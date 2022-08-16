@@ -25,6 +25,7 @@ public class TinyV2Reader {
 	private FieldMapping f;
 	private MethodMapping m;
 	private ParameterMapping p;
+	private boolean parameterIgnored;
 
 	private TinyV2Reader(Path path) {
 		this.path = path;
@@ -122,11 +123,14 @@ public class TinyV2Reader {
 					if ((args.length - indents) != 2) {
 						throw new IllegalStateException("illegal number of arguments (" + (args.length - indents) + ") for parameter javadocs - expected 2");
 					}
-					if (p == null) {
-						throw new IllegalStateException("cannot read parameter javadocs - not in a parameter?");
-					}
 
-					p.setJavadocs(args[1 + indents]);
+					if (!parameterIgnored) {
+						if (p == null) {
+							throw new IllegalStateException("cannot read parameter javadocs - not in a parameter?");
+						}
+
+						p.setJavadocs(args[1 + indents]);
+					}
 
 					return stage;
 				}
@@ -148,6 +152,7 @@ public class TinyV2Reader {
 				f = null;
 				m = null;
 				p = null;
+				parameterIgnored = false;
 
 				break;
 			case TinyV2Mappings.FIELD:
@@ -168,6 +173,7 @@ public class TinyV2Reader {
 				f = c.addField(src, dst, desc);
 				m = null;
 				p = null;
+				parameterIgnored = false;
 
 				break;
 			case TinyV2Mappings.METHOD:
@@ -191,6 +197,7 @@ public class TinyV2Reader {
 				m = c.addMethod(src, dst, desc);
 				f = null;
 				p = null;
+				parameterIgnored = false;
 
 				break;
 			case TinyV2Mappings.PARAMETER:
@@ -216,6 +223,7 @@ public class TinyV2Reader {
 
 				p = m.addParameter(src, dst, index);
 				f = null;
+				parameterIgnored = (p == null);
 
 				break;
 			default:
