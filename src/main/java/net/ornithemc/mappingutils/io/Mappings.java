@@ -192,7 +192,7 @@ public class Mappings {
 				int i = this.src.lastIndexOf('$');
 
 				if (i > 0) {
-					this.simple.substring(i + 1);
+					this.simple = this.src.substring(i + 1);
 				}
 			}
 		}
