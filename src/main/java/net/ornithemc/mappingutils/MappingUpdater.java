@@ -88,13 +88,11 @@ class MappingUpdater {
 					dm.setJavadocs(m.getJavadocs());
 
 					for (ParameterMapping p : m.getParameters()) {
-						ParameterMapping pCalamusDst = mCalamusDst.getParemeter(p.getIndex());
+						ParameterMapping dp = dm.addParameter(p.src(), p.get(), p.getIndex());
 
 						// method descriptors can be different
 						// check if parameter exists in dst
-						if (pCalamusDst != null) {
-							ParameterMapping dp = dm.addParameter(p.src(), p.get(), p.getIndex());
-
+						if (dp != null) {
 							dp.setJavadocs(p.getJavadocs());
 						}
 					}

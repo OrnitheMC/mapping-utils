@@ -5,6 +5,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import org.objectweb.asm.Type;
+
 import net.ornithemc.mappingutils.MappingUtils;
 
 public class Mappings {
@@ -363,6 +365,7 @@ public class Mappings {
 
 		private ClassMapping parent;
 		private String desc;
+		private int parameterCount;
 
 		private MethodMapping(Mappings root, String src, String dst, String desc) {
 			this(root, null, src, dst, desc);
@@ -374,6 +377,7 @@ public class Mappings {
 			this.parameterMappings = new LinkedHashMap<>();
 
 			this.desc = desc;
+			this.parameterCount = -1;
 		}
 
 		@Override
@@ -409,6 +413,17 @@ public class Mappings {
 			return desc;
 		}
 
+		public int getParameterCount() {
+			if (parameterCount < 0) {
+				Type type = Type.getMethodType(desc);
+				Type[] argTypes = type.getArgumentTypes();
+
+				parameterCount = argTypes.length;
+			}
+
+			return parameterCount;
+		}
+
 		public ClassMapping getParent() {
 			return parent;
 		}
@@ -418,6 +433,10 @@ public class Mappings {
 		}
 
 		private ParameterMapping addParameter(ParameterMapping p) {
+			if (p.index >= getParameterCount()) {
+				return null;
+			}
+
 			p.parent = this;
 
 			return parameterMappings.compute(p.key(), (key, value) -> {
