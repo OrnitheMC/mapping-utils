@@ -433,7 +433,7 @@ public class Mappings {
 		}
 
 		private ParameterMapping addParameter(ParameterMapping p) {
-			if (p.index >= getParameterCount()) {
+			if (p.index > getParameterCount()) {
 				return null;
 			}
 
