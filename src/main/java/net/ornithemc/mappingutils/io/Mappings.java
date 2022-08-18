@@ -445,9 +445,9 @@ public class Mappings {
 		public int getParameterCount() {
 			if (parameterCount < 0) {
 				Type type = Type.getMethodType(desc);
-				Type[] argTypes = type.getArgumentTypes();
+				int argAndRetSize = type.getArgumentsAndReturnSizes();
 
-				parameterCount = argTypes.length;
+				parameterCount = argAndRetSize >> 2;
 			}
 
 			return parameterCount;
@@ -462,7 +462,7 @@ public class Mappings {
 		}
 
 		private ParameterMapping addParameter(ParameterMapping p) {
-			if (p.index > getParameterCount()) {
+			if (p.index >= getParameterCount()) {
 				return null;
 			}
 
