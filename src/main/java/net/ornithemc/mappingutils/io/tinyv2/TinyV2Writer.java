@@ -96,7 +96,7 @@ public class TinyV2Writer {
 		bw.write(m.getDesc());
 		bw.write(TAB);
 		bw.write(m.src());
-		if (!m.src().equals("<init>") && !m.src().equals("<clinit>")) {
+		if (!m.src().equals(m.get()) && !m.src().equals("<init>") && !m.src().equals("<clinit>")) {
 			bw.write(TAB);
 			bw.write(m.get());
 		}
