@@ -197,6 +197,8 @@ public class Mappings {
 					this.simple = this.src.substring(i + 1);
 				}
 			}
+
+			this.simple = validateSimple(this.simple);
 		}
 
 		@Override
@@ -240,7 +242,34 @@ public class Mappings {
 		}
 
 		public void setSimple(String simple) {
-			this.simple = simple;
+			this.simple = validateSimple(simple);
+		}
+
+		private String validateSimple(String simple) {
+			String[] srcArgs = src.split("[$]");
+			String[] dstArgs = dst.split("[$]");
+
+			if (srcArgs.length != dstArgs.length) {
+				throw new IllegalStateException("src and dst class names do not have the same nesting depth!");
+			}
+
+			for (int i = 1; i < srcArgs.length; i++) {
+				String srcArg = srcArgs[i];
+
+				try {
+					// make sure anonymous class indices match
+					Integer.parseInt(srcArg);
+					dstArgs[i] = srcArg;
+				} catch (NumberFormatException e) {
+
+				}
+
+				simple = dstArgs[i];
+			}
+
+			dst = String.join("$", dstArgs);
+
+			return simple;
 		}
 
 		public ClassMapping getParentClass() {
