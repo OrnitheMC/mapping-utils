@@ -8,11 +8,11 @@ import net.ornithemc.mappingutils.io.Mappings;
 import net.ornithemc.mappingutils.io.Mappings.ClassMapping;
 import net.ornithemc.mappingutils.io.matcher.Matches;
 import net.ornithemc.mappingutils.io.matcher.MatchesReader;
-import net.ornithemc.mappingutils.io.tiny.TinyMappings;
-import net.ornithemc.mappingutils.io.tiny.TinyReader;
-import net.ornithemc.mappingutils.io.tinyv2.TinyV2Mappings;
-import net.ornithemc.mappingutils.io.tinyv2.TinyV2Reader;
-import net.ornithemc.mappingutils.io.tinyv2.TinyV2Writer;
+import net.ornithemc.mappingutils.io.tiny.v1.TinyV1Mappings;
+import net.ornithemc.mappingutils.io.tiny.v1.TinyV1Reader;
+import net.ornithemc.mappingutils.io.tiny.v2.TinyV2Mappings;
+import net.ornithemc.mappingutils.io.tiny.v2.TinyV2Reader;
+import net.ornithemc.mappingutils.io.tiny.v2.TinyV2Writer;
 
 public class MappingUtils {
 
@@ -23,8 +23,8 @@ public class MappingUtils {
 	public static void updateMappingsV2WithCalamusV1(Path srcPath, Path dstPath, Path calamusSrcPath, Path calamusDstPath, Path matchesPath) throws Exception {
 		TinyV2Mappings src = TinyV2Reader.read(srcPath);
 		TinyV2Mappings dst = new TinyV2Mappings(src.getSrcNamespace(), src.getDstNamespace());
-		TinyMappings calamusSrc = TinyReader.read(calamusSrcPath);
-		TinyMappings calamusDst = TinyReader.read(calamusDstPath);
+		TinyV1Mappings calamusSrc = TinyV1Reader.read(calamusSrcPath);
+		TinyV1Mappings calamusDst = TinyV1Reader.read(calamusDstPath);
 		Matches matches = MatchesReader.read(matchesPath);
 
 		MappingUpdater.run(src, dst, calamusSrc, calamusDst, matches);

@@ -1,30 +1,18 @@
 package net.ornithemc.mappingutils.io.tiny;
 
 import net.ornithemc.mappingutils.io.Mappings;
+import net.ornithemc.mappingutils.io.MappingsNamespace;
 
-public class TinyMappings extends Mappings {
-
-	static final String CLASS = "CLASS";
-	static final String FIELD = "FIELD";
-	static final String METHOD = "METHOD";
-
-	String srcNamespace;
-	String dstNamespace;
+public abstract class TinyMappings<M extends TinyMappings<M>> extends Mappings {
 
 	public TinyMappings() {
-
+		super();
 	}
 
-	public TinyMappings(String srcNamespace, String dstNamespace) {
-		this.srcNamespace = srcNamespace;
-		this.dstNamespace = dstNamespace;
+	public TinyMappings(MappingsNamespace srcNamespace, MappingsNamespace dstNamespace) {
+		super(srcNamespace, dstNamespace);
 	}
 
-	public String getSrcNamespace() {
-		return srcNamespace;
-	}
+	public abstract TinyHeader<M> getHeader();
 
-	public String getDstNamespace() {
-		return dstNamespace;
-	}
 }

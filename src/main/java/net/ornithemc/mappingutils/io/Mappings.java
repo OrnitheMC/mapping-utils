@@ -13,15 +13,43 @@ public class Mappings {
 
 	private final Map<String, ClassMapping> classMappings = new LinkedHashMap<>();
 
+	private MappingsNamespace srcNamespace = MappingsNamespace.NONE;
+	private MappingsNamespace dstNamespace = MappingsNamespace.NONE;
+
 	private Mappings inverted;
 
 	public Mappings() {
 
 	}
 
+	public Mappings(MappingsNamespace srcNamespace, MappingsNamespace dstNamespace) {
+		this();
+
+		this.srcNamespace = srcNamespace;
+		this.dstNamespace = dstNamespace;
+	}
+
 	private Mappings(Mappings inverted) {
+		this(inverted.dstNamespace, inverted.srcNamespace);
+
 		this.inverted = inverted;
 		inverted.inverted = this;
+	}
+
+	public MappingsNamespace getSrcNamespace() {
+		return srcNamespace;
+	}
+
+	public MappingsNamespace getDstNamespace() {
+		return dstNamespace;
+	}
+
+	public void setSrcNamespace(MappingsNamespace namespace) {
+		this.srcNamespace = Objects.requireNonNull(namespace);
+	}
+
+	public void setDstNamespace(MappingsNamespace namespace) {
+		this.dstNamespace = Objects.requireNonNull(namespace);
 	}
 
 	public ClassMapping addClass(String src, String dst) {
@@ -78,7 +106,7 @@ public class Mappings {
 			inverted = new Mappings(this);
 
 			for (ClassMapping c : classMappings.values()) {
-				inverted.addClass(c.inverted());
+				inverted.addClass(c.invert());
 			}
 		}
 
@@ -86,7 +114,7 @@ public class Mappings {
 	}
 
 	public Mappings copy() {
-		Mappings copy = new Mappings();
+		Mappings copy = new Mappings(srcNamespace, dstNamespace);
 
 		for (ClassMapping c : classMappings.values()) {
 			copy.addClass(c.copy());
