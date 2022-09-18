@@ -31,30 +31,30 @@ public class MappingUtils {
 		TinyV2Writer.write(dstPath, dst);
 	}
 
-	public static String updateFieldDescriptor(String desc, Mappings mappings) {
+	public static String translateFieldDescriptor(String desc, Mappings mappings) {
 		Type type = Type.getType(desc);
-		type = updateType(type, mappings);
+		type = translateType(type, mappings);
 
 		return type.getDescriptor();
 	}
 
-	public static String updateMethodDescriptor(String desc, Mappings mappings) {
+	public static String translateMethodDescriptor(String desc, Mappings mappings) {
 		Type type = Type.getMethodType(desc);
 
 		Type[] argTypes = type.getArgumentTypes();
 		Type returnType = type.getReturnType();
 
 		for (int i = 0; i < argTypes.length; i++) {
-			argTypes[i] = updateType(argTypes[i], mappings);
+			argTypes[i] = translateType(argTypes[i], mappings);
 		}
-		returnType = updateType(returnType, mappings);
+		returnType = translateType(returnType, mappings);
 
 		type = Type.getMethodType(returnType, argTypes);
 
 		return type.getDescriptor();
 	}
 
-	public static Type updateType(Type type, Mappings mappings) {
+	public static Type translateType(Type type, Mappings mappings) {
 		switch (type.getSort()) {
 		case Type.OBJECT:
 			String className = type.getInternalName();
@@ -68,7 +68,7 @@ public class MappingUtils {
 			break;
 		case Type.ARRAY:
 			Type elementType = type.getElementType();
-			elementType = updateType(elementType, mappings);
+			elementType = translateType(elementType, mappings);
 
 			int numDim = type.getDimensions();
 			String desc = "";

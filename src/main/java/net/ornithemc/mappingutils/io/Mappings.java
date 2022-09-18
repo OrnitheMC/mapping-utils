@@ -393,7 +393,7 @@ public class Mappings {
 
 		@Override
 		protected FieldMapping inverted() {
-			inverted = new FieldMapping(root.inverted, this, dst, src, MappingUtils.updateFieldDescriptor(desc, root));
+			inverted = new FieldMapping(root.inverted, this, dst, src, MappingUtils.translateFieldDescriptor(desc, root));
 			inverted.setJavadocs(jav);
 
 			return inverted;
@@ -444,7 +444,7 @@ public class Mappings {
 
 		@Override
 		protected MethodMapping inverted() {
-			inverted = new MethodMapping(root.inverted, this, dst, src, MappingUtils.updateMethodDescriptor(desc, root));
+			inverted = new MethodMapping(root.inverted, this, dst, src, MappingUtils.translateMethodDescriptor(desc, root));
 			inverted.setJavadocs(jav);
 
 			for (ParameterMapping p : parameterMappings.values()) {
