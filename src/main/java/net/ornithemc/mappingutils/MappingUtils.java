@@ -16,10 +16,6 @@ import net.ornithemc.mappingutils.io.tiny.v2.TinyV2Writer;
 
 public class MappingUtils {
 
-	public static Mappings concatenate(Mappings... m) {
-		return MappingConcatenator.run(m);
-	}
-
 	public static void updateMappingsV2WithCalamusV1(Path srcPath, Path dstPath, Path calamusSrcPath, Path calamusDstPath, Path matchesPath) throws Exception {
 		TinyV2Mappings src = TinyV2Reader.read(srcPath);
 		TinyV2Mappings dst = new TinyV2Mappings(src.getSrcNamespace(), src.getDstNamespace());
