@@ -5,6 +5,8 @@
 /run
 *.jar
 *.nest
+*.tiny
+*.tinydiff
 
 # eclipse
 .eclipse
