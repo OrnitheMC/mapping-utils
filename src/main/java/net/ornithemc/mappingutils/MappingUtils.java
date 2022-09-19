@@ -24,6 +24,12 @@ import net.ornithemc.mappingutils.io.tiny.v2.TinyV2Writer;
 public class MappingUtils {
 
 	public static void updateMappingsV2WithCalamusV1(Path srcPath, Path dstPath, Path calamusSrcPath, Path calamusDstPath, Path matchesPath) throws Exception {
+		FileUtils.requireReadable(srcPath);
+		FileUtils.requireWritable(dstPath);
+		FileUtils.requireReadable(calamusSrcPath);
+		FileUtils.requireReadable(calamusDstPath);
+		FileUtils.requireReadable(matchesPath);
+
 		TinyV2Mappings src = TinyV2Reader.read(srcPath);
 		TinyV2Mappings dst = new TinyV2Mappings(src.getSrcNamespace(), src.getDstNamespace());
 		TinyV1Mappings calamusSrc = TinyV1Reader.read(calamusSrcPath);
@@ -35,6 +41,10 @@ public class MappingUtils {
 	}
 
 	public static void diffTinyV1Mappings(Path pathA, Path pathB, Path diffPath) throws Exception {
+		FileUtils.requireReadable(pathA);
+		FileUtils.requireReadable(pathB);
+		FileUtils.requireWritable(diffPath);
+
 		TinyV1Mappings a = TinyV1Reader.read(pathA);
 		TinyV1Mappings b = TinyV1Reader.read(pathB);
 		TinyV1Diff diff = new TinyV1Diff();
@@ -44,6 +54,10 @@ public class MappingUtils {
 	}
 
 	public static void diffTinyV2Mappings(Path pathA, Path pathB, Path diffPath) throws Exception {
+		FileUtils.requireReadable(pathA);
+		FileUtils.requireReadable(pathB);
+		FileUtils.requireWritable(diffPath);
+
 		TinyV2Mappings a = TinyV2Reader.read(pathA);
 		TinyV2Mappings b = TinyV2Reader.read(pathB);
 		TinyV2Diff diff = new TinyV2Diff();
@@ -53,6 +67,10 @@ public class MappingUtils {
 	}
 
 	public static void applyTinyV1Diffs(Path srcPath, Path dstPath, Path... diffPaths) throws Exception {
+		FileUtils.requireReadable(srcPath);
+		FileUtils.requireWritable(dstPath);
+		FileUtils.requireReadable(diffPaths);
+
 		TinyV1Mappings src = TinyV1Reader.read(srcPath);
 		TinyV1Mappings dst = src.copy();
 		TinyV1Diff[] diffs = new TinyV1Diff[diffPaths.length];
@@ -65,6 +83,10 @@ public class MappingUtils {
 	}
 
 	public static void applyTinyV2Diffs(Path srcPath, Path dstPath, Path... diffPaths) throws Exception {
+		FileUtils.requireReadable(srcPath);
+		FileUtils.requireWritable(dstPath);
+		FileUtils.requireReadable(diffPaths);
+
 		TinyV2Mappings src = TinyV2Reader.read(srcPath);
 		TinyV2Mappings dst = src.copy();
 		TinyV2Diff[] diffs = new TinyV2Diff[diffPaths.length];
