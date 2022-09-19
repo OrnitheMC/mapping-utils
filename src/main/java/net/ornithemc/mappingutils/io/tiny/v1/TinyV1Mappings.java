@@ -1,6 +1,6 @@
 package net.ornithemc.mappingutils.io.tiny.v1;
 
-import net.ornithemc.mappingutils.io.MappingsNamespace;
+import net.ornithemc.mappingutils.io.MappingNamespace;
 import net.ornithemc.mappingutils.io.tiny.TinyMappings;
 
 public class TinyV1Mappings extends TinyMappings<TinyV1Mappings> {
@@ -17,10 +17,15 @@ public class TinyV1Mappings extends TinyMappings<TinyV1Mappings> {
 		this.header = new TinyV1Header(this);
 	}
 
-	public TinyV1Mappings(MappingsNamespace srcNamespace, MappingsNamespace dstNamespace) {
+	public TinyV1Mappings(MappingNamespace srcNamespace, MappingNamespace dstNamespace) {
 		super(srcNamespace, dstNamespace);
 
 		this.header = new TinyV1Header(this);
+	}
+
+	@Override
+	public TinyV1Mappings copy() {
+		return (TinyV1Mappings)copy(new TinyV1Mappings(getSrcNamespace(), getDstNamespace()));
 	}
 
 	@Override

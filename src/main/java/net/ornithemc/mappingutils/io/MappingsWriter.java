@@ -10,6 +10,8 @@ public abstract class MappingsWriter<M extends Mappings> {
 	protected int indents;
 
 	protected MappingsWriter(BufferedWriter writer, M mappings) {
+		mappings.validate();
+
 		this.writer = writer;
 		this.mappings = mappings;
 	}

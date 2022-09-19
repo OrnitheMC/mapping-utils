@@ -1,32 +1,32 @@
-package net.ornithemc.mappingutils.io.tiny;
+package net.ornithemc.mappingutils.io.diff.tiny;
 
 import java.io.BufferedReader;
 
-import net.ornithemc.mappingutils.io.MappingsReader;
+import net.ornithemc.mappingutils.io.diff.MappingsDiffReader;
 
-public abstract class TinyMappingsReader<M extends TinyMappings<M>> extends MappingsReader<M> {
+public abstract class TinyDiffReader<D extends TinyDiff<D>> extends MappingsDiffReader<D> {
 
 	protected static final String TAB = "\t";
 
-	protected final M mappings;
+	protected final D diff;
 
 	private Stage stage;
 
-	protected TinyMappingsReader(BufferedReader reader, M mappings) {
+	protected TinyDiffReader(BufferedReader reader, D diff) {
 		super(reader);
 
-		this.mappings = mappings;
+		this.diff = diff;
 	}
 
 	@Override
-	public M read() throws Exception {
+	public D read() throws Exception {
 		stage = Stage.HEADER;
 
 		for (int lineNumber = 1; stage != null; lineNumber++) {
 			stage = parseLine(reader.readLine(), lineNumber);
 		}
 
-		return mappings;
+		return diff;
 	}
 
 	private Stage parseLine(String line, int lineNumber) throws Exception {
@@ -37,8 +37,8 @@ public abstract class TinyMappingsReader<M extends TinyMappings<M>> extends Mapp
 		switch (stage) {
 		case HEADER:
 			return parseHeader(line, lineNumber);
-		case MAPPINGS:
-			return parseMappings(line, lineNumber);
+		case DIFFS:
+			return parseDiffs(line, lineNumber);
 		default:
 			throw new IllegalStateException("cannot parse line while done with reading!");
 		}
@@ -46,9 +46,9 @@ public abstract class TinyMappingsReader<M extends TinyMappings<M>> extends Mapp
 
 	protected abstract Stage parseHeader(String line, int lineNumber) throws Exception;
 
-	protected abstract Stage parseMappings(String line, int lineNumber) throws Exception;
+	protected abstract Stage parseDiffs(String line, int lineNumber) throws Exception;
 
 	protected enum Stage {
-		HEADER, MAPPINGS
+		HEADER, DIFFS
 	}
 }

@@ -1,7 +1,7 @@
 package net.ornithemc.mappingutils.io.tiny;
 
 import net.ornithemc.mappingutils.io.Mappings;
-import net.ornithemc.mappingutils.io.MappingsNamespace;
+import net.ornithemc.mappingutils.io.MappingNamespace;
 
 public abstract class TinyMappings<M extends TinyMappings<M>> extends Mappings {
 
@@ -9,7 +9,7 @@ public abstract class TinyMappings<M extends TinyMappings<M>> extends Mappings {
 		super();
 	}
 
-	public TinyMappings(MappingsNamespace srcNamespace, MappingsNamespace dstNamespace) {
+	public TinyMappings(MappingNamespace srcNamespace, MappingNamespace dstNamespace) {
 		super(srcNamespace, dstNamespace);
 	}
 

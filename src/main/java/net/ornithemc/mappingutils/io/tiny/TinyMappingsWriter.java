@@ -2,10 +2,9 @@ package net.ornithemc.mappingutils.io.tiny;
 
 import java.io.BufferedWriter;
 
-import net.ornithemc.mappingutils.io.Mappings;
 import net.ornithemc.mappingutils.io.MappingsWriter;
 
-public abstract class TinyMappingsWriter<M extends Mappings> extends MappingsWriter<M> {
+public abstract class TinyMappingsWriter<M extends TinyMappings<M>> extends MappingsWriter<M> {
 
 	protected static final String TAB = "\t";
 

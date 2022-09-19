@@ -24,7 +24,7 @@ public class TinyV1Reader extends TinyMappingsReader<TinyV1Mappings> {
 	}
 
 	@Override
-	protected Stage parseHeader(String line) throws Exception {
+	protected Stage parseHeader(String line, int lineNumber) throws Exception {
 		String[] args = line.split(TAB);
 
 		if (args.length != 3) {
@@ -48,7 +48,7 @@ public class TinyV1Reader extends TinyMappingsReader<TinyV1Mappings> {
 	}
 
 	@Override
-	protected Stage parseMappings(String line) throws Exception {
+	protected Stage parseMappings(String line, int lineNumber) throws Exception {
 		String[] args = line.split(TAB);
 
 		String cls;
@@ -61,7 +61,7 @@ public class TinyV1Reader extends TinyMappingsReader<TinyV1Mappings> {
 		switch (args[0]) {
 		case TinyV1Mappings.CLASS:
 			if (args.length != 3) {
-				throw new IllegalStateException("illegal number of arguments (" + args.length + ") for class mapping - expected 3");
+				throw new IllegalStateException("illegal number of arguments (" + args.length + ") for class mapping on line " + lineNumber + " - expected 3");
 			}
 
 			src = args[1];
@@ -72,7 +72,7 @@ public class TinyV1Reader extends TinyMappingsReader<TinyV1Mappings> {
 			break;
 		case TinyV1Mappings.FIELD:
 			if (args.length != 5) {
-				throw new IllegalStateException("illegal number of arguments (" + args.length + ") for field mapping - expected 5");
+				throw new IllegalStateException("illegal number of arguments (" + args.length + ") for field mapping on line " + lineNumber + " - expected 5");
 			}
 
 			cls = args[1];
@@ -83,7 +83,7 @@ public class TinyV1Reader extends TinyMappingsReader<TinyV1Mappings> {
 			c = mappings.getClass(cls);
 
 			if (c == null) {
-				throw new IllegalStateException("cannot read field mapping for unknown class " + cls);
+				throw new IllegalStateException("cannot read field mapping for unknown class " + cls + " on line " + lineNumber);
 			}
 
 			c.addField(src, dst, desc);
@@ -91,7 +91,7 @@ public class TinyV1Reader extends TinyMappingsReader<TinyV1Mappings> {
 			break;
 		case TinyV1Mappings.METHOD:
 			if (args.length != 5) {
-				throw new IllegalStateException("illegal number of arguments (" + args.length + ") for field mapping - expected 5");
+				throw new IllegalStateException("illegal number of arguments (" + args.length + ") for field mapping on line " + lineNumber + " - expected 5");
 			}
 
 			cls = args[1];
@@ -102,14 +102,14 @@ public class TinyV1Reader extends TinyMappingsReader<TinyV1Mappings> {
 			c = mappings.getClass(cls);
 
 			if (c == null) {
-				throw new IllegalStateException("cannot read method mapping for unknown class " + cls);
+				throw new IllegalStateException("cannot read method mapping for unknown class " + cls + " on line " + lineNumber);
 			}
 
 			c.addMethod(src, dst, desc);
 
 			break;
 		default:
-			throw new IllegalStateException("unknown mapping target " + args[0]);
+			throw new IllegalStateException("unknown mapping target " + args[0] + " on line " + lineNumber);
 		}
 
 		return Stage.MAPPINGS;

@@ -56,11 +56,11 @@ class MappingUpdater {
 			return;
 		}
 
+		// TODO: make sure anonymous class indices match
 		ClassMapping cCalamusDst = calamusDst.getClass(cMatch.name(MatchSide.DST));
 		ClassMapping dc = dst.addClass(cCalamusDst.get(), c.get());
 
-		dc.setSimple(c.getSimple());
-		dc.setJavadocs(c.getJavadocs());
+		dc.setJavadoc(c.getJavadoc());
 
 		for (FieldMapping f : c.getFields()) {
 			FieldMapping fCalamusSrcInv = cCalamusSrcInv.getField(f.src(), f.getDesc());
@@ -70,7 +70,7 @@ class MappingUpdater {
 				FieldMapping fCalamusDst = cCalamusDst.getField(fMatch.name(MatchSide.DST), fMatch.desc(MatchSide.DST));
 				FieldMapping df = dc.addField(fCalamusDst.get(), f.get(), fCalamusDst.invert().getDesc());
 
-				df.setJavadocs(f.getJavadocs());
+				df.setJavadoc(f.getJavadoc());
 			}
 		}
 		for (MethodMapping m : c.getMethods()) {
@@ -85,15 +85,16 @@ class MappingUpdater {
 				if (mCalamusDst != null) {
 					MethodMapping dm = dc.addMethod(mCalamusDst.get(), m.get(), mCalamusDst.invert().getDesc());
 
-					dm.setJavadocs(m.getJavadocs());
+					dm.setJavadoc(m.getJavadoc());
 
 					for (ParameterMapping p : m.getParameters()) {
+						// TODO: ignore mapping if dst method has fewer parameters
 						ParameterMapping dp = dm.addParameter(p.src(), p.get(), p.getIndex());
 
 						// method descriptors can be different
 						// check if parameter exists in dst
 						if (dp != null) {
-							dp.setJavadocs(p.getJavadocs());
+							dp.setJavadoc(p.getJavadoc());
 						}
 					}
 				}

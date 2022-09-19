@@ -1,0 +1,36 @@
+package net.ornithemc.mappingutils.io;
+
+public class MappingNamespace {
+
+	public static final MappingNamespace NONE = new MappingNamespace("");
+
+	public static final MappingNamespace CALAMUS = new MappingNamespace("calamus");
+	public static final MappingNamespace FEATHER = new MappingNamespace("feather");
+
+	private final String namespace;
+
+	public MappingNamespace(String namespace) {
+		this.namespace = namespace;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+
+		if (obj instanceof MappingNamespace) {
+			MappingNamespace o = (MappingNamespace)obj;
+			return namespace.equals(o.namespace);
+		}
+
+		return false;
+	}
+
+	public String get() {
+		return namespace;
+	}
+}

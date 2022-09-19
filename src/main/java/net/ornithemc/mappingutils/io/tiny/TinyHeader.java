@@ -1,6 +1,6 @@
 package net.ornithemc.mappingutils.io.tiny;
 
-import net.ornithemc.mappingutils.io.MappingsNamespace;
+import net.ornithemc.mappingutils.io.MappingNamespace;
 
 public abstract class TinyHeader<M extends TinyMappings<M>> {
 
@@ -25,10 +25,10 @@ public abstract class TinyHeader<M extends TinyMappings<M>> {
 	}
 
 	public void setSrcNamespace(String namespace) {
-		mappings.setSrcNamespace(new MappingsNamespace(namespace));
+		mappings.setSrcNamespace(new MappingNamespace(namespace));
 	}
 
 	public void setDstNamespace(String namespace) {
-		mappings.setDstNamespace(new MappingsNamespace(namespace));
+		mappings.setDstNamespace(new MappingNamespace(namespace));
 	}
 }

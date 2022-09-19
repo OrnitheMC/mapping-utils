@@ -1,0 +1,661 @@
+tiny	2	0
+c	net/minecraft/C_00xenyapa	net/minecraft/entity/living/mob/passive/Trader	net/minecraft/world/village/trade/Trader
+c	net/minecraft/C_01rvluzuc	net/minecraft/client/gui/screen/world/SelectWorldScreen	net/minecraft/client/gui/screen/menu/SelectWorldScreen
+	f	Ljava/util/List;	f_25ywaadwk	saves	worlds
+	f	I	f_90imzhmrz	selectedWorldId	selectedWorld
+	f	Ljava/lang/String;	f_97ytgenvt	conversionText	needsConversion
+		c	The text to display when a world needs to be converted (e.g. when it needs to be converted from a lower version)	
+	m	(I)Ljava/lang/String;	m_07sziruos	getSaveFileName	getWorldSaveDir
+		c	The world save name is the name of the save folder. When a world is created this\nis always equal to the world name, but can be different if the folder is either manually\neditted or if you create multiple worlds with the same name.	
+	m	(I)V	m_19omhhlbv	loadWorld	loadWorld
+		p	1		id	index
+	m	()V	m_28ruefvgm	getSaves	sortWorlds
+	m	(Lnet/minecraft/C_88hmxeeuo;Ljava/lang/String;I)Lnet/minecraft/C_19dgkerzp;	m_40atfunaw	getDeleteWarningPrompt	createDeleteWorldConfirmationScreen
+		p	0		screen	parent
+		p	2		id	index
+c	net/minecraft/C_01rvluzuc$C_05edmfnvx	net/minecraft/client/gui/screen/world/SelectWorldScreen$WorldListWidget	net/minecraft/client/gui/screen/menu/SelectWorldScreen$WorldListWidget
+c	net/minecraft/C_01sgzllsm	net/minecraft/client/gui/screen/options/ControlsListWidget	net/minecraft/client/gui/screen/menu/options/ControlsListWidget
+c	net/minecraft/C_01sgzllsm$1	net/minecraft/client/gui/screen/options/ControlsListWidget$1	net/minecraft/client/gui/screen/menu/options/ControlsListWidget$1
+c	net/minecraft/C_01sgzllsm$C_23tlycevh	net/minecraft/client/gui/screen/options/ControlsListWidget$KeyBindingEntry	net/minecraft/client/gui/screen/menu/options/ControlsListWidget$KeyBindingEntry
+c	net/minecraft/C_01sgzllsm$C_77rhowlzb	net/minecraft/client/gui/screen/options/ControlsListWidget$CategoryEntry	net/minecraft/client/gui/screen/menu/options/ControlsListWidget$CategoryEntry
+c	net/minecraft/C_01ujpgvbk	net/minecraft/util/IJsonSet	net/minecraft/util/JsonSet
+	m	()Lcom/google/gson/JsonElement;	m_53rdedihv	getJsonElement	toJson
+c	net/minecraft/C_02tautzyf	net/minecraft/client/gui/screen/GameMenuScreen	net/minecraft/client/gui/screen/menu/GameMenuScreen
+c	net/minecraft/C_03fvnjcja	net/minecraft/client/MinecraftClient	net/minecraft/client/MinecraftClient
+	f	I	f_18bgfpxed	width	screenWidth
+	f	Lnet/minecraft/C_19uwkwben;	f_34sgojfos	notification	toasts
+	f	I	f_40kdpyfio	height	screenHeight
+	f	Lnet/minecraft/C_25lpaumxq;	f_41cfzkrje	frameBuffer	renderTarget
+	f	Lnet/minecraft/C_23peprkct;	f_61aknubsx	currentServerEntry	currentServer
+	f	Z	f_68mvuqkdf	isIntegratedServerRunning	hasIntegratedServer
+	f	Lnet/minecraft/C_70ogpwxnb;	f_98bjxddei	inGameHud	gui
+	m	()Z	m_10dfqqshd	isIntegratedServerRunning	hasIntegratedServer
+	m	()Z	m_12nodnqrq	isInSingleplayer	isSingleplayer
+	m	()Lnet/minecraft/C_25lpaumxq;	m_36qmahmvw	getFramebuffer	getRenderTarget
+	m	(Lnet/minecraft/C_23peprkct;)V	m_60zatjtee	setCurrentServerEntry	setCurrentServer
+		p	1		info	server
+	m	()Lnet/minecraft/C_23peprkct;	m_77dwpznob	getCurrentServerEntry	getCurrentServer
+	m	(II)V	m_97fhzekga	onResolutionChanged	resize
+c	net/minecraft/C_03ggkgeuk	net/minecraft/client/gui/screen/ingame/CreativeInventoryScreen	net/minecraft/client/gui/screen/game/inventory/menu/CreativePlayerMenuScreen
+	f	Lnet/minecraft/C_21ejqkzye;	f_83ppjpjzv	ITEM_GROUPS	TABS_TEXTURE
+	f	Lnet/minecraft/C_65vjsyotv;	f_98mrmsdog	inventory	tmp
+c	net/minecraft/C_03ggkgeuk$C_30rfvpqtt	net/minecraft/client/gui/screen/ingame/CreativeInventoryScreen$CreativeInventorySlot	net/minecraft/client/gui/screen/game/inventory/menu/CreativePlayerMenuScreen$CreativeInventorySlot
+c	net/minecraft/C_03ggkgeuk$C_71jhchfdf	net/minecraft/client/gui/screen/ingame/CreativeInventoryScreen$CreativeScreenHandler	net/minecraft/client/gui/screen/game/inventory/menu/CreativePlayerMenuScreen$CreativeInventoryMenu
+c	net/minecraft/C_04kpmbbzi	net/minecraft/client/gui/screen/SoundsScreen	net/minecraft/client/gui/screen/menu/options/SoundOptionsScreen
+	f	Ljava/lang/String;	f_75mynfjpb	name	title
+c	net/minecraft/C_04kpmbbzi$C_69ckopnwf	net/minecraft/client/gui/screen/SoundsScreen$SoundSliderWidget	net/minecraft/client/gui/screen/menu/options/SoundOptionsScreen$SoundSliderWidget
+	c	This is a inner class of {@link net.minecraft.client.gui.screen.SoundsScreen}	
+	f	Lnet/minecraft/C_40bnosben;	f_02idzkziu	soundCatergory	category
+	f	F	f_19hyxedgx	sliderButtonPos	value
+	f	Ljava/lang/String;	f_39kbsdhhe	widgetName	categoryText
+	m	(Lnet/minecraft/C_04kpmbbzi;IIILnet/minecraft/C_40bnosben;Z)V	<init>	<init>	<init>
+		p	6		doubleSlider	doubleWidth
+c	net/minecraft/C_05wnuerqc	net/minecraft/client/gui/hud/ChatHudLine	net/minecraft/client/gui/ChatMessage
+	f	I	f_46wpjsdqa	creationTick	timeOfCreation
+	m	(ILnet/minecraft/C_10utpymwr;I)V	<init>	<init>	<init>
+		p	1		creationTick	timeOfCreation
+	m	()I	m_89uulyomv	getCreationTick	getTimeOfCreation
+c	net/minecraft/C_06egalpjg	net/minecraft/client/gui/screen/ingame/HorseScreen	net/minecraft/client/gui/screen/game/inventory/menu/HorseMenuScreen
+	f	Lnet/minecraft/C_09ksqivce;	f_45sdjvdrh	chestInventory	horseInventory
+	f	Lnet/minecraft/C_09ksqivce;	f_56pacdoxy	armorInventory	playerInventory
+	m	(Lnet/minecraft/C_09ksqivce;Lnet/minecraft/C_09ksqivce;Lnet/minecraft/C_90htpsreg;)V	<init>	<init>	<init>
+		p	1		armorInventory	playerInventory
+		p	2		chestInventory	horseInventory
+c	net/minecraft/C_06tznzaes	net/minecraft/world/village/TradeOffer	net/minecraft/world/village/trade/TradeOffer
+c	net/minecraft/C_08jwossiu	net/minecraft/world/biome/source/layer/AddDeepOceanLayer	net/minecraft/world/biome/layer/AddDeepOceanLayer
+c	net/minecraft/C_08qnkjezg	net/minecraft/client/gui/widget/OptionListWidget	net/minecraft/client/gui/widget/menu/options/OptionListWidget
+c	net/minecraft/C_08qnkjezg$C_46tgmwkpp	net/minecraft/client/gui/widget/OptionListWidget$Entry	net/minecraft/client/gui/widget/menu/options/OptionListWidget$Entry
+c	net/minecraft/C_09uvutied	net/minecraft/client/render/ItemRenderer	net/minecraft/client/render/ItemRenderer
+	m	(Lnet/minecraft/C_18xnybcao;Lnet/minecraft/C_21eurwdss;Lnet/minecraft/C_17gpkxmuh;II)V	m_05zpnkgya	renderStack	renderItem
+	m	(Lnet/minecraft/C_18xnybcao;Lnet/minecraft/C_21eurwdss;Lnet/minecraft/C_17gpkxmuh;II)V	m_71mcwdxvj	itemInGuiRenderer	renderItemInGui
+c	net/minecraft/C_10otvhgjr	net/minecraft/client/gui/widget/EntryListWidget	net/minecraft/client/gui/widget/ListWidget
+c	net/minecraft/C_10otvhgjr$C_49savbdqw	net/minecraft/client/gui/widget/EntryListWidget$Entry	net/minecraft/client/gui/widget/ListWidget$Entry
+	m	(IIIIILnet/minecraft/C_00ouykomk;IIZ)V	m_38levnfta	render	render
+		p	1		id	index
+	m	(IIIIII)Z	m_79jqouwve	mouseClicked	mouseClicked
+		p	1		id	index
+	m	(IIIIII)V	m_93ffbtcqu	mouseReleased	mouseReleased
+		p	1		id	index
+c	net/minecraft/C_12hfsolqi	net/minecraft/client/gui/screen/DeathScreen	net/minecraft/client/gui/screen/game/DeathScreen
+	f	Z	f_58estgjbs	isHardcore	hardcore
+c	net/minecraft/C_12uvxabxw	net/minecraft/client/gui/screen/world/CreateWorldScreen	net/minecraft/client/gui/screen/menu/CreateWorldScreen
+	f	Lnet/minecraft/C_64dnohkgi;	f_02mqhddbn	customizeButton	optionsButton
+	f	Ljava/lang/String;	f_07glkjqny	firstGameModeDescriptionLine	gameModeDescription1
+	f	Lnet/minecraft/C_64dnohkgi;	f_14hhmbrug	mapTypeButton	generatorTypeButton
+	f	Z	f_17nxfstuo	cheatsEnabled	cheatsChanged
+	f	Z	f_28ehikntb	creatingLevel	done
+	f	Lnet/minecraft/C_64dnohkgi;	f_45gfgzzmu	generateStructures	structuresButton
+	f	Ljava/lang/String;	f_47qaisswn	levelName	name
+	f	Ljava/lang/String;	f_53mazevux	setGamemodeName	gameMode
+	f	Lnet/minecraft/C_34myfqxwm;	f_59cwlxnnn	displayNameField	nameField
+	f	Z	f_59jnczlrj	moreOptionsOpen	hasOptions
+	f	Z	f_60ucddvsu	tweakedCheats	cheats
+	f	Ljava/lang/String;	f_74vouimps	saveDirectoryName	worldSaveDir
+	f	Lnet/minecraft/C_64dnohkgi;	f_92grzkymc	gameMode	gameModeButton
+	f	Ljava/lang/String;	f_98dxnnaps	secondGameModeDescriptionLine	gameModeDescription2
+	m	(Z)V	m_10pzjkgar	setScreen	setHasOptions
+		p	1		moreOptionsOPen	hasOptions
+	m	()V	m_10uglsszm	toggleMoreOptions	toggleHasOptions
+	m	(Lnet/minecraft/C_60oojglfe;Ljava/lang/String;)Ljava/lang/String;	m_33kqgpobf	getWorldDirName	findWorldSaveDir
+	m	()V	m_59yqebsmh	updateSettingsLabels	updateButtons
+	m	()V	m_84btiiaud	getSaveDirectoryName	findWorldSaveDir
+c	net/minecraft/C_13mnuszgm	net/minecraft/world/biome/source/BiomeDecorator	net/minecraft/world/biome/BiomeDecorator
+c	net/minecraft/C_13qwvyujs	net/minecraft/client/gui/screen/CreditsScreen	net/minecraft/client/gui/screen/menu/CreditsScreen
+	f	I	f_35fjrxazh	ticksOpen	ticks
+	f	I	f_62fmdxxlp	creditsHeight	scroll
+	f	Ljava/util/List;	f_73xsgjxrt	creditTextLines	credits
+c	net/minecraft/C_14djicpls	net/minecraft/client/gui/screen/resourcepack/SelectedResourcePackListWidget	net/minecraft/client/gui/widget/resource/pack/SelectedResourcePackListWidget
+c	net/minecraft/C_14wqjnvzc	net/minecraft/client/gui/screen/multiplayer/LanScanWidget	net/minecraft/client/gui/widget/menu/LanScanEntry
+c	net/minecraft/C_15gugksgk	net/minecraft/stat/achievement/AchievementStat	net/minecraft/stat/achievement/AchievementStat
+	f	Lnet/minecraft/C_17gpkxmuh;	f_12sgjqlbz	logo	icon
+	f	Lnet/minecraft/C_95icdqcty;	f_41ikiwpeh	statFormatter	formatter
+c	net/minecraft/C_15wklhwwo	net/minecraft/world/biome/source/layer/AddSnowLayer	net/minecraft/world/biome/layer/AddSnowLayer
+c	net/minecraft/C_16yelkitk	net/minecraft/client/gui/screen/resourcepack/ResourcePackEntryWidget	net/minecraft/client/gui/widget/resource/pack/ResourcePackEntry
+c	net/minecraft/C_17qhvplif	net/minecraft/client/gui/MapRenderer	net/minecraft/client/render/MapRenderer
+c	net/minecraft/C_17qhvplif$1	net/minecraft/client/gui/MapRenderer$1	net/minecraft/client/render/MapRenderer$1
+c	net/minecraft/C_17qhvplif$C_15dokbode	net/minecraft/client/gui/MapRenderer$Texture	net/minecraft/client/render/MapRenderer$Texture
+c	net/minecraft/C_17ytoxalb	net/minecraft/client/gui/screen/ConnectScreen	net/minecraft/client/gui/screen/menu/ConnectScreen
+	f	Ljava/util/concurrent/atomic/AtomicInteger;	f_84faplvzg	connectorThreadsCount	threadIdCounter
+	f	Z	f_98vhovcxl	connectingCancelled	cancelled
+c	net/minecraft/C_17ytoxalb$1	net/minecraft/client/gui/screen/ConnectScreen$1	net/minecraft/client/gui/screen/menu/ConnectScreen$1
+c	net/minecraft/C_18foexyey	net/minecraft/world/biome/source/layer/AddMushroomIslandLayer	net/minecraft/world/biome/layer/AddMushroomIslandLayer
+c	net/minecraft/C_18ubtfzzh	net/minecraft/client/gui/screen/options/LanguageOptionsScreen	net/minecraft/client/gui/screen/menu/options/LanguageOptionsScreen
+	f	Lnet/minecraft/C_14rplppdz;	f_16defmewq	gameOptions	options
+	f	Lnet/minecraft/C_18ubtfzzh$C_07xlsjovb;	f_82thnbqoc	languageSelectionListWidget	languageList
+c	net/minecraft/C_18ubtfzzh$C_07xlsjovb	net/minecraft/client/gui/screen/options/LanguageOptionsScreen$LanguageSelectionListWidget	net/minecraft/client/gui/screen/menu/options/LanguageOptionsScreen$LanguageListWidget
+	f	Ljava/util/Map;	f_44tjdpypw	defenitionByLanguage	languagesByCode
+c	net/minecraft/C_18xqwbkgc	net/minecraft/world/biome/source/layer/Layer	net/minecraft/world/biome/layer/Layer
+c	net/minecraft/C_18xqwbkgc$1	net/minecraft/world/biome/source/layer/Layer$1	net/minecraft/world/biome/layer/Layer$1
+c	net/minecraft/C_18xqwbkgc$2	net/minecraft/world/biome/source/layer/Layer$2	net/minecraft/world/biome/layer/Layer$2
+c	net/minecraft/C_18yjyfihe	net/minecraft/client/gui/screen/OutOfMemoryScreen	net/minecraft/client/gui/screen/menu/OutOfMemoryScreen
+c	net/minecraft/C_19dgkerzp	net/minecraft/client/gui/screen/ConfirmScreen	net/minecraft/client/gui/screen/ConfirmationScreen
+	c	A screen that is used to confirm an action. For example when deleting something.\nThis screen has a question that needs confirming and a text that is used for the buttons you use to confirm\nand a text that is used for the button to abort.	
+	f	I	f_23tvljtjg	buttonEnableTimer	buttonDisableTimer
+c	net/minecraft/C_19kadzuiv	net/minecraft/client/gui/screen/AchievementsScreen	net/minecraft/client/gui/screen/menu/AchievementsScreen
+	f	D	f_30tlmursp	newMouseX	scaledMouseDx
+	f	D	f_44mnodiua	xStart	scrollX
+	f	Z	f_74nubcpmp	notReady	downloading
+	f	D	f_83cnloxxs	yStart	scrollY
+	f	I	f_92voehuzy	scrolling	scroll
+	f	D	f_99zqmzbup	newMouseY	scaledMouseDy
+	m	(IIF)V	m_83wkcqsnq	renderIcons	renderAchievements
+	m	()V	m_96debbtoi	setTitle	renderTitle
+c	net/minecraft/C_19uwkwben	net/minecraft/client/gui/AchievementNotification	net/minecraft/client/gui/ToastGui
+	f	Ljava/lang/String;	f_03vdukwkf	name	description
+	f	J	f_60mfmlovv	time	startTime
+	f	Z	f_62uqzxdrw	firstAchievement	tutorial
+	m	()V	m_01uhvwpxr	reset	clear
+	m	(Lnet/minecraft/C_15gugksgk;)V	m_26upgkumh	displayFirstAchievement	setTutorial
+		p	1		achieved	achievement
+	m	(Lnet/minecraft/C_15gugksgk;)V	m_40plzufqk	display	set
+		p	1		achieved	achievement
+c	net/minecraft/C_20xvjjrqo	net/minecraft/client/gui/screen/ingame/InventoryScreen	net/minecraft/client/gui/screen/game/inventory/menu/PlayerMenuScreen
+c	net/minecraft/C_21vwvwsck	net/minecraft/world/biome/source/layer/RiverLayer	net/minecraft/world/biome/layer/RiverLayer
+c	net/minecraft/C_21zmusubh	net/minecraft/text/TextUtils	net/minecraft/text/StringUtils
+c	net/minecraft/C_22hpyavnk	net/minecraft/client/gui/DrawableHelper	net/minecraft/client/gui/GuiElement
+	f	Lnet/minecraft/C_21ejqkzye;	f_18czwewil	GUI_ICONS_TEXTURE	ICONS
+		c	The texture of various icons and widgets used for rendering ingame indicators.	
+	f	Lnet/minecraft/C_21ejqkzye;	f_33zszmfxu	STATS_ICON_TEXTURE	STATS_ICONS
+		c	The texture of icons used in the stats screen.	
+	f	F	f_47gypeicv	zOffset	drawOffset
+	f	Lnet/minecraft/C_21ejqkzye;	f_96wxnxpnt	BACKGROUND_TEXTURE	OPTIONS_BACKGROUND
+		c	The texture used by options for background.	
+	m	(IIFFIIFF)V	m_11gnrdixk	drawTexture	drawTexture
+		p	6		uOffset	scaleU
+		p	7		vOffset	scaleV
+	m	(Lnet/minecraft/C_18xnybcao;Ljava/lang/String;III)V	m_67urqhths	drawWithShadow	drawString
+c	net/minecraft/C_23trrjfpw	net/minecraft/client/gui/screen/ingame/BrewingStandScreen	net/minecraft/client/gui/screen/game/inventory/menu/BrewingStandMenuScreen
+	f	Lnet/minecraft/C_21ejqkzye;	f_34xljhgvl	TEXTURE	BREWING_STAND_TEXTURE
+	f	Lnet/minecraft/C_79qxbiqkg;	f_49daieylz	parentBlockEntity	brewingStand
+	m	(Lnet/minecraft/C_60veucqkp;Lnet/minecraft/C_79qxbiqkg;)V	<init>	<init>	<init>
+		p	1		inventory	playerInventory
+		p	2		parentBlockEntity	brewingStand
+c	net/minecraft/C_24qqnyndz	net/minecraft/world/village/TradeOffers	net/minecraft/world/village/trade/TradeOffers
+c	net/minecraft/C_24yuujktq	net/minecraft/client/gui/screen/ProgressScreen	net/minecraft/client/gui/screen/ProgressScreen
+	f	Ljava/lang/String;	f_19grvtllk	task	stage
+c	net/minecraft/C_25lpaumxq	com/mojang/blaze3d/pipeline/RenderTarget	com/mojang/blaze3d/pipeline/RenderTarget
+	m	(II)V	m_06amoldtx	blitToScreen	draw
+c	net/minecraft/C_27fbjyjsk	net/minecraft/world/gen/FlatWorldGenerator	net/minecraft/world/gen/FlatWorldGenerator
+	m	(Ljava/lang/String;)Lnet/minecraft/C_27fbjyjsk;	m_12rjxifph	of	create
+	m	()Lnet/minecraft/C_27fbjyjsk;	m_48evhlqqc	ofDefault	create
+c	net/minecraft/C_28bcmpcnt	net/minecraft/network/packet/s2c/play/OpenSignEditorS2CPacket	net/minecraft/network/packet/s2c/play/OpenEditorS2CPacket
+c	net/minecraft/C_28gsjnicj	net/minecraft/client/gui/screen/ingame/SurvivalInventoryScreen	net/minecraft/client/gui/screen/game/inventory/menu/SurvivalPlayerMenuScreen
+	m	(IIIFFLnet/minecraft/C_92gesnerq;)V	m_91owtbdny	renderEntity	renderPlayerModel
+c	net/minecraft/C_28yossnov	net/minecraft/client/gui/screen/ServerDisconnectedScreen	net/minecraft/client/gui/screen/menu/ServerDisconnectedScreen
+	f	Ljava/lang/String;	f_31vpebqhx	serverName	title
+	f	Ljava/util/List;	f_57xzrgpzd	serverList	reasonWrapped
+	m	(Lnet/minecraft/C_88hmxeeuo;Ljava/lang/String;Lnet/minecraft/C_10utpymwr;)V	<init>	<init>	<init>
+		p	2		name	title
+c	net/minecraft/C_29hsltoqw	net/minecraft/world/biome/source/layer/VoronoiZoomLayer	net/minecraft/world/biome/layer/VoronoiZoomLayer
+c	net/minecraft/C_29wvrnpbz	net/minecraft/entity/living/player/PlayerEntity	net/minecraft/entity/living/player/PlayerEntity
+	m	(Lnet/minecraft/C_41cvuyzpf;)V	m_06tjszgfl	openSignEditor	openEditor
+		c		Open a sign or command block editor.
+		p	1		sign	blockEntity
+	m	(Lnet/minecraft/C_00xenyapa;Ljava/lang/String;)V	m_07foakbfw	openTradingScreen	openTraderMenu
+	m	(Lnet/minecraft/C_20cfssaww;)V	m_12hmjvgfm	openFurnaceScreen	openFurnaceMenu
+	m	(IIILjava/lang/String;)V	m_23pbkheri	openEnchantingScreen	openEnchantingTableMenu
+	m	(Lnet/minecraft/C_90htpsreg;Lnet/minecraft/C_09ksqivce;)V	m_26yqzludj	openHorseScreen	openHorseMenu
+	m	(III)V	m_29lzpiwqq	openAnvilScreen	openAnvilMenu
+	m	(Lnet/minecraft/C_71woggfwf;)V	m_37zsvaowh	openHopperScreen	openHopperMenu
+	m	(Lnet/minecraft/C_08nxnlmcy;)V	m_43zcrswnf	openDispenserScreen	openDispenserMenu
+	m	(Lnet/minecraft/C_09ksqivce;)V	m_58noqbzuf	openInventory	openChestMenu
+	m	(III)V	m_69ssyrqsz	openCraftingScreen	openCraftingTableMenu
+	m	(Lnet/minecraft/C_08ypzdlqo;)V	m_78rvpjujm	openBeaconScreen	openBeaconMenu
+	m	(Lnet/minecraft/C_47jefxppq;)V	m_85gpgrvfw	openCommandBlockMinecartScreen	openMinecartCommandBlockEditor
+	m	(Lnet/minecraft/C_17gpkxmuh;)V	m_85oafpwfx	openEditBookScreen	openBookEditor
+	m	(Lnet/minecraft/C_79qxbiqkg;)V	m_86djleisf	openBrewingStandScreen	openBrewingStandMenu
+c	net/minecraft/C_29wvrnpbz$C_07jsmbsxs	net/minecraft/entity/living/player/PlayerEntity$ChatVisibility	net/minecraft/entity/living/player/PlayerEntity$ChatVisibility
+	f	Ljava/lang/String;	f_18voxtjlm	name	id
+	f	I	f_38oijppti	id	index
+	m	(I)Lnet/minecraft/C_29wvrnpbz$C_07jsmbsxs;	m_05mlzagcl	byId	byIndex
+		p	0		id	index
+	m	()Ljava/lang/String;	m_36joaojnt	getName	getId
+	m	()I	m_54mrbbqwd	getId	getIndex
+c	net/minecraft/C_29wvrnpbz$C_63vebzate	net/minecraft/entity/living/player/PlayerEntity$SleepStatus	net/minecraft/entity/living/player/PlayerEntity$SleepAllowedStatus
+c	net/minecraft/C_30exlclrq	net/minecraft/client/gui/screen/ChatScreen	net/minecraft/client/gui/screen/game/ChatScreen
+c	net/minecraft/C_32dfoxhcn	net/minecraft/client/gui/screen/StatsScreen	net/minecraft/client/gui/screen/menu/StatsScreen
+	m	(IILnet/minecraft/C_85numzecy;)V	m_20ecvruhd	renderStatItem	renderIcon
+		p	3		item	icon
+	m	()V	m_48vyrtwfa	createButtons	addButtons
+	m	(IIII)V	m_77aczanve	renderIcon	renderIconBackground
+	m	(II)V	m_90lxpjyko	renderIcon	renderIconBackground
+c	net/minecraft/C_32dfoxhcn$C_09bnbsulw	net/minecraft/client/gui/screen/StatsScreen$ItemStatsListWidget	net/minecraft/client/gui/screen/menu/StatsScreen$ItemStatsList
+c	net/minecraft/C_32dfoxhcn$C_09bnbsulw$1	net/minecraft/client/gui/screen/StatsScreen$ItemStatsListWidget$1	net/minecraft/client/gui/screen/menu/StatsScreen$ItemStatsList$1
+c	net/minecraft/C_32dfoxhcn$C_21qpsflrg	net/minecraft/client/gui/screen/StatsScreen$EntityStatsListWidget	net/minecraft/client/gui/screen/menu/StatsScreen$EntityStatsList
+c	net/minecraft/C_32dfoxhcn$C_63ymvvwfx	net/minecraft/client/gui/screen/StatsScreen$AbstractStatsListWidget	net/minecraft/client/gui/screen/menu/StatsScreen$SortedStatsList
+	f	I	f_31ytcqkjv	clickedIconId	clickedIcon
+	m	(I)V	m_40vqfvacr	click	sortByColumn
+		p	1		buttonDownTime	column
+	m	(Lnet/minecraft/C_60tmecsby;II)V	m_75fknhxgk	renderStat	renderColumnHeader
+c	net/minecraft/C_32dfoxhcn$C_84tbfooqw	net/minecraft/client/gui/screen/StatsScreen$GeneralStatsListWidget	net/minecraft/client/gui/screen/menu/StatsScreen$GeneralStatsList
+c	net/minecraft/C_32dfoxhcn$C_99nuuueru	net/minecraft/client/gui/screen/StatsScreen$StatsListWidget	net/minecraft/client/gui/screen/menu/StatsScreen$StatsList
+c	net/minecraft/C_32dfoxhcn$C_99nuuueru$1	net/minecraft/client/gui/screen/StatsScreen$StatsListWidget$1	net/minecraft/client/gui/screen/menu/StatsScreen$StatsList$1
+c	net/minecraft/C_35bsqvesa	net/minecraft/client/render/GameRenderer	net/minecraft/client/render/GameRenderer
+	m	()V	m_51fqniyvo	setupHudMatrixMode	updateOrthoMatrix
+	m	(II)V	m_51hxipwqo	onResolutionChanged	resize
+c	net/minecraft/C_35fmvwcid	net/minecraft/client/render/entity/EntityRenderer	net/minecraft/client/render/entity/EntityRenderer
+	m	()Lnet/minecraft/C_72mqkrkao;	m_65mimydiu	getEntityRenderDispatcherWorld	getWorld
+c	net/minecraft/C_35pixkgdf	net/minecraft/client/gui/screen/resourcepack/AbstractResourcePackEntryWidget	net/minecraft/client/gui/widget/resource/pack/AbstractResourcePackEntry
+c	net/minecraft/C_35qtrweze	net/minecraft/client/gui/screen/ingame/VillagerScreen	net/minecraft/client/gui/screen/game/inventory/menu/VillagerMenuScreen
+	f	Lnet/minecraft/C_35qtrweze$C_40xfsrcel;	f_21vsmbvos	buttonBack	prevButton
+	f	Ljava/lang/String;	f_26pqcsthw	screenName	name
+	f	I	f_41iwekqmr	currentPage	selectedPage
+	f	Lnet/minecraft/C_35qtrweze$C_40xfsrcel;	f_69raudltz	buttonForward	nextButton
+	f	Lnet/minecraft/C_21ejqkzye;	f_96trklusv	TEXTURE	VILLAGER_TEXTURE
+	m	(Lnet/minecraft/C_60veucqkp;Lnet/minecraft/C_00xenyapa;Lnet/minecraft/C_72mqkrkao;Ljava/lang/String;)V	<init>	<init>	<init>
+		p	1		inventory	playerInventory
+c	net/minecraft/C_35qtrweze$C_40xfsrcel	net/minecraft/client/gui/screen/ingame/VillagerScreen$PaginationButton	net/minecraft/client/gui/screen/game/inventory/menu/VillagerMenuScreen$PaginationButtonWidget
+	f	Z	f_17ofoqehh	hasHeight	forward
+	m	(IIIZ)V	<init>	<init>	<init>
+		p	4		hasHeight	forward
+c	net/minecraft/C_37isfmzwk	net/minecraft/client/gui/screen/DownloadingTerrainScreen	net/minecraft/client/gui/screen/menu/DownloadingTerrainScreen
+c	net/minecraft/C_38audomwf	net/minecraft/client/gui/screen/DisconnectedScreen	net/minecraft/client/gui/screen/menu/DisconnectedScreen
+	f	Ljava/util/List;	f_47zucnnbh	textLines	reasonWrapped
+c	net/minecraft/C_39qrjytpp	net/minecraft/client/gui/screen/ingame/BookEditScreen	net/minecraft/client/gui/screen/game/BookScreen
+	f	Lnet/minecraft/C_96psewykf;	f_67hquriza	pageList	pages
+	f	Lnet/minecraft/C_39qrjytpp$C_58ktghrxo;	f_79wwpesub	previousPageButton	prevPageButton
+	f	Lnet/minecraft/C_29wvrnpbz;	f_83ejvlkjs	reader	player
+	m	(Lnet/minecraft/C_29wvrnpbz;Lnet/minecraft/C_17gpkxmuh;Z)V	<init>	<init>	<init>
+		p	1		reader	player
+	m	(CI)V	m_01kajzrjf	handleTitleKeyPresses	signBookKeyPressed
+	m	(CI)V	m_32mmlduyd	handleBookKeyPresses	writeBookKeyPressed
+	m	(Z)V	m_58bfjhlfe	finalizeBook	finalizeBook
+		p	1		signBook	sign
+	m	()Ljava/lang/String;	m_61vvxwshv	getCurrentPageContent	getCurrentPage
+	m	(Ljava/lang/String;)V	m_65ixrczfi	handleClipboardPaste	pasteClipboard
+	m	(Ljava/lang/String;)V	m_72aykgrql	setPageContent	setCurrentPage
+		p	1		pageContent	page
+	m	()V	m_82rkmyluk	appendNewPage	addPage
+c	net/minecraft/C_39qrjytpp$C_58ktghrxo	net/minecraft/client/gui/screen/ingame/BookEditScreen$BookButton	net/minecraft/client/gui/screen/game/BookScreen$PaginationButtonWidget
+	f	Z	f_64wfdzqvw	clickable	forward
+c	net/minecraft/C_40acvrkno	net/minecraft/client/gui/screen/ingame/CraftingTableScreen	net/minecraft/client/gui/screen/game/inventory/menu/CraftingTableMenuScreen
+	f	Lnet/minecraft/C_21ejqkzye;	f_32purohbs	TEXTURE	CRAFTING_TABLE_TEXTURE
+c	net/minecraft/C_41vewfuax	net/minecraft/client/gui/widget/LanServerEntry	net/minecraft/client/gui/widget/menu/LocalServerEntry
+c	net/minecraft/C_42aohkzvc	net/minecraft/client/gui/screen/ingame/AnvilScreen	net/minecraft/client/gui/screen/game/inventory/menu/AnvilMenuScreen
+	f	Lnet/minecraft/C_34myfqxwm;	f_10orwopxl	renameTextField	nameItemField
+	f	Lnet/minecraft/C_60veucqkp;	f_36ouruwzd	inventory	playerInventory
+	f	Lnet/minecraft/C_09kftudub;	f_86hjgpcfd	anvilScreenHandler	anvilMenu
+	f	Lnet/minecraft/C_21ejqkzye;	f_99bdygtiz	TEXTURE	ANVIL_TEXTURE
+	m	(Lnet/minecraft/C_60veucqkp;Lnet/minecraft/C_72mqkrkao;III)V	<init>	<init>	<init>
+		p	1		inventory	playerInventory
+	m	()V	m_38ijqulgi	sendRenameUpdates	nameItem
+c	net/minecraft/C_42kxnukcb	net/minecraft/world/biome/source/layer/BiomeInitLayer	net/minecraft/world/biome/layer/BiomeInitLayer
+c	net/minecraft/C_42qxozumc	net/minecraft/client/gui/screen/resourcepack/AvailableResourcePackListWidget	net/minecraft/client/gui/widget/resource/pack/AvailableResourcePackListWidget
+c	net/minecraft/C_43wpcuyqo	net/minecraft/client/gui/screen/ingame/OptionsScreen	net/minecraft/client/gui/screen/menu/options/OptionsScreen
+	f	[Lnet/minecraft/C_14rplppdz$C_70jjgyyjr;	f_58cyodnej	RENDER_OPTIONS	OPTIONS
+c	net/minecraft/C_43wpcuyqo$1	net/minecraft/client/gui/screen/ingame/OptionsScreen$1	net/minecraft/client/gui/screen/menu/options/OptionsScreen$1
+c	net/minecraft/C_43zdapnyk	net/minecraft/client/gui/screen/TitleScreen	net/minecraft/client/gui/screen/menu/TitleScreen
+	f	Z	f_13obsetgm	mcoEnabled	isRealmsAvailable
+	f	Lnet/minecraft/C_64dnohkgi;	f_15zojntxo	buttonResetDemo	resetDemoButton
+	f	Lnet/minecraft/C_51ecoakpo;	f_16wcvedfv	defualtBackgroundImage	defaultBackgroundImage
+	f	Ljava/lang/String;	f_24balrhsk	warningInfo	outdatedGpuWarning1
+	f	Ljava/util/concurrent/atomic/AtomicInteger;	f_44kicpvqd	mcoAvailabilityCheckerCount	threadIdCounter
+	f	Ljava/lang/String;	f_88zxwcajs	warningInfoLink	outdatedGpuWarning2
+	f	Ljava/lang/String;	f_96dyzntwm	outdatedGpuWarning	outdatedGpuWarning0
+	f	[Lnet/minecraft/C_21ejqkzye;	f_99lqnkthe	PANORAMA_ARRAY	PANORAMA
+	m	()V	m_15fezesrd	checkIsRealmsAvailable	checkRealmsAvailability
+	m	(II)V	m_18gmnqaxv	initWidgetsNormal	addButtons
+	m	(II)V	m_40jtkffwm	initWidgetsDemo	addDemoButtons
+		p	1		y	height
+		p	2		spacingY	offset
+c	net/minecraft/C_43zdapnyk$1	net/minecraft/client/gui/screen/TitleScreen$1	net/minecraft/client/gui/screen/menu/TitleScreen$1
+c	net/minecraft/C_45lpmzlqf	net/minecraft/client/gui/screen/CustomizeFlatLevelScreen	net/minecraft/client/gui/screen/menu/CreateFlatWorldScreen
+	f	Lnet/minecraft/C_27fbjyjsk;	f_22hycdrse	helper	generator
+	f	Ljava/lang/String;	f_60kfzanes	heightText	layerHeight
+	f	Ljava/lang/String;	f_70iouwrlg	tileText	layerBlock
+	f	Lnet/minecraft/C_45lpmzlqf$C_63jankljs;	f_77kbgjrwl	customizeFlatLevelListWidget	layers
+	m	(Lnet/minecraft/C_12uvxabxw;Ljava/lang/String;)V	<init>	<init>	<init>
+		p	2		config	preset
+	m	(Ljava/lang/String;)V	m_04zpdmwxm	setConfigString	setPreset
+		p	1		config	preset
+	m	()Ljava/lang/String;	m_05vgyncda	getConfigString	getPreset
+c	net/minecraft/C_45lpmzlqf$C_63jankljs	net/minecraft/client/gui/screen/CustomizeFlatLevelScreen$CustomizeFlatLevelListWidget	net/minecraft/client/gui/screen/menu/CreateFlatWorldScreen$FlatWorldLayerList
+c	net/minecraft/C_45phgaqnd	net/minecraft/world/biome/source/layer/ShoreLayer	net/minecraft/world/biome/layer/ShoreLayer
+c	net/minecraft/C_45rgjysvs	net/minecraft/client/gui/ClientTradeScreenInventory	net/minecraft/client/world/village/trade/ClientTrader
+	f	Lnet/minecraft/C_24qqnyndz;	f_07hxhaeew	tradeOfferList	offers
+	f	Lnet/minecraft/C_60kzguchi;	f_25vsqgwbk	tradeInventory	traderInventory
+c	net/minecraft/C_46eddxlid	net/minecraft/world/biome/source/layer/RiverInitLayer	net/minecraft/world/biome/layer/RiverInitLayer
+c	net/minecraft/C_47bnozvpa	net/minecraft/world/biome/source/layer/AddSunflowerPlainsLayer	net/minecraft/world/biome/layer/AddSunflowerPlainsLayer
+c	net/minecraft/C_47mdtjbnq	net/minecraft/client/gui/screen/DirectConnectScreen	net/minecraft/client/gui/screen/menu/DirectConnectScreen
+	f	Lnet/minecraft/C_34myfqxwm;	f_55yrjwjdf	serverField	addressField
+c	net/minecraft/C_47naxowbj	net/minecraft/world/biome/source/layer/IslandLayer	net/minecraft/world/biome/layer/IslandLayer
+c	net/minecraft/C_50mjmcjrs	net/minecraft/client/gui/screen/OpenToLanScreen	net/minecraft/client/gui/screen/menu/OpenToLanScreen
+	m	()V	m_89qwvvckp	updateButtonTexts	updateButtons
+c	net/minecraft/C_51mtuleet	net/minecraft/client/resource/pack/IServerResourcePack	net/minecraft/client/resource/pack/ServerResourcePack
+c	net/minecraft/C_52gritcgo	net/minecraft/client/gui/screen/VideoOptionsScreen	net/minecraft/client/gui/screen/menu/options/VideoOptionsScreen
+	f	Lnet/minecraft/C_10otvhgjr;	f_95npipads	listWidget	optionsList
+c	net/minecraft/C_54ddplxiu	net/minecraft/world/biome/source/layer/SmoothLayer	net/minecraft/world/biome/layer/SmoothLayer
+c	net/minecraft/C_55vundcex	net/minecraft/client/gui/widget/OptionSliderWidget	net/minecraft/client/gui/widget/menu/options/OptionSliderWidget
+c	net/minecraft/C_56fdemswm	net/minecraft/world/biome/source/layer/RemoveTooMuchOceanLayer	net/minecraft/world/biome/layer/RemoveTooMuchOceanLayer
+c	net/minecraft/C_56qjwrldm	net/minecraft/world/biome/source/layer/ZoomLayer	net/minecraft/world/biome/layer/ZoomLayer
+c	net/minecraft/C_56qlmuexr	net/minecraft/util/JsonSet	net/minecraft/util/ForwardingJsonSet
+	f	Ljava/util/Set;	f_79egyckko	set	delegate
+c	net/minecraft/C_59qvmogpv	net/minecraft/client/gui/screen/ingame/HopperScreen	net/minecraft/client/gui/screen/game/inventory/menu/HopperMenuScreen
+	f	Lnet/minecraft/C_21ejqkzye;	f_33bobnitx	TEXTURE	HOPPER_TEXTURE
+c	net/minecraft/C_59uyvnpol	net/minecraft/world/biome/source/layer/BiomeTransitionLayer	net/minecraft/world/biome/layer/BiomeTransitionLayer
+c	net/minecraft/C_60kzguchi	net/minecraft/world/village/TraderInventory	net/minecraft/world/village/trade/TraderInventory
+c	net/minecraft/C_60veucqkp	net/minecraft/entity/player/PlayerInventory	net/minecraft/entity/player/PlayerInventory
+	f	[Lnet/minecraft/C_17gpkxmuh;	f_38wfjrluz	inventorySlots	slots
+c	net/minecraft/C_62pnzwpda	net/minecraft/client/gui/screen/multiplayer/MultiplayerScreen	net/minecraft/client/gui/screen/menu/MultiplayerScreen
+	f	Ljava/lang/String;	f_38zwlrvcq	tooltipText	tooltip
+	f	Z	f_53nvrqlsy	deleteServerConfirmationDialogOpen	deleteServerDialogOpen
+	m	()Lnet/minecraft/C_04fjpauen;	m_21imuqqxe	getServerListPinger	getServerPinger
+	m	(Lnet/minecraft/C_23peprkct;)V	m_62ckmbbbe	connect	connect
+		p	1		entry	server
+	m	()V	m_71wfefakw	addButtons	addButtons
+		c	Button Ids:\n    - 0: Cancel Button\n    - 1: Select Server Button\n    - 2: Delete Server Button\n    - 3: Add Server button\n    - 4: Select Server Directly\n    - 5:\n    - 6:\n    - 7: Edit Server Button\n    - 8: Refresh Server Button	
+c	net/minecraft/C_63mapmuxj	net/minecraft/world/biome/source/layer/RegionHillsLayer	net/minecraft/world/biome/layer/RegionHillsLayer
+c	net/minecraft/C_64vwveiti	net/minecraft/client/gui/hud/ChatHud	net/minecraft/client/gui/ChatGui
+	f	Z	f_07jvbhcjo	hasUnreadNewMessages	hasNewMessagesSinceScroll
+	f	Ljava/util/List;	f_11izwipoh	drawnLines	trimmedMessages
+		c		A list of chat messages, trimmed to fit on the screen. Note: this means long messages\nwill have multiple entries; one for each line.
+	f	Ljava/util/List;	f_49jgjpcjd	sentChats	recentMessages
+		c		Recent messages that show up on screen even if the chat is not in focus.
+	f	Ljava/util/List;	f_69okxygsu	chatLines	messages
+	f	I	f_70ekekhqe	scrolledLines	scroll
+	m	(Ljava/lang/String;)Ljava/lang/String;	m_07aehjidk	formatText	prepareMessage
+		p	1		text	message
+	m	(II)Lnet/minecraft/C_10utpymwr;	m_13boqxmil	getTextAt	getMessageAt
+	m	(Lnet/minecraft/C_10utpymwr;IIZ)V	m_16jpnfksx	addMessage	addMessage
+		p	3		ticks	time
+	m	()Ljava/util/List;	m_47lbicqzq	getMessageHistory	getRecentMessages
+	m	(Ljava/lang/String;)V	m_59qergjcl	addToMessageHistory	addRecentMessage
+	m	(I)V	m_66fqanvmj	removeMessage	removeMessage
+		p	1		messageId	id
+c	net/minecraft/C_68fggeuii	net/minecraft/client/gui/StatsListener	net/minecraft/client/gui/screen/menu/StatsListener
+c	net/minecraft/C_68rdiambu	net/minecraft/world/biome/source/layer/AddEdgeLayer	net/minecraft/world/biome/layer/AddEdgeLayer
+c	net/minecraft/C_68rdiambu$1	net/minecraft/world/biome/source/layer/AddEdgeLayer$1	net/minecraft/world/biome/layer/AddEdgeLayer$1
+c	net/minecraft/C_68rdiambu$C_30cbdzprh	net/minecraft/world/biome/source/layer/AddEdgeLayer$Mode	net/minecraft/world/biome/layer/AddEdgeLayer$Mode
+c	net/minecraft/C_68zpcxtnc	net/minecraft/network/packet/c2s/play/CreativeMenuClickSlotC2SPacket	net/minecraft/network/packet/c2s/play/CreativeMenuSlotC2SPacket
+	f	I	f_56yesfaeh	id	slotId
+	m	(ILnet/minecraft/C_17gpkxmuh;)V	<init>	<init>	<init>
+		p	1		id	slotId
+	m	()I	m_49iuzljym	getId	getSlotId
+c	net/minecraft/C_69givgdsq	net/minecraft/world/biome/source/layer/AddIslandLayer	net/minecraft/world/biome/layer/AddIslandLayer
+c	net/minecraft/C_70ogpwxnb	net/minecraft/client/gui/hud/InGameHud	net/minecraft/client/gui/GameGui
+	f	I	f_04emnlexz	overlayRemaining	overlayMessageTimer
+	f	Lnet/minecraft/C_03fvnjcja;	f_04zfzmyqs	minecraftClient	client
+	f	Lnet/minecraft/C_17gpkxmuh;	f_42ijyhbhx	heldItem	mainHandStack
+	f	Lnet/minecraft/C_64vwveiti;	f_57plhqjfh	chatHud	chat
+	f	F	f_68barxbgn	brightnessAtEyes	vignetteBrightness
+	f	Z	f_70eyivgbd	overlayTinted	overlayMessageTinted
+	f	I	f_96kqzpxvs	heldItemTooltipFade	mainHandMessageTimer
+	m	()Lnet/minecraft/C_64vwveiti;	m_00pirqahm	getChatHud	getChat
+	m	(Ljava/lang/String;)V	m_54upnsvcb	setRecordPlayingOverlay	setRecordOverlayMessage
+		p	1		playerName	record
+	m	(Ljava/lang/String;Z)V	m_57nvpqfqh	setOverlayMessage	setOverlayMessage
+		p	1		overlayMessage	message
+	m	(FII)V	m_68tbecwxc	renderNauseaOverlay	renderPortalOverlay
+	m	(IIIF)V	m_77ijdjonj	renderItemSlot	renderInventorySlot
+	m	(Lnet/minecraft/C_23gjwmitm;IILnet/minecraft/C_18xnybcao;)V	m_85ckirupv	renderScoreboardObjective	renderSidebarObjective
+c	net/minecraft/C_71yazgdlb	net/minecraft/world/biome/source/layer/RiverMixLayer	net/minecraft/world/biome/layer/RiverMixLayer
+c	net/minecraft/C_73bjbxuov	net/minecraft/client/gui/screen/multiplayer/MultiplayerServerListWidget	net/minecraft/client/gui/widget/menu/ServerListWidget
+	f	Lnet/minecraft/C_10otvhgjr$C_49savbdqw;	f_02lxfqnkn	scanningWidget	lanScanEntry
+		c	The widget you see that is scanning for LAN servers when there are no servers in the server list.	The server list entry that is scanning for servers on the local network.
+	f	Ljava/util/List;	f_04whakecd	servers	remoteServers
+		c	External servers (i.e. servers you access with an ip)	
+	f	I	f_06rroekrm	currentServerIndex	selectedServer
+		c	The index of the server that is currently selected.	
+	f	Ljava/util/List;	f_71obgmhyt	lanServers	localServers
+		c	LAN servers or local servers (i.e. servers on your local network)	
+	m	(Lnet/minecraft/C_62pnzwpda;Lnet/minecraft/C_03fvnjcja;IIIII)V	<init>	<init>	<init>
+		p	3		x	width
+		p	4		y	height
+		p	5		yStart	top
+		p	6		yEnd	bottom
+	m	(Lnet/minecraft/C_07cyesnjq;)V	m_22qbklduu	setServers	setRemoteServers
+	m	(Ljava/util/List;)V	m_48rrgazgh	setLanServers	setLocalServers
+		p	1		lanServers	servers
+	m	()I	m_63vvcntvh	getCurrentServerIndex	getSelectedServer
+	m	(I)V	m_92cbdvxcp	setCurrentServerIndex	setSelectedServer
+c	net/minecraft/C_73cvnbcja	net/minecraft/world/biome/source/BiomeCache	net/minecraft/world/biome/BiomeCache
+c	net/minecraft/C_73cvnbcja$C_55vkdylyj	net/minecraft/world/biome/source/BiomeCache$Entry	net/minecraft/world/biome/BiomeCache$Entry
+c	net/minecraft/C_73jpfvhnd	net/minecraft/client/gui/screen/PresetsScreen	net/minecraft/client/gui/screen/menu/FlatWorldPresetsScreen
+	f	Ljava/lang/String;	f_33wtkvgjd	titleText	title
+	f	Ljava/lang/String;	f_52esqlhej	shareText	share
+	f	Lnet/minecraft/C_73jpfvhnd$C_31joblpaq;	f_67qmqyqey	listWidget	presets
+	f	Lnet/minecraft/C_34myfqxwm;	f_92xfoyszj	customPresetField	presetField
+	f	Ljava/lang/String;	f_95uskgmzp	listText	list
+	m	()Z	m_37obsrqly	isPresetSelected	isPresetSelected
+		c	Returns true if any preset is selected	
+	m	()V	m_83xvlqcgb	activateSelectButtonIfPresetSelected	setActive
+	m	(Ljava/lang/String;Lnet/minecraft/C_85numzecy;Lnet/minecraft/C_33fapnocc;Ljava/util/List;[Lnet/minecraft/C_97jvsjbsk;)V	m_88zrivqcw	addFlatWorldPreset	addPreset
+c	net/minecraft/C_73jpfvhnd$C_31joblpaq	net/minecraft/client/gui/screen/PresetsScreen$PresetsListWidget	net/minecraft/client/gui/screen/menu/FlatWorldPresetsScreen$PresetsListWidget
+	f	I	f_44kbjwxjc	selectedEntryIndex	selectedPreset
+	m	(IIII)V	m_23newkrfs	render	renderIconBackground
+	m	(IILnet/minecraft/C_85numzecy;)V	m_69eecgeug	renderEntry	renderIcon
+		p	3		item	icon
+	m	(II)V	m_96nsevgtr	render	renderIconBackground
+c	net/minecraft/C_73jpfvhnd$C_73tbrjaft	net/minecraft/client/gui/screen/PresetsScreen$FlatWorldPreset	net/minecraft/client/gui/screen/menu/FlatWorldPresetsScreen$PresetEntry
+	f	Lnet/minecraft/C_85numzecy;	f_05ueapcqw	presetItem	icon
+	f	Ljava/lang/String;	f_20xgzqghh	presetLayers	preset
+	f	Ljava/lang/String;	f_49jnaxewu	presetName	name
+	m	(Lnet/minecraft/C_85numzecy;Ljava/lang/String;Ljava/lang/String;)V	<init>	<init>	<init>
+		p	1		presetItem	icon
+		p	2		presetName	name
+		p	3		presetLayers	preset
+c	net/minecraft/C_73kwpbzdx	net/minecraft/world/biome/source/layer/FuzzyZoomLayer	net/minecraft/world/biome/layer/FuzzyZoomLayer
+c	net/minecraft/C_75autgcez	net/minecraft/client/ClientPlayerInteractionManager	net/minecraft/client/ClientPlayerInteractionManager
+	m	(IIIILnet/minecraft/C_29wvrnpbz;)Lnet/minecraft/C_17gpkxmuh;	m_12neavflp	clickSlot	clickSlot
+		p	1		syncId	menuId
+		p	4		actionType	action
+	m	(Lnet/minecraft/C_17gpkxmuh;I)V	m_30bckqxze	clickStackFromCreativeInventory	addStackToCreativeMenu
+	m	(Lnet/minecraft/C_17gpkxmuh;)V	m_64pngcygh	dropStackFromCreativeInventory	dropStackFromCreativeMenu
+	m	(Lnet/minecraft/C_72mqkrkao;Lnet/minecraft/C_38pnjdsfl;)Lnet/minecraft/C_38lnusdph;	m_69pkrcyvz	createPlayerEntity	createPlayerEntity
+		p	2		stateHandler	statHandler
+	m	(II)V	m_99qdgcmrc	clickGuiButton	clickMenuButton
+		c	Request a click on a graphical button	
+		p	1		syncId	menuId
+c	net/minecraft/C_75kfrqbwg	net/minecraft/client/gui/screen/world/EditWorldScreen	net/minecraft/client/gui/screen/menu/EditWorldScreen
+	f	Ljava/lang/String;	f_94ogmqydr	worldName	name
+	m	(Lnet/minecraft/C_88hmxeeuo;Ljava/lang/String;)V	<init>	<init>	<init>
+		p	2		worldName	name
+c	net/minecraft/C_75khtrzyv	net/minecraft/client/gui/screen/ingame/SignEditScreen	net/minecraft/client/gui/screen/game/SignScreen
+	f	I	f_18xgnwmyz	ticksSinceOpened	ticks
+	f	Lnet/minecraft/C_78cxfvxud;	f_69peemqye	parentBlockEntity	sign
+	f	I	f_85zjnrhcl	currentRow	selectedRow
+c	net/minecraft/C_76upjctfx	net/minecraft/world/biome/source/SingleBiomeSource	net/minecraft/world/biome/SingleBiomeSource
+c	net/minecraft/C_77cxqpybg	net/minecraft/client/gui/screen/ResourcePackScreen	net/minecraft/client/gui/screen/menu/options/ResourcePacksScreen
+	f	Ljava/util/List;	f_21ccqncvt	namedResourcePackEntryList	namedResourcePacks
+	f	Lnet/minecraft/C_14djicpls;	f_36unoqmtt	selectedList	selectedResourcePacks
+	f	Ljava/util/List;	f_79wjkipel	unnamedResourcePackEntryList	unnamedResourcePacks
+	f	Lnet/minecraft/C_42qxozumc;	f_83uuusyim	availableList	availableResourcePacks
+	m	(Lnet/minecraft/C_35pixkgdf;)Ljava/util/List;	m_37tglynva	getListContainingResourcePackEntry	getSiblings
+		p	1		abstractResourcePackEntryList	resourcePack
+	m	()Ljava/util/List;	m_54bztdsga	getUnnamedResourcePackEntryList	getUnnamedResourcePacks
+	m	(Lnet/minecraft/C_35pixkgdf;)Z	m_54qshcatw	isResourcePackEntryNamed	isResourcePackNamed
+		p	1		abstractResourcePackEntryWidget	resourcePack
+	m	()Ljava/util/List;	m_62rqnkwmz	getNamedResourcePackEntryList	getNamedResourcePacks
+c	net/minecraft/C_77klylapo	net/minecraft/entity/player/HungerManager	net/minecraft/entity/player/HungerManager
+	f	I	f_02ebpocvr	foodStarvationTimer	starvationTimer
+	f	I	f_16ermgyjp	prevFoodLevel	lastFoodLevel
+	f	F	f_73dfwcqsl	foodSaturationLevel	saturationLevel
+	m	(F)V	m_19tpkvwal	setSaturationLevelClient	setSaturationLevel
+	m	(Lnet/minecraft/C_85dsbsqaq;)V	m_37rwvhtvf	deserialize	readNbt
+	m	()Z	m_38hotkyrz	isNotFull	needsFood
+	m	(Lnet/minecraft/C_29wvrnpbz;)V	m_52dqrprpn	update	tick
+	m	(Lnet/minecraft/C_37tsstwdz;Lnet/minecraft/C_17gpkxmuh;)V	m_73nmrzyop	incrementStat	add
+		p	2		itemStack	stack
+	m	()I	m_81iwgtqmw	getPrevFoodLevel	getLastFoodLevel
+	m	(Lnet/minecraft/C_85dsbsqaq;)V	m_87mfzatzx	serialize	writeNbt
+c	net/minecraft/C_77nnzsohz	net/minecraft/client/gui/EnchantingPhrases	net/minecraft/client/gui/screen/game/inventory/menu/EnchantingPhrases
+	f	[Ljava/lang/String;	f_81mvfnbff	wordList	words
+	m	()Ljava/lang/String;	m_15ciriefs	getRandomString	getRandomPhrase
+c	net/minecraft/C_77vklvdbe	net/minecraft/util/ProgressListener	net/minecraft/util/ProgressListener
+	m	(Ljava/lang/String;)V	m_21ejlsyhq	updateProgress	progressStartNoAbort
+	m	()V	m_34zwxpgtn	setDone	done
+	m	(Ljava/lang/String;)V	m_35foolkgo	updateTitle	progressStart
+	m	(Ljava/lang/String;)V	m_57czchxyu	setTask	progressStage
+		p	1		task	stage
+	m	(I)V	m_57txgwycf	progressStagePercentage	progressStagePercentage
+		p	1		percentage	progress
+c	net/minecraft/C_77vuovaea	net/minecraft/client/gui/screen/ingame/BeaconScreen	net/minecraft/client/gui/screen/game/inventory/menu/BeaconMenuScreen
+	f	Lnet/minecraft/C_21ejqkzye;	f_38kxkkpxj	TEXTURE	BEACON_TEXTURE
+	f	Lnet/minecraft/C_08ypzdlqo;	f_73iihoopc	parentBlockEntity	beacon
+	m	(Lnet/minecraft/C_60veucqkp;Lnet/minecraft/C_08ypzdlqo;)V	<init>	<init>	<init>
+		p	1		inventory	playerInventory
+		p	2		parentBlockEntity	beacon
+c	net/minecraft/C_77vuovaea$C_23lliexem	net/minecraft/client/gui/screen/ingame/BeaconScreen$BeaconButtonWidget	net/minecraft/client/gui/screen/game/inventory/menu/BeaconMenuScreen$BeaconButtonWidget
+	c	The buttons are always square, 22x22	
+	f	Z	f_20fsdfkkx	disabled	disabled
+		c	If clicking the button is disabled (button becomes unclickable and grayed out).	
+	f	I	f_29untefbm	yPos	v
+		c	The vertical position relative to the beacon GUI at which the button starts	
+	f	I	f_34zkqieic	xPos	u
+		c	The horizontal position relative to the beacon GUI at which the button starts	
+	f	Lnet/minecraft/C_21ejqkzye;	f_64uqtuyiv	texture	texture
+		c	The texture of the button inside the beacon GUI	
+	m	(IIILnet/minecraft/C_21ejqkzye;II)V	<init>	<init>	<init>
+		p	5		xPos	u
+		p	6		yPos	v
+c	net/minecraft/C_77vuovaea$C_72iawbdqa	net/minecraft/client/gui/screen/ingame/BeaconScreen$CancelButtonWidget	net/minecraft/client/gui/screen/game/inventory/menu/BeaconMenuScreen$CancelButtonWidget
+c	net/minecraft/C_77vuovaea$C_88agaxvtj	net/minecraft/client/gui/screen/ingame/BeaconScreen$DoneButtonWidget	net/minecraft/client/gui/screen/game/inventory/menu/BeaconMenuScreen$DoneButtonWidget
+c	net/minecraft/C_77vuovaea$C_98raslmja	net/minecraft/client/gui/screen/ingame/BeaconScreen$EffectButtonWidget	net/minecraft/client/gui/screen/game/inventory/menu/BeaconMenuScreen$EffectButtonWidget
+c	net/minecraft/C_78cjrdzjv	net/minecraft/world/biome/source/EndBiomeDecorator	net/minecraft/world/biome/EndBiomeDecorator
+c	net/minecraft/C_79nzfdnmt	net/minecraft/client/gui/screen/resourcepack/ResourcePackListWidget	net/minecraft/client/gui/widget/resource/pack/ResourcePackListWidget
+	m	(Lnet/minecraft/C_03fvnjcja;IILjava/util/List;)V	<init>	<init>	<init>
+		p	4		widgets	entries
+c	net/minecraft/C_79pfufrxi	net/minecraft/client/render/Window	net/minecraft/client/render/Window
+	f	I	f_24dalvzxs	width	scaledWidthI
+	f	D	f_75qxnzpbq	scaledWidth	scaledWidthD
+	f	I	f_83btswhtz	height	scaledHeightI
+	f	D	f_92gusyhey	scaledHeight	scaledHeightD
+	m	()D	m_71agjzpoz	getScaledHeight	getScaledHeightD
+	m	()I	m_72bsxmbyk	getWidth	getScaledWidthI
+	m	()D	m_77jcnyngt	getScaledWidth	getScaledWidthD
+	m	()I	m_91vitoiel	getHeight	getScaledHeightI
+c	net/minecraft/C_79supmsmb	net/minecraft/client/gui/widget/ListWidget	net/minecraft/client/gui/widget/AbstractListWidget
+	f	I	f_07curekmo	yEnd	bottom
+	f	I	f_10pcciknr	xEnd	right
+	f	I	f_22lfshssk	upButtonId	scrollUpButton
+	f	I	f_29tjmlshj	xStart	left
+	f	I	f_33tgxifbe	yStart	top
+	f	Z	f_34inefhgi	renderSelectionBox	renderSelectionHighlight
+	f	I	f_47nswldzh	downButtonId	scrollDownButton
+	f	F	f_74brchnft	mouseYStart	lastScrollbarClickY
+	m	(Lnet/minecraft/C_03fvnjcja;IIIII)V	<init>	<init>	<init>
+		p	4		yStart	top
+		p	5		yEnd	bottom
+	m	()V	m_01rwmcbxe	capScrolling	validateScroll
+		c	prevents you from scrolling outs too far	
+	m	(Z)V	m_10mllxtcu	setRenderSelection	setRenderSelectionHighlight
+		p	1		renderSelection	renderSelectionHighlight
+	m	(IIIILnet/minecraft/C_00ouykomk;II)V	m_18pkhfyfn	renderEntry	renderEntry
+		p	4		rowHeight	entryHeight
+	m	(II)V	m_19ckbtnbl	render	headerClicked
+		p	1		x	mouseX
+		p	2		y	mouseY
+	m	()I	m_42raorrfv	getEntriesSize	getListSize
+	m	()I	m_43vnstqqy	getItemHeight	getEntryHeight
+	m	(I)V	m_44tlrtwkt	setXPos	setX
+	m	(II)V	m_53oxvxvaf	setScrollButtonIds	setScrollButtonIds
+		p	1		homeButtonId	scrollDownButton
+		p	2		endButtonId	scrollUpButton
+	m	(ZI)V	m_61mowzkob	setHeader	setRenderHeader
+	m	(I)V	m_61thegryu	scroll	scroll
+		c	scroll a given amount. A positive amount will scroll down and a negative one scroll up	
+	m	(IZII)V	m_67qtnjkyl	selectEntry	selectEntry
+		p	1		y	index
+		p	3		lastMouseX	mouseX
+		p	4		lastMouseY	mouseY
+	m	()I	m_79nehescb	getScrollbarPosition	getScrollbarX
+	m	(I)Z	m_89cfecfxw	isMouseInList	isHovered
+	m	()I	m_94pomsvae	getListSize	getHeight
+c	net/minecraft/C_79zvlxoen	net/minecraft/client/gui/screen/SleepingChatScreen	net/minecraft/client/gui/screen/game/SleepingChatScreen
+c	net/minecraft/C_80azrlpyl	net/minecraft/client/gui/screen/options/ChatOptionsScreen	net/minecraft/client/gui/screen/menu/options/ChatOptionsScreen
+c	net/minecraft/C_80dcurlre	net/minecraft/world/biome/source/BiomeSource	net/minecraft/world/biome/BiomeSource
+c	net/minecraft/C_80ihhqtni	net/minecraft/client/gui/screen/SnooperScreen	net/minecraft/client/gui/screen/menu/options/SnooperScreen
+	f	Lnet/minecraft/C_64dnohkgi;	f_03fwchbzb	snooperToggleButton	toggleSnooperButton
+c	net/minecraft/C_80ihhqtni$C_79ysmitae	net/minecraft/client/gui/screen/SnooperScreen$SnooperListWidget	net/minecraft/client/gui/screen/menu/options/SnooperScreen$SnooperList
+c	net/minecraft/C_80pmhecxf	net/minecraft/client/gui/screen/DemoScreen	net/minecraft/client/gui/screen/game/DemoScreen
+	f	Lnet/minecraft/C_21ejqkzye;	f_77lvsxrks	TEXTURE	BACKGROUND
+c	net/minecraft/C_80yifkbwh	net/minecraft/client/gui/widget/ServerListEntryWidget	net/minecraft/client/gui/widget/menu/RemoteServerEntry
+c	net/minecraft/C_80yifkbwh$1	net/minecraft/client/gui/widget/ServerListEntryWidget$1	net/minecraft/client/gui/widget/menu/RemoteServerEntry$1
+c	net/minecraft/C_81wfeutco	net/minecraft/client/gui/screen/AddServerScreen	net/minecraft/client/gui/screen/menu/AddServerScreen
+	f	Lnet/minecraft/C_34myfqxwm;	f_85bollcxj	serverNameField	nameField
+c	net/minecraft/C_82lbrqxro	net/minecraft/client/gui/screen/resourcepack/DefaultResourcePackEntryWidget	net/minecraft/client/gui/widget/resource/pack/DefaultResourcePackEntry
+c	net/minecraft/C_84zyccisg	net/minecraft/client/gui/screen/CommandBlockScreen	net/minecraft/client/gui/screen/game/CommandBlockScreen
+c	net/minecraft/C_85iwedsdy	net/minecraft/client/gui/screen/ingame/EnchantingTableScreen	net/minecraft/client/gui/screen/game/inventory/menu/EnchantingTableMenuScreen
+	f	Lnet/minecraft/C_21ejqkzye;	f_19swyozba	SCREEN_TEXTURE	ENCHANTING_TABLE_TEXTURE
+	f	Lnet/minecraft/C_25fkxnihd;	f_27xdekccr	enchantingScreenHandler	enchantingTableMenu
+	f	Lnet/minecraft/C_17gpkxmuh;	f_98qkdlxvf	itemStackToEnchant	stack
+	m	(Lnet/minecraft/C_60veucqkp;Lnet/minecraft/C_72mqkrkao;IIILjava/lang/String;)V	<init>	<init>	<init>
+		p	1		inventory	playerInventory
+	m	()V	m_74heleoso	tickEnchantingScreen	tickBook
+c	net/minecraft/C_85lypinqy	net/minecraft/world/biome/source/IntArrays	net/minecraft/world/biome/IntArrays
+c	net/minecraft/C_86gknxnvz	net/minecraft/client/gui/screen/options/ControlsOptionsScreen	net/minecraft/client/gui/screen/menu/options/ControlsOptionsScreen
+	f	[Lnet/minecraft/C_14rplppdz$C_70jjgyyjr;	f_07mgqlfxx	OPTIONS	CONTROLS_OPTIONS
+c	net/minecraft/C_86ldxydeq	net/minecraft/client/gui/CreativeInventoryListener	net/minecraft/client/gui/screen/game/inventory/menu/CreativeInventoryListener
+c	net/minecraft/C_87ssrefqi	net/minecraft/server/world/ServerWorld	net/minecraft/server/world/ServerWorld
+	m	(Lnet/minecraft/C_10yycgwfx;)V	m_76umngbkn	findSpawnPosition	initSpawnPoint
+c	net/minecraft/C_88hmxeeuo	net/minecraft/client/gui/screen/Screen	net/minecraft/client/gui/screen/Screen
+	f	Lnet/minecraft/C_64dnohkgi;	f_34uizsgbp	lastClickedButton	lastGuiButton
+	f	Z	f_52mxaiuqu	passEvents	passInputEvents
+		c		True if this screen passes keyboard and mouse events on to the client.
+	f	I	f_74ovswshq	lastButton	lastMouseButton
+	m	(Lnet/minecraft/C_03fvnjcja;II)V	m_01vzgeerw	init	resize
+	m	(Lnet/minecraft/C_64dnohkgi;)V	m_36uanugbz	buttonClicked	buttonClicked
+		p	1		buttonWidget	button
+	m	(I)V	m_57vnmffqt	drawBackgroundTexture	renderBackgroundTexture
+		p	1		offset	scroll
+	m	(I)V	m_58qtskxyo	renderBackground	renderBackground
+		p	1		offset	scroll
+	m	(III)V	m_84dskanyi	mouseClicked	mouseClicked
+		p	3		mouseButton	button
+	m	(ZI)V	m_94ktbcacn	confirmResult	confirmResult
+		p	1		acceptTextures	result
+		p	2		identifier	id
+c	net/minecraft/C_88rbsxznd	net/minecraft/block/Block	net/minecraft/block/Block
+	m	()Z	m_75pssdvdj	acceptsImmediateScheduledTicks	acceptsImmediateTicks
+		c	Returns whether this block accepts scheduled ticks when the world is executing them\nimmediately (i.e. without scheduling them first).	Returns whether this block accepts ticks when the world is executing them\nimmediately (i.e. without scheduling them first).
+c	net/minecraft/C_89bimrdxo	net/minecraft/client/gui/screen/ingame/DispenserScreen	net/minecraft/client/gui/screen/game/inventory/menu/DispenserMenuScreen
+	f	Lnet/minecraft/C_08nxnlmcy;	f_05ucbnddj	parentBlockEntity	dispenser
+	f	Lnet/minecraft/C_21ejqkzye;	f_40jzwgkfq	TEXTURE	DISPENSER_TEXTURE
+	m	(Lnet/minecraft/C_60veucqkp;Lnet/minecraft/C_08nxnlmcy;)V	<init>	<init>	<init>
+		p	1		inventory	playerInventory
+		p	2		parentBlockEntity	dispenser
+c	net/minecraft/C_89sumfqks	net/minecraft/client/gui/widget/LanguageButton	net/minecraft/client/gui/widget/menu/LanguageButtonWidget
+c	net/minecraft/C_89zcmfknj	net/minecraft/client/gui/screen/ingame/menu/InventoryMenuScreen	net/minecraft/client/gui/screen/game/inventory/menu/InventoryMenuScreen
+	f	Lnet/minecraft/C_77gckepdk;	f_01ncypjwn	screenHandler	menu
+c	net/minecraft/C_91ykqreyk	net/minecraft/client/gui/screen/ingame/FurnaceScreen	net/minecraft/client/gui/screen/game/inventory/menu/FurnaceMenuScreen
+	f	Lnet/minecraft/C_20cfssaww;	f_13mfcoabt	parentBlockEntity	furnace
+	f	Lnet/minecraft/C_21ejqkzye;	f_55tycpxui	TEXTURE	FURNACE_TEXTURE
+c	net/minecraft/C_92gesnerq	net/minecraft/entity/living/LivingEntity	net/minecraft/entity/living/LivingEntity
+	f	F	f_56bobhhgc	health	lastHealth
+c	net/minecraft/C_92ofklyey	net/minecraft/client/realms/gui/MoreInfoButton	net/minecraft/client/realms/gui/MoreInfoButtonWidget
+c	net/minecraft/C_93cjlqsxv	net/minecraft/client/gui/screen/ConfirmationScreen	net/minecraft/client/realms/gui/screen/ConfirmationScreen
+	f	Ljava/lang/String;	f_43ljlwfpr	confermNo	confirmNo
+	f	Ljava/lang/String;	f_80rjukhtw	conferYes	confirmYes
+c	net/minecraft/C_95nnbided	net/minecraft/client/resource/pack/ResourcePackLoader	net/minecraft/client/resource/pack/ResourcePackLoader
+	m	()Ljava/util/List;	m_11ogrpjlc	getAppliedResourcePacks	getApplied
+	m	()Ljava/util/List;	m_14ygtpazk	getResourcePackFiles	getAvailableFiles
+	m	(Ljava/lang/String;Ljava/io/File;)V	m_15njnwtil	downloadServerResourcePack	downloadServerResourcePack
+		p	2		file	dst
+	m	()V	m_18tnuzzwp	initDirectory	makeDir
+	m	(Ljava/util/List;)V	m_83pmqngpa	applyResourcePacks	apply
+	m	()V	m_87jepotxm	loadResourcePacks	load
+	m	()Ljava/util/List;	m_97trajork	getAvailableResourcePacks	getAvailable
+c	net/minecraft/C_95nnbided$C_03nnlcaxc	net/minecraft/client/resource/pack/ResourcePackLoader$Entry	net/minecraft/client/resource/pack/ResourcePackLoader$Entry
+	f	Lnet/minecraft/C_26gghvicq;	f_09nyvxinb	resourcePack	pack
+	m	()Lnet/minecraft/C_26gghvicq;	m_83isiutvb	getResourcePack	get
+c	net/minecraft/C_95tkslqzp	net/minecraft/client/gui/ConfirmationScreenType	net/minecraft/client/realms/gui/screen/ConfirmationType
+c	net/minecraft/C_97bjxdypr	net/minecraft/server/command/source/CommandSource	net/minecraft/server/command/source/CommandSource
+	m	()Lnet/minecraft/C_98mwkxlqj;	m_03thafdpm	getBlockPos	getSourceBlockPos
+	m	()Lnet/minecraft/C_72mqkrkao;	m_81adysqhx	getWorld	getSourceWorld
+c	net/minecraft/C_97wadvbio	net/minecraft/server/network/listener/ServerPlayPacketListener	net/minecraft/server/network/listener/ServerPlayPacketListener
+	m	(Lnet/minecraft/C_68zpcxtnc;)V	m_00igsadql	onCreativeMenuClickSlot	onCreativeMenuSlot
+c	net/minecraft/C_97wnxolsh	net/minecraft/client/gui/screen/ingame/ChestScreen	net/minecraft/client/gui/screen/game/inventory/menu/ChestMenuScreen
+	f	Lnet/minecraft/C_09ksqivce;	f_19gdzxgxs	bottom	chest
+	f	Lnet/minecraft/C_09ksqivce;	f_68lsvdhdy	top	playerInventory
+	f	Lnet/minecraft/C_21ejqkzye;	f_98ckiwkzt	TEXTURE	CHEST_TEXTURE
+	m	(Lnet/minecraft/C_09ksqivce;Lnet/minecraft/C_09ksqivce;)V	<init>	<init>	<init>
+		p	1		bottom	chest
+		p	2		top	playerInventory
+c	net/minecraft/C_98tnijqnf	net/minecraft/entity/Entity	net/minecraft/entity/Entity
+	m	()[Lnet/minecraft/C_17gpkxmuh;	m_79tybaucg	getArmorStacks	getEquipmentStacks
+	m	(ILnet/minecraft/C_17gpkxmuh;)V	m_83xfiwxhh	setInventoryStack	setEquipmentStack
+c	net/minecraft/C_98vvvmnmu	net/minecraft/client/gui/widget/OptionButtonWidget	net/minecraft/client/gui/widget/menu/options/OptionToggleWidget
+c	net/minecraft/C_99nfoiefh	net/minecraft/client/gui/screen/ConfirmChatLinkScreen	net/minecraft/client/gui/screen/game/ConfirmChatLinkScreen
+	f	Ljava/lang/String;	f_04qutnymm	warning	warningText
+	f	Ljava/lang/String;	f_96ucolruq	copy	copyText
+	m	()V	m_92ldybcre	noWarning	disableWarning

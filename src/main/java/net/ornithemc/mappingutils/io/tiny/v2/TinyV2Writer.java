@@ -60,7 +60,7 @@ public class TinyV2Writer extends TinyMappingsWriter<TinyV2Mappings> {
 		writer.write(c.get());
 		writer.newLine();
 
-		writeJavadocs(c);
+		writeJavadoc(c);
 
 		for (FieldMapping f : c.getFields()) {
 			writeField(f);
@@ -85,7 +85,7 @@ public class TinyV2Writer extends TinyMappingsWriter<TinyV2Mappings> {
 		writer.write(f.get());
 		writer.newLine();
 
-		writeJavadocs(f);
+		writeJavadoc(f);
 	}
 
 	private void writeMethod(MethodMapping m) throws Exception {
@@ -96,13 +96,11 @@ public class TinyV2Writer extends TinyMappingsWriter<TinyV2Mappings> {
 		writer.write(m.getDesc());
 		writer.write(TAB);
 		writer.write(m.src());
-		if (!m.src().equals("<init>") && !m.src().equals("<clinit>")) {
-			writer.write(TAB);
-			writer.write(m.get());
-		}
+		writer.write(TAB);
+		writer.write(m.get());
 		writer.newLine();
 
-		writeJavadocs(m);
+		writeJavadoc(m);
 
 		for (ParameterMapping p : m.getParameters()) {
 			writeParameter(p);
@@ -121,11 +119,11 @@ public class TinyV2Writer extends TinyMappingsWriter<TinyV2Mappings> {
 		writer.write(p.get());
 		writer.newLine();
 
-		writeJavadocs(p);
+		writeJavadoc(p);
 	}
 
-	private void writeJavadocs(Mapping<?> mapping) throws Exception {
-		String jav = mapping.getJavadocs();
+	private void writeJavadoc(Mapping<?> mapping) throws Exception {
+		String jav = mapping.getJavadoc();
 
 		if (jav != null && !jav.isEmpty()) {
 			indents++;

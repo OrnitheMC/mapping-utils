@@ -13,8 +13,8 @@ public class Mappings {
 
 	private final Map<String, ClassMapping> classMappings = new LinkedHashMap<>();
 
-	private MappingsNamespace srcNamespace = MappingsNamespace.NONE;
-	private MappingsNamespace dstNamespace = MappingsNamespace.NONE;
+	private MappingNamespace srcNamespace = MappingNamespace.NONE;
+	private MappingNamespace dstNamespace = MappingNamespace.NONE;
 
 	private Mappings inverted;
 
@@ -22,7 +22,7 @@ public class Mappings {
 
 	}
 
-	public Mappings(MappingsNamespace srcNamespace, MappingsNamespace dstNamespace) {
+	public Mappings(MappingNamespace srcNamespace, MappingNamespace dstNamespace) {
 		this();
 
 		this.srcNamespace = srcNamespace;
@@ -36,69 +36,84 @@ public class Mappings {
 		inverted.inverted = this;
 	}
 
-	public MappingsNamespace getSrcNamespace() {
+	public MappingNamespace getSrcNamespace() {
 		return srcNamespace;
 	}
 
-	public MappingsNamespace getDstNamespace() {
+	public MappingNamespace getDstNamespace() {
 		return dstNamespace;
 	}
 
-	public void setSrcNamespace(MappingsNamespace namespace) {
+	public void setSrcNamespace(MappingNamespace namespace) {
 		this.srcNamespace = Objects.requireNonNull(namespace);
 	}
 
-	public void setDstNamespace(MappingsNamespace namespace) {
+	public void setDstNamespace(MappingNamespace namespace) {
 		this.dstNamespace = Objects.requireNonNull(namespace);
 	}
 
-	public ClassMapping addClass(String src, String dst) {
-		return addClass(new ClassMapping(this, src, dst, null));
-	}
-
-	private ClassMapping addClass(ClassMapping c) {
-		int i = c.src.lastIndexOf('$');
+	private ClassMapping findParent(String name, boolean orThrowException) {
+		int i = name.lastIndexOf('$');
 
 		if (i < 0) {
-			return classMappings.compute(c.key(), (key, value) -> {
-				return checkReplace(value, c);
-			});
+			return null;
 		}
 
-		String parentName = c.src.substring(0, i);
+		String parentName = name.substring(0, i);
 		ClassMapping parent = getClass(parentName);
 
-		if (parent == null) {
-			throw new IllegalStateException("cannot find parent class mapping " + parentName + " of class mapping " + c);
+		if (parent == null && orThrowException) {
+			throw new IllegalStateException("unable to find parent class mapping " + parentName + " of class mapping " + name);
 		}
 
-		return parent.addClass(c);
+		return parent;
+	}
+
+	public ClassMapping getClass(String name) {
+		ClassMapping parent = findParent(name, false);
+		return parent == null ? getTopLevelClass(name) : parent.getClass(name);
 	}
 
 	public ClassMapping getTopLevelClass(String name) {
 		return classMappings.get(name);
 	}
 
-	public ClassMapping getClass(String name) {
-		int i = name.lastIndexOf('$');
-		
-		if (i < 0) {
-			return getTopLevelClass(name);
-		}
-		
-		String parentName = name.substring(0, i);
-		String simple = name.substring(i + 1);
-		ClassMapping parent = getClass(parentName);
-
-		if (parent == null) {
-			return null;
-		}
-
-		return parent.getClass(simple);
-	}
-
 	public Collection<ClassMapping> getTopLevelClasses() {
 		return classMappings.values();
+	}
+
+	public ClassMapping addClass(String src, String dst) {
+		return addClass(new ClassMapping(this, src, dst));
+	}
+
+	private ClassMapping addClass(ClassMapping c) {
+		ClassMapping parent = findParent(c.key(), true);
+
+		if (parent == null) {
+			return classMappings.compute(c.key(), (key, value) -> {
+				return checkReplace(value, c);
+			});
+		}
+
+		return parent.addClass(c);
+	}
+
+	public void removeClass(String name) {
+		ClassMapping c = getClass(name);
+
+		if (c != null) {
+			if (c.parent == null) {
+				classMappings.remove(name);
+			} else {
+				c.parent.removeClass(name);
+			}
+		}
+	}
+
+	public void validate() {
+		for (ClassMapping c : classMappings.values()) {
+			c.validate();
+		}
 	}
 
 	public Mappings invert() {
@@ -114,8 +129,10 @@ public class Mappings {
 	}
 
 	public Mappings copy() {
-		Mappings copy = new Mappings(srcNamespace, dstNamespace);
+		return copy(new Mappings(srcNamespace, dstNamespace));
+	}
 
+	protected Mappings copy(Mappings copy) {
 		for (ClassMapping c : classMappings.values()) {
 			copy.addClass(c.copy());
 		}
@@ -134,7 +151,7 @@ public class Mappings {
 
 		@SuppressWarnings("unchecked")
 		private Mapping(Mappings root, T inverted, String src, String dst) {
-			this.root = root;
+			this.root = Objects.requireNonNull(root);
 
 			if (inverted != null) {
 				this.inverted = inverted;
@@ -143,8 +160,6 @@ public class Mappings {
 
 			this.src = src;
 			this.dst = dst;
-
-			Objects.requireNonNull(this.root);
 		}
 
 		@Override
@@ -164,12 +179,20 @@ public class Mappings {
 			this.dst = dst;
 		}
 
-		public final String getJavadocs() {
+		public final void reset() {
+			set(src);
+		}
+
+		public final String getJavadoc() {
 			return jav;
 		}
 
-		public final void setJavadocs(String jav) {
+		public final void setJavadoc(String jav) {
 			this.jav = jav;
+		}
+
+		public boolean hasChildren() {
+			return false;
 		}
 
 		public final T invert() {
@@ -186,6 +209,10 @@ public class Mappings {
 			return src;
 		}
 
+		protected void validate() {
+
+		}
+
 		protected abstract T inverted();
 
 		protected abstract T copy();
@@ -199,40 +226,71 @@ public class Mappings {
 		private final Map<String, MethodMapping> methodMappings;
 
 		private ClassMapping parent;
-		private String simple;
 
-		private ClassMapping(Mappings root, String src, String dst, String simple) {
-			this(root, null, src, dst, simple);
+		private ClassMapping(Mappings root, String src, String dst) {
+			this(root, null, src, dst);
 		}
 
 		private ClassMapping(Mappings root, ClassMapping inverted, String src, String dst) {
-			this(root, inverted, src, dst, null);
-		}
-
-		private ClassMapping(Mappings root, ClassMapping inverted, String src, String dst, String simple) {
 			super(root, inverted, src, dst);
 
 			this.classMappings = new LinkedHashMap<>();
 			this.fieldMappings = new LinkedHashMap<>();
 			this.methodMappings = new LinkedHashMap<>();
+		}
 
-			this.simple = simple;
+		@Override
+		public boolean hasChildren() {
+			return !classMappings.isEmpty() || !fieldMappings.isEmpty() || !methodMappings.isEmpty();
+		}
 
-			if (this.simple == null) {
-				int i = this.src.lastIndexOf('$');
+		@Override
+		protected void validate() {
+			String[] srcArgs = src.split("[$]");
+			String[] dstArgs = dst.split("[$]");
 
-				if (i > 0) {
-					this.simple = this.src.substring(i + 1);
-				}
+			if (srcArgs.length != dstArgs.length) {
+				throw new IllegalStateException("src and dst class names do not have the same nesting depth!");
+			}
+			if (srcArgs.length == 1) {
+				return;
 			}
 
-			this.simple = validateSimple(this.simple);
+			int i = src.lastIndexOf('$');
+			int j = dst.lastIndexOf('$');
+			String srcParentName = src.substring(0, i);
+			String dstParentName = dst.substring(0, j);
+
+			if (!parent.src.equals(srcParentName) || !parent.dst.equals(dstParentName)) {
+				throw new IllegalStateException("class mapping " + this + " is not consistent with parent class mapping " + parent);
+			}
+
+			try {
+				int srcIndex = Integer.parseInt(srcArgs[srcArgs.length - 1]);
+				int dstIndex = Integer.parseInt(dstArgs[dstArgs.length - 1]);
+
+				if (srcIndex != dstIndex) {
+					throw new IllegalStateException("src and dst anonymous class indices do not match!");
+				}
+			} catch (NumberFormatException e) {
+
+			}
+
+			for (ClassMapping c : classMappings.values()) {
+				c.validate();
+			}
+			for (FieldMapping f : fieldMappings.values()) {
+				f.validate();
+			}
+			for (MethodMapping m : methodMappings.values()) {
+				m.validate();
+			}
 		}
 
 		@Override
 		protected ClassMapping inverted() {
 			inverted = new ClassMapping(root.inverted, this, dst, src);
-			inverted.setJavadocs(jav);
+			inverted.setJavadoc(jav);
 
 			for (ClassMapping c : classMappings.values()) {
 				inverted.addClass(c.inverted());
@@ -249,8 +307,8 @@ public class Mappings {
 
 		@Override
 		protected ClassMapping copy() {
-			ClassMapping copy = new ClassMapping(root, src, dst, simple);
-			copy.setJavadocs(jav);
+			ClassMapping copy = new ClassMapping(root, src, dst);
+			copy.setJavadoc(jav);
 
 			for (ClassMapping c : classMappings.values()) {
 				copy.addClass(c.copy());
@@ -265,53 +323,48 @@ public class Mappings {
 			return copy;
 		}
 
-		public String getSimple() {
-			return simple;
-		}
-
-		public void setSimple(String simple) {
-			this.simple = validateSimple(simple);
-		}
-
-		private String validateSimple(String simple) {
-			String[] srcArgs = src.split("[$]");
-			String[] dstArgs = dst.split("[$]");
-
-			if (srcArgs.length != dstArgs.length) {
-				throw new IllegalStateException("src and dst class names do not have the same nesting depth!");
-			}
-
-			for (int i = 1; i < srcArgs.length; i++) {
-				String srcArg = srcArgs[i];
-
-				try {
-					// make sure anonymous class indices match
-					Integer.parseInt(srcArg);
-					dstArgs[i] = srcArg;
-				} catch (NumberFormatException e) {
-
-				}
-
-				simple = dstArgs[i];
-			}
-
-			dst = String.join("$", dstArgs);
-
-			return simple;
-		}
-
 		public ClassMapping getParentClass() {
 			return parent;
 		}
 
-		public ClassMapping addClass(String src, String dst, String simple) {
-			return addClass(new ClassMapping(root, src, dst, simple));
+		public ClassMapping getClass(String name) {
+			return classMappings.get(name);
+		}
+
+		public FieldMapping getField(String name, String desc) {
+			return fieldMappings.get(name + desc);
+		}
+
+		public MethodMapping getMethod(String name, String desc) {
+			MethodMapping m = methodMappings.get(name + desc);
+
+			if (m == null && (name.equals("<init>") || name.equals("<clinit>"))) {
+				m = addMethod(name, name, desc);
+			}
+
+			return m;
+		}
+
+		public Collection<ClassMapping> getClasses() {
+			return classMappings.values();
+		}
+
+		public Collection<FieldMapping> getFields() {
+			return fieldMappings.values();
+		}
+
+		public Collection<MethodMapping> getMethods() {
+			return methodMappings.values();
+		}
+
+		public ClassMapping addClass(String src, String dst) {
+			return addClass(new ClassMapping(root, src, dst));
 		}
 		
 		private ClassMapping addClass(ClassMapping c) {
 			c.parent = this;
 			
-			return classMappings.compute(c.simple, (key, value) -> {
+			return classMappings.compute(c.key(), (key, value) -> {
 				return checkReplace(value, c);
 			});
 		}
@@ -340,34 +393,16 @@ public class Mappings {
 			});
 		}
 
-		public ClassMapping getClass(String simple) {
-			return classMappings.get(simple);
+		public void removeClass(String name) {
+			classMappings.remove(name);
 		}
 
-		public FieldMapping getField(String name, String desc) {
-			return fieldMappings.get(name + desc);
+		public void removeField(String name, String desc) {
+			fieldMappings.remove(name + desc);
 		}
 
-		public MethodMapping getMethod(String name, String desc) {
-			MethodMapping m = methodMappings.get(name + desc);
-
-			if (m == null && (name.equals("<init>") || name.equals("<clinit>"))) {
-				m = addMethod(name, name, desc);
-			}
-
-			return m;
-		}
-
-		public Collection<ClassMapping> getClasses() {
-			return classMappings.values();
-		}
-
-		public Collection<FieldMapping> getFields() {
-			return fieldMappings.values();
-		}
-
-		public Collection<MethodMapping> getMethods() {
-			return methodMappings.values();
+		public void removeMethod(String name, String desc) {
+			methodMappings.remove(name + desc);
 		}
 	}
 
@@ -394,7 +429,7 @@ public class Mappings {
 		@Override
 		protected FieldMapping inverted() {
 			inverted = new FieldMapping(root.inverted, this, dst, src, MappingUtils.translateFieldDescriptor(desc, root));
-			inverted.setJavadocs(jav);
+			inverted.setJavadoc(jav);
 
 			return inverted;
 		}
@@ -402,7 +437,7 @@ public class Mappings {
 		@Override
 		protected FieldMapping copy() {
 			FieldMapping copy = new FieldMapping(root, src, dst, desc);
-			copy.setJavadocs(jav);
+			copy.setJavadoc(jav);
 
 			return copy;
 		}
@@ -438,14 +473,26 @@ public class Mappings {
 		}
 
 		@Override
+		public boolean hasChildren() {
+			return !parameterMappings.isEmpty();
+		}
+
+		@Override
 		protected String key() {
 			return super.key() + desc;
 		}
 
 		@Override
+		protected void validate() {
+			for (ParameterMapping p : parameterMappings.values()) {
+				p.validate();
+			}
+		}
+
+		@Override
 		protected MethodMapping inverted() {
 			inverted = new MethodMapping(root.inverted, this, dst, src, MappingUtils.translateMethodDescriptor(desc, root));
-			inverted.setJavadocs(jav);
+			inverted.setJavadoc(jav);
 
 			for (ParameterMapping p : parameterMappings.values()) {
 				inverted.addParameter(p.inverted());
@@ -457,7 +504,7 @@ public class Mappings {
 		@Override
 		protected MethodMapping copy() {
 			MethodMapping copy = new MethodMapping(root, src, dst, desc);
-			copy.setJavadocs(jav);
+			copy.setJavadoc(jav);
 
 			for (ParameterMapping p : parameterMappings.values()) {
 				copy.addParameter(p.copy());
@@ -485,15 +532,19 @@ public class Mappings {
 			return parent;
 		}
 
+		public ParameterMapping getParameter(int index) {
+			return parameterMappings.get(Integer.toString(index));
+		}
+
+		public Collection<ParameterMapping> getParameters() {
+			return parameterMappings.values();
+		}
+
 		public ParameterMapping addParameter(String src, String dst, int index) {
 			return addParameter(new ParameterMapping(root, src, dst, index));
 		}
 
 		private ParameterMapping addParameter(ParameterMapping p) {
-			if (p.index >= getParameterCount()) {
-				return null;
-			}
-
 			p.parent = this;
 
 			return parameterMappings.compute(p.key(), (key, value) -> {
@@ -501,12 +552,8 @@ public class Mappings {
 			});
 		}
 
-		public ParameterMapping getParemeter(int index) {
-			return parameterMappings.get(Integer.toString(index));
-		}
-
-		public Collection<ParameterMapping> getParameters() {
-			return parameterMappings.values();
+		public void removeParameter(int index) {
+			parameterMappings.remove(Integer.toString(index));
 		}
 	}
 
@@ -538,7 +585,7 @@ public class Mappings {
 		@Override
 		protected ParameterMapping inverted() {
 			inverted = new ParameterMapping(root.inverted, this, dst, src, index);
-			inverted.setJavadocs(jav);
+			inverted.setJavadoc(jav);
 
 			return inverted;
 		}
@@ -546,7 +593,7 @@ public class Mappings {
 		@Override
 		protected ParameterMapping copy() {
 			ParameterMapping copy = new ParameterMapping(root, src, dst, index);
-			copy.setJavadocs(jav);
+			copy.setJavadoc(jav);
 
 			return copy;
 		}
