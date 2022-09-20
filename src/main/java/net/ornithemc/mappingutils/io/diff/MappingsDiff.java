@@ -23,6 +23,10 @@ public class MappingsDiff {
 		return classDiffs.values();
 	}
 
+	public ClassDiff addClass(String src) {
+		return addClass(src, "", "");
+	}
+
 	public ClassDiff addClass(String src, String dstA, String dstB) {
 		return addClass(new ClassDiff(this, src, dstA, dstB));
 	}
@@ -59,10 +63,6 @@ public class MappingsDiff {
 		}
 
 		return copy;
-	}
-
-	public static boolean isDiffSafe(String a, String b) {
-		return (a == null || b == null) ? a != b : isDiff(a, b);
 	}
 
 	public static boolean isDiff(String a, String b) {
@@ -108,12 +108,16 @@ public class MappingsDiff {
 			}
 		}
 
+		public final void clear() {
+			this.dstA = this.dstB = "";
+		}
+
 		public final JavadocDiff getJavadoc() {
 			return javadoc;
 		}
 
 		public final boolean isDiff() {
-			return MappingsDiff.isDiff(dstA, dstB) || javadoc.isDiff();
+			return MappingsDiff.isDiff(dstA, dstB);
 		}
 
 		public boolean hasChildren() {
@@ -125,9 +129,7 @@ public class MappingsDiff {
 		}
 
 		protected void validate() {
-			if (javadoc != null) {
-				javadoc.validate();
-			}
+			javadoc.validate();
 
 			dstA = validateDst(dstA);
 			dstB = validateDst(dstB);
@@ -165,7 +167,7 @@ public class MappingsDiff {
 				m.validate();
 			}
 
-			if (!hasChildren() && !isDiff()) {
+			if (!hasChildren() && !isDiff() && !javadoc.isDiff()) {
 				root.removeClass(this);
 			}
 		}
@@ -201,6 +203,10 @@ public class MappingsDiff {
 			return methodDiffs.values();
 		}
 
+		public FieldDiff addField(String src, String desc) {
+			return addField(src, "", "", desc);
+		}
+
 		public FieldDiff addField(String src, String dstA, String dstB, String desc) {
 			return addField(new FieldDiff(root, src, dstA, dstB, desc));
 		}
@@ -211,6 +217,10 @@ public class MappingsDiff {
 			return fieldDiffs.compute(f.key(), (key, value) -> {
 				return checkReplace(value, f);
 			});
+		}
+
+		public MethodDiff addMethod(String src, String desc) {
+			return addMethod(src, "", "", desc);
 		}
 
 		public MethodDiff addMethod(String src, String dstA, String dstB, String desc) {
@@ -270,7 +280,7 @@ public class MappingsDiff {
 		protected void validate() {
 			super.validate();
 
-			if (!isDiff()) {
+			if (!isDiff() && !javadoc.isDiff()) {
 				parent.removeField(this);
 			}
 		}
@@ -327,7 +337,7 @@ public class MappingsDiff {
 				p.validate();
 			}
 
-			if (!hasChildren() && !isDiff()) {
+			if (!hasChildren() && !isDiff() && !javadoc.isDiff()) {
 				parent.removeMethod(this);
 			}
 		}
@@ -369,6 +379,10 @@ public class MappingsDiff {
 
 		public Collection<ParameterDiff> getParameters() {
 			return parameterDiffs.values();
+		}
+
+		public ParameterDiff addParameter(String src, int index) {
+			return addParameter(src, "", "", index);
 		}
 
 		public ParameterDiff addParameter(String src, String dstA, String dstB, int index) {
@@ -421,7 +435,7 @@ public class MappingsDiff {
 		protected void validate() {
 			super.validate();
 
-			if (!isDiff()) {
+			if (!isDiff() && !javadoc.isDiff()) {
 				parent.removeParameter(this);
 			}
 		}
@@ -451,7 +465,7 @@ public class MappingsDiff {
 		private Diff<?> parent;
 
 		private JavadocDiff() {
-
+			this("", "");
 		}
 
 		private JavadocDiff(String javadocA, String javadocB) {
@@ -474,6 +488,10 @@ public class MappingsDiff {
 			} else {
 				this.javadocB = javadoc;
 			}
+		}
+
+		public void clear() {
+			this.javadocA = this.javadocB = "";
 		}
 
 		public boolean isDiff() {

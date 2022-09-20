@@ -45,10 +45,12 @@ public class TinyV1DiffWriter extends TinyDiffWriter<TinyV1Diff> {
 		writer.write(TinyV1Diff.CLASS);
 		writer.write(TAB);
 		writer.write(c.src());
-		writer.write(TAB);
-		writer.write(c.get(DiffSide.A));
-		writer.write(TAB);
-		writer.write(c.get(DiffSide.B));
+		if (c.isDiff()) {
+			writer.write(TAB);
+			writer.write(c.get(DiffSide.A));
+			writer.write(TAB);
+			writer.write(c.get(DiffSide.B));
+		}
 		writer.newLine();
 
 		for (FieldDiff f : c.getFields()) {
@@ -60,6 +62,10 @@ public class TinyV1DiffWriter extends TinyDiffWriter<TinyV1Diff> {
 	}
 
 	private void writeField(FieldDiff f) throws Exception {
+		if (!f.isDiff()) {
+			return;
+		}
+
 		writer.write(TinyV1Diff.FIELD);
 		writer.write(TAB);
 		writer.write(f.getParent().src());
@@ -75,6 +81,10 @@ public class TinyV1DiffWriter extends TinyDiffWriter<TinyV1Diff> {
 	}
 
 	private void writeMethod(MethodDiff m) throws Exception {
+		if (!m.isDiff()) {
+			return;
+		}
+
 		writer.write(TinyV1Diff.METHOD);
 		writer.write(TAB);
 		writer.write(m.getParent().src());

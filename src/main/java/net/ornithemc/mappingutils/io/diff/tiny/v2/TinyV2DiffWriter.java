@@ -54,10 +54,12 @@ public class TinyV2DiffWriter extends TinyDiffWriter<TinyV2Diff> {
 		writer.write(TinyV2Diff.CLASS);
 		writer.write(TAB);
 		writer.write(c.src());
-		writer.write(TAB);
-		writer.write(c.get(DiffSide.A));
-		writer.write(TAB);
-		writer.write(c.get(DiffSide.B));
+		if (c.isDiff()) {
+			writer.write(TAB);
+			writer.write(c.get(DiffSide.A));
+			writer.write(TAB);
+			writer.write(c.get(DiffSide.B));
+		}
 		writer.newLine();
 
 		writeJavadoc(c);
@@ -78,10 +80,12 @@ public class TinyV2DiffWriter extends TinyDiffWriter<TinyV2Diff> {
 		writer.write(f.getDesc());
 		writer.write(TAB);
 		writer.write(f.src());
-		writer.write(TAB);
-		writer.write(f.get(DiffSide.A));
-		writer.write(TAB);
-		writer.write(f.get(DiffSide.B));
+		if (f.isDiff()) {
+			writer.write(TAB);
+			writer.write(f.get(DiffSide.A));
+			writer.write(TAB);
+			writer.write(f.get(DiffSide.B));
+		}
 		writer.newLine();
 
 		writeJavadoc(f);
@@ -95,10 +99,12 @@ public class TinyV2DiffWriter extends TinyDiffWriter<TinyV2Diff> {
 		writer.write(m.getDesc());
 		writer.write(TAB);
 		writer.write(m.src());
-		writer.write(TAB);
-		writer.write(m.get(DiffSide.A));
-		writer.write(TAB);
-		writer.write(m.get(DiffSide.B));
+		if (m.isDiff()) {
+			writer.write(TAB);
+			writer.write(m.get(DiffSide.A));
+			writer.write(TAB);
+			writer.write(m.get(DiffSide.B));
+		}
 		writer.newLine();
 
 		writeJavadoc(m);
@@ -116,10 +122,12 @@ public class TinyV2DiffWriter extends TinyDiffWriter<TinyV2Diff> {
 		writer.write(Integer.toString(p.getIndex()));
 		writer.write(TAB);
 		writer.write(p.src());
-		writer.write(TAB);
-		writer.write(p.get(DiffSide.A));
-		writer.write(TAB);
-		writer.write(p.get(DiffSide.B));
+		if (p.isDiff()) {
+			writer.write(TAB);
+			writer.write(p.get(DiffSide.A));
+			writer.write(TAB);
+			writer.write(p.get(DiffSide.B));
+		}
 		writer.newLine();
 
 		writeJavadoc(p);
@@ -128,7 +136,7 @@ public class TinyV2DiffWriter extends TinyDiffWriter<TinyV2Diff> {
 	private void writeJavadoc(Diff<?> d) throws Exception {
 		JavadocDiff javadoc = d.getJavadoc();
 
-		if (javadoc != null && javadoc.isDiff()) {
+		if (javadoc.isDiff()) {
 			indents++;
 
 			indent();

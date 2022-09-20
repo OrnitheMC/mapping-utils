@@ -146,13 +146,13 @@ public class TinyV2DiffReader extends TinyDiffReader<TinyV2Diff> {
 			if (indents != TinyV2Diff.CLASS_INDENTS) {
 				throw new IllegalStateException("illegal number of indents (" + indents + ") for class mapping on line " + lineNumber + " - expected " + TinyV2Diff.CLASS_INDENTS);
 			}
-			if (ac != 3 && ac != 4) {
-				throw new IllegalStateException("illegal number of arguments (" + ac + ") for class mapping on line " + lineNumber + " - expected 3 or 4");
+			if (ac < 2 || ac > 4) {
+				throw new IllegalStateException("illegal number of arguments (" + ac + ") for class mapping on line " + lineNumber + " - expected 2-4");
 			}
 
 			src = args[1 + indents];
-			dstA = args[2 + indents];
-			dstB = (ac == 3) ? "" : args[3 + indents];
+			dstA = (ac < 3) ? "" : args[2 + indents];
+			dstB = (ac < 4) ? "" : args[3 + indents];
 
 			c = diff.addClass(src, dstA, dstB);
 			f = null;
@@ -164,8 +164,8 @@ public class TinyV2DiffReader extends TinyDiffReader<TinyV2Diff> {
 			if (indents != TinyV2Diff.FIELD_INDENTS) {
 				throw new IllegalStateException("illegal number of indents (" + indents + ") for field mapping on line " + lineNumber + " - expected " + TinyV2Diff.FIELD_INDENTS);
 			}
-			if (ac != 4 && ac != 5) {
-				throw new IllegalStateException("illegal number of arguments (" + ac + ") for field mapping on line " + lineNumber + " - expected 4 or 5");
+			if (ac < 3 || ac > 5) {
+				throw new IllegalStateException("illegal number of arguments (" + ac + ") for field mapping on line " + lineNumber + " - expected 3-5");
 			}
 			if (c == null) {
 				throw new IllegalStateException("cannot read field mapping on line " + lineNumber + " - not in a class?");
@@ -173,8 +173,8 @@ public class TinyV2DiffReader extends TinyDiffReader<TinyV2Diff> {
 
 			desc = args[1 + indents];
 			src = args[2 + indents];
-			dstA = args[3 + indents];
-			dstB = (ac == 4) ? "" : args[4 + indents];
+			dstA = (ac < 4) ? "" : args[3 + indents];
+			dstB = (ac < 5) ? "" : args[4 + indents];
 
 			f = c.addField(src, dstA, dstB, desc);
 			m = null;
@@ -185,8 +185,8 @@ public class TinyV2DiffReader extends TinyDiffReader<TinyV2Diff> {
 			if (indents != TinyV2Diff.METHOD_INDENTS) {
 				throw new IllegalStateException("illegal number of indents (" + indents + ") for method mapping on line " + lineNumber + " - expected " + TinyV2Diff.METHOD_INDENTS);
 			}
-			if (ac != 4 && ac != 5) {
-				throw new IllegalStateException("illegal number of arguments (" + ac + ") for method mapping on line " + lineNumber + " - expected 4 or 5");
+			if (ac < 3 || ac > 5) {
+				throw new IllegalStateException("illegal number of arguments (" + ac + ") for method mapping on line " + lineNumber + " - expected 3-5");
 			}
 			if (c == null) {
 				throw new IllegalStateException("cannot read method mapping on line " + lineNumber + " - not in a class?");
@@ -194,8 +194,8 @@ public class TinyV2DiffReader extends TinyDiffReader<TinyV2Diff> {
 
 			desc = args[1 + indents];
 			src = args[2 + indents];
-			dstA = args[3 + indents];
-			dstB = (ac == 4) ? "" : args[4 + indents];
+			dstA = (ac < 4) ? "" : args[3 + indents];
+			dstB = (ac < 5) ? "" : args[4 + indents];
 
 			m = c.addMethod(src, dstA, dstB, desc);
 			f = null;
@@ -206,8 +206,8 @@ public class TinyV2DiffReader extends TinyDiffReader<TinyV2Diff> {
 			if (indents != TinyV2Diff.PARAMETER_INDENTS) {
 				throw new IllegalStateException("illegal number of indents (" + indents + ") for parameter mapping on line " + lineNumber + " - expected " + TinyV2Diff.PARAMETER_INDENTS);
 			}
-			if (ac != 4 && ac != 5) {
-				throw new IllegalStateException("illegal number of arguments (" + ac + ") for parameter mapping on line " + lineNumber + " - expected 4 or 5");
+			if (ac < 3 || ac > 5) {
+				throw new IllegalStateException("illegal number of arguments (" + ac + ") for parameter mapping on line " + lineNumber + " - expected 3-5");
 			}
 			if (m == null) {
 				throw new IllegalStateException("cannot read paremter mapping on line " + lineNumber + " - not in a method?");
@@ -215,8 +215,8 @@ public class TinyV2DiffReader extends TinyDiffReader<TinyV2Diff> {
 
 			String rawIndex = args[1 + indents];
 			src = args[2 + indents]; // we could ignore this argument
-			dstA = args[3 + indents];
-			dstB = (ac == 4) ? "" : args[4 + indents];
+			dstA = (ac < 4) ? "" : args[3 + indents];
+			dstB = (ac < 5) ? "" : args[4 + indents];
 
 			int index = Integer.parseInt(rawIndex);
 

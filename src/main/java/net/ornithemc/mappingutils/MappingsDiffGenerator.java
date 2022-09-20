@@ -157,10 +157,10 @@ class MappingsDiffGenerator {
 			} else if (a == null) {
 				diff(a, b, DiffMode.B);
 			} else {
-				if (MappingsDiff.isDiffSafe(a.get(), b.get())) {
+				if (MappingsDiff.isDiff(a.get(), b.get())) {
 					diff(a, b, DiffMode.AB);
 				}
-				if (MappingsDiff.isDiffSafe(a.getJavadoc(), b.getJavadoc())) {
+				if (MappingsDiff.isDiff(a.getJavadoc(), b.getJavadoc())) {
 					diff(a, b, DiffMode.JAVADOC);
 				}
 			}
@@ -190,25 +190,25 @@ class MappingsDiffGenerator {
 
 	private ClassDiff getDiff(ClassMapping c) {
 		ClassDiff cd = diff.getClass(c.src());
-		return cd != null ? cd : diff.addClass(c.src(), c.get(), c.get());
+		return cd != null ? cd : diff.addClass(c.src());
 	}
 
 	private FieldDiff getDiff(FieldMapping f) {
 		ClassDiff cd = getDiff(f.getParent());
 		FieldDiff fd = cd.getField(f.src(), f.getDesc());
-		return fd != null ? fd : cd.addField(f.src(), f.get(), f.get(), f.getDesc());
+		return fd != null ? fd : cd.addField(f.src(), f.getDesc());
 	}
 
 	private MethodDiff getDiff(MethodMapping m) {
 		ClassDiff cd = getDiff(m.getParent());
 		MethodDiff md = cd.getMethod(m.src(), m.getDesc());
-		return md != null ? md : cd.addMethod(m.src(), m.get(), m.get(), m.getDesc());
+		return md != null ? md : cd.addMethod(m.src(), m.getDesc());
 	}
 
 	private ParameterDiff getDiff(ParameterMapping p) {
 		MethodDiff md = getDiff(p.getParent());
 		ParameterDiff pd = md.getParameter(p.getIndex());
-		return pd != null ? pd : md.addParameter(p.src(), p.get(), p.get(), p.getIndex());
+		return pd != null ? pd : md.addParameter(p.src(), p.getIndex());
 	}
 
 	private abstract class MappingPair<T extends Mapping<T>> {
@@ -221,7 +221,7 @@ class MappingsDiffGenerator {
 			this.b = b;
 		}
 
-		protected abstract T find(DiffSide side, T mapping);
+		protected abstract T find(DiffSide side, T other);
 
 		public T get(DiffSide side) {
 			if (a == null) a = find(DiffSide.A, b);
@@ -238,8 +238,8 @@ class MappingsDiffGenerator {
 		}
 
 		@Override
-		protected ClassMapping find(DiffSide side, ClassMapping c) {
-			return MappingsDiffGenerator.this.getClass(side, c.src());
+		protected ClassMapping find(DiffSide side, ClassMapping other) {
+			return MappingsDiffGenerator.this.getClass(side, other.src());
 		}
 	}
 
@@ -254,8 +254,8 @@ class MappingsDiffGenerator {
 		}
 
 		@Override
-		protected FieldMapping find(DiffSide side, FieldMapping f) {
-			return MappingsDiffGenerator.this.getField(side, f.src(), f.getDesc(), parent.get(DiffSide.A), parent.get(DiffSide.B));
+		protected FieldMapping find(DiffSide side, FieldMapping other) {
+			return MappingsDiffGenerator.this.getField(side, other.src(), other.getDesc(), parent.get(DiffSide.A), parent.get(DiffSide.B));
 		}
 	}
 
@@ -270,8 +270,8 @@ class MappingsDiffGenerator {
 		}
 
 		@Override
-		protected MethodMapping find(DiffSide side, MethodMapping f) {
-			return MappingsDiffGenerator.this.getMethod(side, f.src(), f.getDesc(), parent.get(DiffSide.A), parent.get(DiffSide.B));
+		protected MethodMapping find(DiffSide side, MethodMapping other) {
+			return MappingsDiffGenerator.this.getMethod(side, other.src(), other.getDesc(), parent.get(DiffSide.A), parent.get(DiffSide.B));
 		}
 	}
 
@@ -286,8 +286,8 @@ class MappingsDiffGenerator {
 		}
 
 		@Override
-		protected ParameterMapping find(DiffSide side, ParameterMapping f) {
-			return MappingsDiffGenerator.this.getParameter(side, f.getIndex(), parent.get(DiffSide.A), parent.get(DiffSide.B));
+		protected ParameterMapping find(DiffSide side, ParameterMapping other) {
+			return MappingsDiffGenerator.this.getParameter(side, other.getIndex(), parent.get(DiffSide.A), parent.get(DiffSide.B));
 		}
 	}
 

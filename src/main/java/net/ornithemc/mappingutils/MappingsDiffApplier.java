@@ -1,5 +1,8 @@
 package net.ornithemc.mappingutils;
 
+import java.util.Arrays;
+import java.util.List;
+
 import net.ornithemc.mappingutils.io.Mappings;
 import net.ornithemc.mappingutils.io.Mappings.ClassMapping;
 import net.ornithemc.mappingutils.io.Mappings.FieldMapping;
@@ -17,15 +20,19 @@ import net.ornithemc.mappingutils.io.diff.MappingsDiff.ParameterDiff;
 
 class MappingsDiffApplier {
 
-	static void run(Mappings src, Mappings dst, MappingsDiff... diffs) throws Exception {
-		new MappingsDiffApplier(src, dst, diffs).run();
+	static Mappings run(Mappings src, MappingsDiff... diffs) throws Exception {
+		return run(src, Arrays.asList(diffs));
+	}
+
+	static Mappings run(Mappings src, List<MappingsDiff> diffs) throws Exception {
+		return new MappingsDiffApplier(src, diffs).run();
 	}
 
 	private final Mappings src;
 	private final Mappings dst;
-	private final MappingsDiff[] diffs;
+	private final List<MappingsDiff> diffs;
 
-	private MappingsDiffApplier(Mappings src, Mappings dst, MappingsDiff... diffs) {
+	private MappingsDiffApplier(Mappings src, List<MappingsDiff> diffs) {
 		src.validate();
 
 		for (MappingsDiff diff : diffs) {
@@ -33,14 +40,16 @@ class MappingsDiffApplier {
 		}
 
 		this.src = src;
-		this.dst = dst;
+		this.dst = this.src.copy();
 		this.diffs = diffs;
 	}
 
-	private void run() throws Exception {
+	private Mappings run() throws Exception {
 		for (MappingsDiff diff : diffs) {
 			applyDiff(diff);
 		}
+
+		return dst;
 	}
 
 	private void applyDiff(MappingsDiff diff) {

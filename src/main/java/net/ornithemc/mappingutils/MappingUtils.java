@@ -1,22 +1,22 @@
 package net.ornithemc.mappingutils;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 
 import org.objectweb.asm.Type;
 
+import net.ornithemc.mappingutils.io.Format;
 import net.ornithemc.mappingutils.io.Mappings;
 import net.ornithemc.mappingutils.io.Mappings.ClassMapping;
-import net.ornithemc.mappingutils.io.diff.tiny.v1.TinyV1Diff;
-import net.ornithemc.mappingutils.io.diff.tiny.v1.TinyV1DiffReader;
-import net.ornithemc.mappingutils.io.diff.tiny.v1.TinyV1DiffWriter;
-import net.ornithemc.mappingutils.io.diff.tiny.v2.TinyV2Diff;
-import net.ornithemc.mappingutils.io.diff.tiny.v2.TinyV2DiffReader;
-import net.ornithemc.mappingutils.io.diff.tiny.v2.TinyV2DiffWriter;
+import net.ornithemc.mappingutils.io.diff.MappingsDiff;
+import net.ornithemc.mappingutils.io.diff.tree.MappingsDiffTree;
+import net.ornithemc.mappingutils.io.diff.tree.Version;
 import net.ornithemc.mappingutils.io.matcher.Matches;
 import net.ornithemc.mappingutils.io.matcher.MatchesReader;
 import net.ornithemc.mappingutils.io.tiny.v1.TinyV1Mappings;
 import net.ornithemc.mappingutils.io.tiny.v1.TinyV1Reader;
-import net.ornithemc.mappingutils.io.tiny.v1.TinyV1Writer;
 import net.ornithemc.mappingutils.io.tiny.v2.TinyV2Mappings;
 import net.ornithemc.mappingutils.io.tiny.v2.TinyV2Reader;
 import net.ornithemc.mappingutils.io.tiny.v2.TinyV2Writer;
@@ -40,62 +40,58 @@ public class MappingUtils {
 		TinyV2Writer.write(dstPath, dst);
 	}
 
-	public static void diffTinyV1Mappings(Path pathA, Path pathB, Path diffPath) throws Exception {
+	public static void diffMappings(Format format, Path pathA, Path pathB, Path diffPath) throws Exception {
 		FileUtils.requireReadable(pathA);
 		FileUtils.requireReadable(pathB);
 		FileUtils.requireWritable(diffPath);
 
-		TinyV1Mappings a = TinyV1Reader.read(pathA);
-		TinyV1Mappings b = TinyV1Reader.read(pathB);
-		TinyV1Diff diff = new TinyV1Diff();
+		Mappings a = format.readMappings(pathA);
+		Mappings b = format.readMappings(pathB);
+		MappingsDiff diff = format.readDiff(diffPath);
 
 		MappingsDiffGenerator.run(a, b, diff);
-		TinyV1DiffWriter.write(diffPath, diff);
+		format.writeDiff(diffPath, diff);
 	}
 
-	public static void diffTinyV2Mappings(Path pathA, Path pathB, Path diffPath) throws Exception {
-		FileUtils.requireReadable(pathA);
-		FileUtils.requireReadable(pathB);
-		FileUtils.requireWritable(diffPath);
-
-		TinyV2Mappings a = TinyV2Reader.read(pathA);
-		TinyV2Mappings b = TinyV2Reader.read(pathB);
-		TinyV2Diff diff = new TinyV2Diff();
-
-		MappingsDiffGenerator.run(a, b, diff);
-		TinyV2DiffWriter.write(diffPath, diff);
+	public static void applyDiffs(Format format, Path srcPath, Path dstPath, Path... diffPaths) throws Exception {
+		applyDiffs(format, srcPath, dstPath, Arrays.asList(diffPaths));
 	}
 
-	public static void applyTinyV1Diffs(Path srcPath, Path dstPath, Path... diffPaths) throws Exception {
+	public static void applyDiffs(Format format, Path srcPath, Path dstPath, List<Path> diffPaths) throws Exception {
 		FileUtils.requireReadable(srcPath);
 		FileUtils.requireWritable(dstPath);
 		FileUtils.requireReadable(diffPaths);
 
-		TinyV1Mappings src = TinyV1Reader.read(srcPath);
-		TinyV1Mappings dst = src.copy();
-		TinyV1Diff[] diffs = new TinyV1Diff[diffPaths.length];
-		for (int i = 0; i < diffPaths.length; i++) {
-			diffs[i] = TinyV1DiffReader.read(diffPaths[i]);
+		Mappings src = format.readMappings(srcPath);
+		MappingsDiff[] diffs = new MappingsDiff[diffPaths.size()];
+		for (int i = 0; i < diffPaths.size(); i++) {
+			diffs[i] = format.readDiff(diffPaths.get(i));
 		}
 
-		MappingsDiffApplier.run(src, dst, diffs);
-		TinyV1Writer.write(dstPath, dst);
+		format.writeMappings(dstPath, MappingsDiffApplier.run(src, diffs));
 	}
 
-	public static void applyTinyV2Diffs(Path srcPath, Path dstPath, Path... diffPaths) throws Exception {
-		FileUtils.requireReadable(srcPath);
+	public static void separateMappings(Format format, Path dir, Path dstPath, String version) throws Exception {
+		FileUtils.requireReadable(dir);
 		FileUtils.requireWritable(dstPath);
-		FileUtils.requireReadable(diffPaths);
 
-		TinyV2Mappings src = TinyV2Reader.read(srcPath);
-		TinyV2Mappings dst = src.copy();
-		TinyV2Diff[] diffs = new TinyV2Diff[diffPaths.length];
-		for (int i = 0; i < diffPaths.length; i++) {
-			diffs[i] = TinyV2DiffReader.read(diffPaths[i]);
-		}
+		MappingsDiffTree tree = MappingsDiffTree.of(format, dir);
+		Version root = tree.root();
 
-		MappingsDiffApplier.run(src, dst, diffs);
-		TinyV2Writer.write(dstPath, dst);
+		Mappings src = root.getMappings();
+		List<MappingsDiff> diffs = tree.getDiffsFromRoot(version);
+
+		format.writeMappings(dstPath, MappingsDiffApplier.run(src, diffs));
+	}
+
+	public static void propagateMappings(Format format, Path dir, Path diffPath, String version) throws Exception {
+		FileUtils.requireReadable(dir);
+		FileUtils.requireReadable(diffPath);
+
+		MappingsDiffTree tree = MappingsDiffTree.of(format, dir);
+		MappingsDiff diff = format.readDiff(diffPath);
+
+		MappingsDiffPropagator.run(tree, diff, version);
 	}
 
 	public static String translateFieldDescriptor(String desc, Mappings mappings) {
@@ -152,7 +148,7 @@ public class MappingUtils {
 
 		return type;
 	}
-	
+
 	public static void main(String[] args) {
 
 	}
