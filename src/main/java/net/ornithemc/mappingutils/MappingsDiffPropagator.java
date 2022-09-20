@@ -105,6 +105,8 @@ class MappingsDiffPropagator {
 			} else {
 				cm.set(cd.get(DiffSide.B));
 			}
+
+			v.markDirty();
 		} else {
 			MappingsDiff vdiff = v.getDiff();
 			ClassDiff vcd = vdiff.getClass(cd.src());
@@ -113,6 +115,7 @@ class MappingsDiffPropagator {
 				propagateUp(v.getParent(), cd);
 			} else {
 				vcd.set(DiffSide.B, cd.get(DiffSide.B));
+				v.markDirty();
 			}
 		}
 	}
@@ -126,7 +129,8 @@ class MappingsDiffPropagator {
 				propagateDown(c, cd);
 			}
 		} else {
-			vcd.set(DiffSide.A, cd.get(DiffSide.A));
+			vcd.set(DiffSide.A, cd.get(DiffSide.B));
+			v.markDirty();
 		}
 	}
 
@@ -143,6 +147,8 @@ class MappingsDiffPropagator {
 				} else {
 					fm.set(fd.get(DiffSide.B));
 				}
+
+				v.markDirty();
 			}
 		} else {
 			MappingsDiff vdiff = v.getDiff();
@@ -155,6 +161,7 @@ class MappingsDiffPropagator {
 					propagateUp(v.getParent(), cd, fd);
 				} else {
 					vfd.set(DiffSide.B, fd.get(DiffSide.B));
+					v.markDirty();
 				}
 			}
 		}
@@ -170,7 +177,8 @@ class MappingsDiffPropagator {
 				propagateDown(c, cd, fd);
 			}
 		} else {
-			vfd.set(DiffSide.A, fd.get(DiffSide.A));
+			vfd.set(DiffSide.A, fd.get(DiffSide.B));
+			v.markDirty();
 		}
 	}
 
@@ -187,6 +195,8 @@ class MappingsDiffPropagator {
 				} else {
 					mm.set(md.get(DiffSide.B));
 				}
+
+				v.markDirty();
 			}
 		} else {
 			MappingsDiff vdiff = v.getDiff();
@@ -199,6 +209,7 @@ class MappingsDiffPropagator {
 					propagateUp(v.getParent(), cd, md);
 				} else {
 					vmd.set(DiffSide.B, md.get(DiffSide.B));
+					v.markDirty();
 				}
 			}
 		}
@@ -214,7 +225,8 @@ class MappingsDiffPropagator {
 				propagateDown(c, cd, md);
 			}
 		} else {
-			vmd.set(DiffSide.A, md.get(DiffSide.A));
+			vmd.set(DiffSide.A, md.get(DiffSide.B));
+			v.markDirty();
 		}
 	}
 
@@ -234,6 +246,8 @@ class MappingsDiffPropagator {
 					} else {
 						pm.set(md.get(DiffSide.B));
 					}
+
+					v.markDirty();
 				}
 			}
 		} else {
@@ -250,6 +264,7 @@ class MappingsDiffPropagator {
 						propagateUp(v.getParent(), cd, md, pd);
 					} else {
 						vpd.set(DiffSide.B, pd.get(DiffSide.B));
+						v.markDirty();
 					}
 				}
 			}
@@ -267,7 +282,8 @@ class MappingsDiffPropagator {
 				propagateDown(c, cd, md, pd);
 			}
 		} else {
-			vpd.set(DiffSide.A, pd.get(DiffSide.A));
+			vpd.set(DiffSide.A, pd.get(DiffSide.B));
+			v.markDirty();
 		}
 	}
 }
