@@ -46,7 +46,7 @@ public class MappingUtils {
 
 		Mappings a = format.readMappings(pathA);
 		Mappings b = format.readMappings(pathB);
-		MappingsDiff diff = format.readDiff(diffPath);
+		MappingsDiff diff = format.newDiff();
 
 		MappingsDiffGenerator.run(a, b, diff);
 		format.writeDiff(diffPath, diff);

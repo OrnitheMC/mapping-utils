@@ -512,8 +512,8 @@ public class Mappings {
 		private ClassMapping parent;
 		private String desc;
 
-		private FieldMapping(Mappings root, String key, String desc) {
-			this(root, null, key.split("[:]")[0], key.split("[:]")[1], desc);
+		private FieldMapping(Mappings root, String key, String dst) {
+			this(root, null, key.split("[:]")[0], dst, key.split("[:]")[1]);
 		}
 
 		private FieldMapping(Mappings root, FieldMapping inverted, String src, String dst, String desc) {
@@ -570,8 +570,8 @@ public class Mappings {
 		private ClassMapping parent;
 		private String desc;
 
-		private MethodMapping(Mappings root, String key, String desc) {
-			this(root, null, key.split("[:]")[0], key.split("[:]")[1], desc);
+		private MethodMapping(Mappings root, String key, String dst) {
+			this(root, null, key.split("[:]")[0], dst, key.split("[:]")[1]);
 		}
 
 		private MethodMapping(Mappings root, MethodMapping inverted, String src, String dst, String desc) {
@@ -701,8 +701,8 @@ public class Mappings {
 			return parameterMappings.values();
 		}
 
-		public ParameterMapping addParameter(String src, String dst, int index) {
-			return addParameter(ParameterMapping.key(index, dst), dst);
+		public ParameterMapping addParameter(String name, String dst, int index) {
+			return addParameter(ParameterMapping.key(index, name), dst);
 		}
 
 		public ParameterMapping addParameter(String key, String dst) {
@@ -710,6 +710,11 @@ public class Mappings {
 		}
 
 		private ParameterMapping addParameter(ParameterMapping p) {
+			if (p.index >= parameters.length) {
+				System.out.println(this + " ignoring illegal parameter mapping " + p + ": index out of bounds");
+				return null;
+			}
+
 			p.parent = this;
 
 			parameters[p.index] = p;
@@ -744,7 +749,7 @@ public class Mappings {
 		private MethodMapping parent;
 
 		private ParameterMapping(Mappings root, String key, String dst) {
-			this(root, null, key.split("[:]")[1], dst, Integer.parseInt(key.split("[:]")[0]));
+			this(root, null, key.substring(key.indexOf(':') + 1), dst, Integer.parseInt(key.substring(0, key.indexOf(':'))));
 		}
 
 		private ParameterMapping(Mappings root, ParameterMapping inverted, String src, String dst, int index) {

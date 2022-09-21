@@ -61,16 +61,21 @@ class MappingsDiffGenerator {
 
 	private void addMappingPair(MappingPair parent, Mapping<?> a, Mapping<?> b) {
 		MappingPair pair = new MappingPair(parent, a, b);
+		a = pair.get(DiffSide.A);
+		b = pair.get(DiffSide.B);
+
 		mappingPairs.add(pair);
 
-		for (Mapping<?> ca : a.getChildren()) {
-			addMappingPair(pair, ca, null);
+		if (a != null) {
+			for (Mapping<?> ca : a.getChildren()) {
+				addMappingPair(pair, ca, null);
+			}
 		}
-		for (Mapping<?> cb : b.getChildren()) {
-			Mapping<?> ca = b.getChild(cb.target(), cb.key());
-
-			if (ca == null) {
-				addMappingPair(pair, null, cb);
+		if (b != null) {
+			for (Mapping<?> cb : b.getChildren()) {
+				if (a == null || a.getChild(cb.target(), cb.key()) == null) {
+					addMappingPair(pair, null, cb);
+				}
 			}
 		}
 	}
@@ -85,10 +90,10 @@ class MappingsDiffGenerator {
 			} else if (a == null) {
 				diff(a, b, DiffMode.B);
 			} else {
-				if (MappingsDiff.isDiff(a.get(), b.get())) {
+				if (MappingsDiff.safeIsDiff(a.get(), b.get())) {
 					diff(a, b, DiffMode.AB);
 				}
-				if (MappingsDiff.isDiff(a.getJavadoc(), b.getJavadoc())) {
+				if (MappingsDiff.safeIsDiff(a.getJavadoc(), b.getJavadoc())) {
 					diff(a, b, DiffMode.JAVADOC);
 				}
 			}
@@ -96,11 +101,11 @@ class MappingsDiffGenerator {
 	}
 
 	private void diff(Mapping<?> a, Mapping<?> b, DiffMode mode) {
-		mode.run(a, b, addDiff(a));
+		mode.run(a, b, addDiff(a == null ? b : a));
 	}
 
 	public Mapping<?> findMapping(DiffSide side, MappingPair parent, MappingTarget target, String key) {
-		Mapping<?> m;
+		Mapping<?> m = null;
 
 		if (parent == null) {
 			if (target != MappingTarget.CLASS) {
@@ -111,11 +116,9 @@ class MappingsDiffGenerator {
 		} else {
 			Mapping<?> parentMapping = parent.get(side);
 
-			if (parentMapping == null) {
-				throw new IllegalStateException("unable to get mapping for " + parent);
+			if (parentMapping != null) {
+				m = parentMapping.getChild(target, key);
 			}
-
-			m = parentMapping.getChild(target, key);
 		}
 
 		return m;
@@ -125,7 +128,7 @@ class MappingsDiffGenerator {
 		Diff<?> d;
 		Mapping<?> parentMapping = mapping.getParent();
 
-		if (parentMapping == null) {
+		if (parentMapping == null || mapping.target() == MappingTarget.CLASS) {
 			if (mapping.target() != MappingTarget.CLASS) {
 				throw new IllegalStateException("cannot get diff of target " + mapping.target() + " from the root diff");
 			}
@@ -157,8 +160,6 @@ class MappingsDiffGenerator {
 
 	private class MappingPair {
 
-		private final MappingPair parent;
-
 		private Mapping<?> a;
 		private Mapping<?> b;
 
@@ -167,13 +168,6 @@ class MappingsDiffGenerator {
 				throw new IllegalArgumentException("mismatched targets for mapping pair: " + a.target() + " and " + b.target());
 			}
 
-			this.parent = parent;
-
-			this.a = a;
-			this.b = b;
-		}
-
-		public Mapping<?> get(DiffSide side) {
 			if (a == null) {
 				a = findMapping(DiffSide.A, parent, b.target(), b.key());
 			}
@@ -181,6 +175,16 @@ class MappingsDiffGenerator {
 				b = findMapping(DiffSide.B, parent, a.target(), a.key());
 			}
 
+			this.a = a;
+			this.b = b;
+		}
+
+		@Override
+		public String toString() {
+			return a + " == " + b;
+		}
+
+		public Mapping<?> get(DiffSide side) {
 			return side == DiffSide.A ? a : b;
 		}
 	}

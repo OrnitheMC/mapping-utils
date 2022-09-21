@@ -140,10 +140,10 @@ class MappingsDiffPropagator {
 		result = new Result<>(m, mode);
 
 		if (mode.is(DiffMode.MAPPINGS)) {
-			m.set(change.get(side));
+			m.set(change.get(DiffSide.B));
 		}
 		if (mode.is(DiffMode.JAVADOCS)) {
-			m.setJavadoc(change.getJavadoc().get(side));
+			m.setJavadoc(change.getJavadoc().get(DiffSide.B));
 		}
 
 		return result;
@@ -179,7 +179,7 @@ class MappingsDiffPropagator {
 		if (d != null) {
 			if (mode.is(DiffMode.MAPPINGS)) {
 				if (d.isDiff()) {
-					d.set(side, change.get(side));
+					d.set(side, change.get(DiffSide.B));
 					result.with(DiffMode.MAPPINGS);
 				}
 			}
@@ -188,7 +188,7 @@ class MappingsDiffPropagator {
 				JavadocDiff jd = d.getJavadoc();
 
 				if (jd.isDiff()) {
-					jd.set(side, jchange.get(side));
+					jd.set(side, jchange.get(DiffSide.B));
 					result.with(DiffMode.JAVADOCS);
 				}
 			}

@@ -73,6 +73,10 @@ public class MappingsDiff {
 		return a.isEmpty() ? !b.isEmpty() : !a.equals(b);
 	}
 
+	public static boolean safeIsDiff(String a, String b) {
+		return (a == null || a.isEmpty()) ? !(b == null || b.isEmpty()) : !a.equals(b);
+	}
+
 	public static abstract class Diff<T extends Diff<T>> {
 
 		protected MappingsDiff root;
@@ -111,6 +115,8 @@ public class MappingsDiff {
 		}
 
 		public final void set(DiffSide side, String dst) {
+			dst = validateDst(dst);
+
 			if (side == DiffSide.A) {
 				this.dstA = dst;
 			} else {
@@ -610,7 +616,7 @@ public class MappingsDiff {
 		private MethodDiff parent;
 
 		private ParameterDiff(MappingsDiff root, String key, String dstA, String dstB) {
-			this(root, key.split("[:]")[1], dstA, dstB, Integer.parseInt(key.split("[:]")[0]));
+			this(root, key.substring(key.indexOf(':') + 1), dstA, dstB, Integer.parseInt(key.substring(0, key.indexOf(':'))));
 		}
 
 		private ParameterDiff(MappingsDiff root, String src, String dstA, String dstB, int index) {
@@ -690,6 +696,8 @@ public class MappingsDiff {
 		}
 
 		public void set(DiffSide side, String javadoc) {
+			javadoc = validateDst(javadoc);
+
 			if (side == DiffSide.A) {
 				this.javadocA = javadoc;
 			} else {

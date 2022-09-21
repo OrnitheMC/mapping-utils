@@ -23,6 +23,16 @@ public enum Format {
 	TINY_V1(".tiny", ".tinydiff") {
 
 		@Override
+		public Mappings newMappings() {
+			return new TinyV1Mappings();
+		}
+
+		@Override
+		public MappingsDiff newDiff() {
+			return new TinyV1Diff();
+		}
+
+		@Override
 		public Mappings readMappings(Path path) throws Exception {
 			return TinyV1Reader.read(path);
 		}
@@ -63,6 +73,16 @@ public enum Format {
 		}
 	},
 	TINY_V2(".tiny", ".tinydiff") {
+
+		@Override
+		public Mappings newMappings() {
+			return new TinyV2Mappings();
+		}
+
+		@Override
+		public MappingsDiff newDiff() {
+			return new TinyV2Diff();
+		}
 
 		@Override
 		public Mappings readMappings(Path path) throws Exception {
@@ -120,6 +140,10 @@ public enum Format {
 	public String diffExtension() {
 		return diffExtension;
 	}
+
+	public abstract Mappings newMappings();
+
+	public abstract MappingsDiff newDiff();
 
 	public abstract Mappings readMappings(Path path) throws Exception;
 
