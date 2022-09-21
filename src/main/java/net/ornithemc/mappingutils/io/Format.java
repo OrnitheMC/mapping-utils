@@ -20,7 +20,7 @@ import net.ornithemc.mappingutils.io.tiny.v2.TinyV2Writer;
 
 public enum Format {
 
-	TINY_V1 {
+	TINY_V1(".tiny", ".tinydiff") {
 
 		@Override
 		public Mappings readMappings(Path path) throws Exception {
@@ -62,7 +62,7 @@ public enum Format {
 			TinyV1DiffWriter.write(bw, (TinyV1Diff)diff);
 		}
 	},
-	TINY_V2 {
+	TINY_V2(".tiny", ".tinydiff") {
 
 		@Override
 		public Mappings readMappings(Path path) throws Exception {
@@ -104,6 +104,22 @@ public enum Format {
 			TinyV2DiffWriter.write(bw, (TinyV2Diff)diff);
 		}
 	};
+
+	private final String mappingsExtension;
+	private final String diffExtension;
+
+	private Format(String mappingsExtension, String diffExtension) {
+		this.mappingsExtension = mappingsExtension;
+		this.diffExtension = diffExtension;
+	}
+
+	public String mappingsExtension() {
+		return mappingsExtension;
+	}
+
+	public String diffExtension() {
+		return diffExtension;
+	}
 
 	public abstract Mappings readMappings(Path path) throws Exception;
 

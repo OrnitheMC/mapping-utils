@@ -14,9 +14,6 @@ import net.ornithemc.mappingutils.io.diff.MappingsDiff;
 
 public class MappingsDiffTree {
 
-	private static final String DOT_TINY = ".tiny";
-	private static final String DOT_TINYDIFF = ".tinydiff";
-
 	private final Format format;
 	private final Map<String, Version> versions;
 
@@ -124,15 +121,15 @@ public class MappingsDiffTree {
 			String fileName = file.getName();
 
 			// root mappings
-			if (fileName.endsWith(DOT_TINY)) {
-				int versionLength = fileName.length() - DOT_TINY.length();
+			if (fileName.endsWith(format.mappingsExtension())) {
+				int versionLength = fileName.length() - format.mappingsExtension().length();
 				String version = fileName.substring(0, versionLength);
 
 				operation.accept(null, version, file.toPath());
 			}
 			// diff
-			if (fileName.endsWith(DOT_TINYDIFF)) {
-				int versionsLength = fileName.length() - DOT_TINYDIFF.length();
+			if (fileName.endsWith(format.diffExtension())) {
+				int versionsLength = fileName.length() - format.diffExtension().length();
 				String rawVersions = fileName.substring(0, versionsLength);
 
 				String[] versions = rawVersions.split("[#]");
