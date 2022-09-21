@@ -57,7 +57,7 @@ class MappingUpdater {
 		}
 
 		// TODO: make sure anonymous class indices match
-		ClassMapping cCalamusDst = calamusDst.getClass(cMatch.name(MatchSide.DST));
+		ClassMapping cCalamusDst = calamusDst.getClass(cMatch.name(MatchSide.B));
 		ClassMapping dc = dst.addClass(cCalamusDst.get(), c.get());
 
 		dc.setJavadoc(c.getJavadoc());
@@ -67,7 +67,7 @@ class MappingUpdater {
 			FieldMatch fMatch = cMatch.getField(fCalamusSrcInv.get(), fCalamusSrcInv.invert().getDesc());
 
 			if (fMatch != null) {
-				FieldMapping fCalamusDst = cCalamusDst.getField(fMatch.name(MatchSide.DST), fMatch.desc(MatchSide.DST));
+				FieldMapping fCalamusDst = cCalamusDst.getField(fMatch.name(MatchSide.B), fMatch.desc(MatchSide.B));
 				FieldMapping df = dc.addField(fCalamusDst.get(), f.get(), fCalamusDst.invert().getDesc());
 
 				df.setJavadoc(f.getJavadoc());
@@ -78,7 +78,7 @@ class MappingUpdater {
 			MethodMatch mMatch = cMatch.getMethod(mCalamusSrcInv.get(), mCalamusSrcInv.invert().getDesc());
 
 			if (mMatch != null) {
-				MethodMapping mCalamusDst = cCalamusDst.getMethod(mMatch.name(MatchSide.DST), mMatch.desc(MatchSide.DST));
+				MethodMapping mCalamusDst = cCalamusDst.getMethod(mMatch.name(MatchSide.B), mMatch.desc(MatchSide.B));
 
 				// method matches are a little finnicky
 				// sometimes there is a match even if the method does not exist in dst
