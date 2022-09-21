@@ -78,6 +78,7 @@ class MappingUpdater {
 			MethodMatch mMatch = cMatch.getMethod(mCalamusSrcInv.get(), mCalamusSrcInv.invert().getDesc());
 
 			if (mMatch != null) {
+				// TODO: deal with init methods
 				MethodMapping mCalamusDst = cCalamusDst.getMethod(mMatch.name(MatchSide.B), mMatch.desc(MatchSide.B));
 
 				// method matches are a little finnicky

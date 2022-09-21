@@ -5,7 +5,7 @@ public class MappingNamespace {
 	public static final MappingNamespace NONE = new MappingNamespace("");
 
 	public static final MappingNamespace CALAMUS = new MappingNamespace("calamus");
-	public static final MappingNamespace FEATHER = new MappingNamespace("feather");
+	public static final MappingNamespace NAMED = new MappingNamespace("named");
 
 	private final String namespace;
 

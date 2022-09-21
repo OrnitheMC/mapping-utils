@@ -1,7 +1,9 @@
 package net.ornithemc.mappingutils.io;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Objects;
 
@@ -52,30 +54,30 @@ public class Mappings {
 		this.dstNamespace = Objects.requireNonNull(namespace);
 	}
 
-	private ClassMapping findParent(String name, boolean orThrowException) {
-		int i = name.lastIndexOf('$');
+	private ClassMapping findParent(String key, boolean orThrowException) {
+		int i = key.lastIndexOf('$');
 
 		if (i < 0) {
 			return null;
 		}
 
-		String parentName = name.substring(0, i);
-		ClassMapping parent = getClass(parentName);
+		String parentKey = key.substring(0, i);
+		ClassMapping parent = getClass(parentKey);
 
 		if (parent == null && orThrowException) {
-			throw new IllegalStateException("unable to find parent class mapping " + parentName + " of class mapping " + name);
+			throw new IllegalStateException("unable to find parent class mapping " + parentKey + " of class mapping " + key);
 		}
 
 		return parent;
 	}
 
-	public ClassMapping getClass(String name) {
-		ClassMapping parent = findParent(name, false);
-		return parent == null ? getTopLevelClass(name) : parent.getClass(name);
+	public ClassMapping getClass(String key) {
+		ClassMapping parent = findParent(key, false);
+		return parent == null ? getTopLevelClass(key) : parent.getClass(key);
 	}
 
-	public ClassMapping getTopLevelClass(String name) {
-		return classMappings.get(name);
+	public ClassMapping getTopLevelClass(String key) {
+		return classMappings.get(key);
 	}
 
 	public Collection<ClassMapping> getTopLevelClasses() {
@@ -98,14 +100,14 @@ public class Mappings {
 		return parent.addClass(c);
 	}
 
-	public void removeClass(String name) {
-		ClassMapping c = getClass(name);
+	public void removeClass(String key) {
+		ClassMapping c = getClass(key);
 
 		if (c != null) {
 			if (c.parent == null) {
-				classMappings.remove(name);
+				classMappings.remove(key);
 			} else {
-				c.parent.removeClass(name);
+				c.parent.removeClass(key);
 			}
 		}
 	}
@@ -167,6 +169,12 @@ public class Mappings {
 			return getClass().getSimpleName() + "[" + key() + " -> " + dst + "]";
 		}
 
+		public abstract MappingTarget target();
+
+		public String key() {
+			return src;
+		}
+
 		public final String src() {
 			return src;
 		}
@@ -191,6 +199,26 @@ public class Mappings {
 			this.jav = jav;
 		}
 
+		public Mapping<?> getParent() {
+			return null;
+		}
+
+		public Mapping<?> getChild(MappingTarget target, String key) {
+			throw new IllegalStateException("cannot get child mapping of target " + target);
+		}
+
+		public Mapping<?> addChild(MappingTarget target, String key, String dst) {
+			throw new IllegalStateException("cannot add child mapping of target " + target);
+		}
+
+		public void removeChild(MappingTarget target, String key) {
+			throw new IllegalStateException("cannot remove child mapping of target " + target);
+		}
+
+		public Collection<Mapping<?>> getChildren() {
+			return Collections.emptyList();
+		}
+
 		public boolean hasChildren() {
 			return false;
 		}
@@ -199,14 +227,10 @@ public class Mappings {
 			root.invert();
 
 			if (inverted == null) {
-				inverted();
+				inverted = inverted();
 			}
 
 			return inverted;
-		}
-
-		protected String key() {
-			return src;
 		}
 
 		protected void validate() {
@@ -237,6 +261,69 @@ public class Mappings {
 			this.classMappings = new LinkedHashMap<>();
 			this.fieldMappings = new LinkedHashMap<>();
 			this.methodMappings = new LinkedHashMap<>();
+		}
+
+		@Override
+		public MappingTarget target() {
+			return MappingTarget.CLASS;
+		}
+
+		@Override
+		public ClassMapping getParent() {
+			return parent;
+		}
+
+		@Override
+		public Mapping<?> getChild(MappingTarget target, String key) {
+			switch (target) {
+			case CLASS:
+				return getClass(key);
+			case FIELD:
+				return getField(key);
+			case METHOD:
+				return getMethod(key);
+			default:
+				return super.getChild(target, key);
+			}
+		}
+
+		@Override
+		public Mapping<?> addChild(MappingTarget target, String key, String dst) {
+			switch (target) {
+			case CLASS:
+				return addClass(key, dst);
+			case FIELD:
+				return addField(key, dst);
+			case METHOD:
+				return addMethod(key, dst);
+			default:
+				return super.addChild(target, key, dst);
+			}
+		}
+
+		@Override
+		public void removeChild(MappingTarget target, String key) {
+			switch (target) {
+			case CLASS:
+				removeClass(key);
+			case FIELD:
+				removeField(key);
+			case METHOD:
+				removeMethod(key);
+			default:
+				super.removeChild(target, key);
+			}
+		}
+
+		@Override
+		public Collection<Mapping<?>> getChildren() {
+			Collection<Mapping<?>> children = new LinkedList<>();
+
+			children.addAll(classMappings.values());
+			children.addAll(fieldMappings.values());
+			children.addAll(methodMappings.values());
+
+			return children;
 		}
 
 		@Override
@@ -323,26 +410,24 @@ public class Mappings {
 			return copy;
 		}
 
-		public ClassMapping getParentClass() {
-			return parent;
-		}
-
-		public ClassMapping getClass(String name) {
-			return classMappings.get(name);
+		public ClassMapping getClass(String key) {
+			return classMappings.get(key);
 		}
 
 		public FieldMapping getField(String name, String desc) {
-			return fieldMappings.get(name + desc);
+			return getField(FieldMapping.key(name, desc));
+		}
+
+		public FieldMapping getField(String key) {
+			return fieldMappings.get(key);
 		}
 
 		public MethodMapping getMethod(String name, String desc) {
-			MethodMapping m = methodMappings.get(name + desc);
+			return getMethod(MethodMapping.key(name, desc));
+		}
 
-			if (m == null && (name.equals("<init>") || name.equals("<clinit>"))) {
-				m = addMethod(name, name, desc);
-			}
-
-			return m;
+		public MethodMapping getMethod(String key) {
+			return methodMappings.get(key);
 		}
 
 		public Collection<ClassMapping> getClasses() {
@@ -360,17 +445,21 @@ public class Mappings {
 		public ClassMapping addClass(String src, String dst) {
 			return addClass(new ClassMapping(root, src, dst));
 		}
-		
+
 		private ClassMapping addClass(ClassMapping c) {
 			c.parent = this;
-			
+
 			return classMappings.compute(c.key(), (key, value) -> {
 				return checkReplace(value, c);
 			});
 		}
 
 		public FieldMapping addField(String src, String dst, String desc) {
-			return addField(new FieldMapping(root, src, dst, desc));
+			return addField(FieldMapping.key(src, desc), dst);
+		}
+
+		private FieldMapping addField(String key, String dst) {
+			return addField(new FieldMapping(root, key, dst));
 		}
 
 		private FieldMapping addField(FieldMapping f) {
@@ -382,7 +471,11 @@ public class Mappings {
 		}
 
 		public MethodMapping addMethod(String src, String dst, String desc) {
-			return addMethod(new MethodMapping(root, src, dst, desc));
+			return addMethod(MethodMapping.key(src, desc), dst);
+		}
+
+		private MethodMapping addMethod(String key, String desc) {
+			return addMethod(new MethodMapping(root, key, desc));
 		}
 
 		private MethodMapping addMethod(MethodMapping m) {
@@ -393,16 +486,24 @@ public class Mappings {
 			});
 		}
 
-		public void removeClass(String name) {
-			classMappings.remove(name);
+		public void removeClass(String key) {
+			classMappings.remove(key);
 		}
 
 		public void removeField(String name, String desc) {
-			fieldMappings.remove(name + desc);
+			removeField(FieldMapping.key(name, desc));
+		}
+
+		public void removeField(String key) {
+			fieldMappings.remove(key);
 		}
 
 		public void removeMethod(String name, String desc) {
-			methodMappings.remove(name + desc);
+			removeMethod(MethodMapping.key(name, desc));
+		}
+
+		public void removeMethod(String key) {
+			methodMappings.remove(key);
 		}
 	}
 
@@ -411,8 +512,8 @@ public class Mappings {
 		private ClassMapping parent;
 		private String desc;
 
-		private FieldMapping(Mappings root, String src, String dst, String desc) {
-			this(root, null, src, dst, desc);
+		private FieldMapping(Mappings root, String key, String desc) {
+			this(root, null, key.split("[:]")[0], key.split("[:]")[1], desc);
 		}
 
 		private FieldMapping(Mappings root, FieldMapping inverted, String src, String dst, String desc) {
@@ -421,9 +522,23 @@ public class Mappings {
 			this.desc = desc;
 		}
 
+		private static String key(String name, String desc) {
+			return name + ":" + desc;
+		}
+
 		@Override
-		protected String key() {
-			return super.key() + desc;
+		public MappingTarget target() {
+			return MappingTarget.FIELD;
+		}
+
+		@Override
+		public String key() {
+			return key(src, desc);
+		}
+
+		@Override
+		public ClassMapping getParent() {
+			return parent;
 		}
 
 		@Override
@@ -436,7 +551,7 @@ public class Mappings {
 
 		@Override
 		protected FieldMapping copy() {
-			FieldMapping copy = new FieldMapping(root, src, dst, desc);
+			FieldMapping copy = new FieldMapping(root, null, src, dst, desc);
 			copy.setJavadoc(jav);
 
 			return copy;
@@ -445,41 +560,94 @@ public class Mappings {
 		public String getDesc() {
 			return desc;
 		}
-
-		public ClassMapping getParent() {
-			return parent;
-		}
 	}
 
 	public static class MethodMapping extends Mapping<MethodMapping> {
 
+		private final ParameterMapping[] parameters;
 		private final Map<String, ParameterMapping> parameterMappings;
 
 		private ClassMapping parent;
 		private String desc;
-		private int parameterCount;
 
-		private MethodMapping(Mappings root, String src, String dst, String desc) {
-			this(root, null, src, dst, desc);
+		private MethodMapping(Mappings root, String key, String desc) {
+			this(root, null, key.split("[:]")[0], key.split("[:]")[1], desc);
 		}
 
 		private MethodMapping(Mappings root, MethodMapping inverted, String src, String dst, String desc) {
 			super(root, inverted, src, dst);
 
+			this.parameters = new ParameterMapping[parameterCount(desc)];
 			this.parameterMappings = new LinkedHashMap<>();
 
 			this.desc = desc;
-			this.parameterCount = -1;
+		}
+
+		private static String key(String name, String desc) {
+			return name + ":" + desc;
+		}
+
+		private static int parameterCount(String desc) {
+			Type type = Type.getMethodType(desc);
+			int argAndRetSize = type.getArgumentsAndReturnSizes();
+
+			return argAndRetSize >> 2;
+		}
+
+		@Override
+		public MappingTarget target() {
+			return MappingTarget.METHOD;
+		}
+
+		@Override
+		public String key() {
+			return key(src, desc);
+		}
+
+		@Override
+		public ClassMapping getParent() {
+			return parent;
+		}
+
+		@Override
+		public Mapping<?> getChild(MappingTarget target, String key) {
+			if (target == MappingTarget.PARAMETER) {
+				return getParameter(key);
+			} else {
+				return super.getChild(target, key);
+			}
+		}
+
+		@Override
+		public Mapping<?> addChild(MappingTarget target, String key, String dst) {
+			if (target == MappingTarget.PARAMETER) {
+				return addParameter(key, dst);
+			} else {
+				return super.addChild(target, key, dst);
+			}
+		}
+
+		@Override
+		public void removeChild(MappingTarget target, String key) {
+			if (target == MappingTarget.PARAMETER) {
+				removeParameter(key);
+			} else {
+				super.removeChild(target, key);
+			}
+		}
+
+		@Override
+		public Collection<Mapping<?>> getChildren() {
+			Collection<Mapping<?>> children = new LinkedList<>();
+
+			children.addAll(parameterMappings.values());
+
+			return children;
 		}
 
 		@Override
 		public boolean hasChildren() {
 			return !parameterMappings.isEmpty();
-		}
-
-		@Override
-		protected String key() {
-			return super.key() + desc;
 		}
 
 		@Override
@@ -503,7 +671,7 @@ public class Mappings {
 
 		@Override
 		protected MethodMapping copy() {
-			MethodMapping copy = new MethodMapping(root, src, dst, desc);
+			MethodMapping copy = new MethodMapping(root, null, src, dst, desc);
 			copy.setJavadoc(jav);
 
 			for (ParameterMapping p : parameterMappings.values()) {
@@ -518,22 +686,15 @@ public class Mappings {
 		}
 
 		public int getParameterCount() {
-			if (parameterCount < 0) {
-				Type type = Type.getMethodType(desc);
-				int argAndRetSize = type.getArgumentsAndReturnSizes();
-
-				parameterCount = argAndRetSize >> 2;
-			}
-
-			return parameterCount;
-		}
-
-		public ClassMapping getParent() {
-			return parent;
+			return parameters.length;
 		}
 
 		public ParameterMapping getParameter(int index) {
-			return parameterMappings.get(Integer.toString(index));
+			return parameters[index];
+		}
+
+		public ParameterMapping getParameter(String key) {
+			return parameterMappings.get(key);
 		}
 
 		public Collection<ParameterMapping> getParameters() {
@@ -541,19 +702,38 @@ public class Mappings {
 		}
 
 		public ParameterMapping addParameter(String src, String dst, int index) {
-			return addParameter(new ParameterMapping(root, src, dst, index));
+			return addParameter(ParameterMapping.key(index, dst), dst);
+		}
+
+		public ParameterMapping addParameter(String key, String dst) {
+			return addParameter(new ParameterMapping(root, key, dst));
 		}
 
 		private ParameterMapping addParameter(ParameterMapping p) {
 			p.parent = this;
 
+			parameters[p.index] = p;
 			return parameterMappings.compute(p.key(), (key, value) -> {
 				return checkReplace(value, p);
 			});
 		}
 
 		public void removeParameter(int index) {
-			parameterMappings.remove(Integer.toString(index));
+			ParameterMapping p = parameters[index];
+
+			if (p != null) {
+				parameters[p.index] = null;
+				parameterMappings.remove(p.key());
+			}
+		}
+
+		public void removeParameter(String key) {
+			ParameterMapping p = parameterMappings.get(key);
+
+			if (p != null) {
+				parameters[p.index] = null;
+				parameterMappings.remove(p.key());
+			}
 		}
 	}
 
@@ -563,8 +743,8 @@ public class Mappings {
 
 		private MethodMapping parent;
 
-		private ParameterMapping(Mappings root, String src, String dst, int index) {
-			this(root, null, src, dst, index);
+		private ParameterMapping(Mappings root, String key, String dst) {
+			this(root, null, key.split("[:]")[1], dst, Integer.parseInt(key.split("[:]")[0]));
 		}
 
 		private ParameterMapping(Mappings root, ParameterMapping inverted, String src, String dst, int index) {
@@ -577,9 +757,23 @@ public class Mappings {
 			this.index = index;
 		}
 
+		private static String key(int index, String name) {
+			return Integer.toString(index) + ":" + name;
+		}
+
 		@Override
-		protected String key() {
-			return Integer.toString(index);
+		public MappingTarget target() {
+			return MappingTarget.PARAMETER;
+		}
+
+		@Override
+		public String key() {
+			return key(index, src);
+		}
+
+		@Override
+		public MethodMapping getParent() {
+			return parent;
 		}
 
 		@Override
@@ -592,7 +786,7 @@ public class Mappings {
 
 		@Override
 		protected ParameterMapping copy() {
-			ParameterMapping copy = new ParameterMapping(root, src, dst, index);
+			ParameterMapping copy = new ParameterMapping(root, null, src, dst, index);
 			copy.setJavadoc(jav);
 
 			return copy;
@@ -600,10 +794,6 @@ public class Mappings {
 
 		public int getIndex() {
 			return index;
-		}
-
-		public MethodMapping getParent() {
-			return parent;
 		}
 	}
 

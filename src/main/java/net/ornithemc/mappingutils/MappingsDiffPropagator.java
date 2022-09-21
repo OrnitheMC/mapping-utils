@@ -1,14 +1,14 @@
 package net.ornithemc.mappingutils;
 
+import net.ornithemc.mappingutils.io.MappingTarget;
 import net.ornithemc.mappingutils.io.Mappings;
-import net.ornithemc.mappingutils.io.Mappings.ClassMapping;
-import net.ornithemc.mappingutils.io.Mappings.FieldMapping;
-import net.ornithemc.mappingutils.io.Mappings.MethodMapping;
-import net.ornithemc.mappingutils.io.Mappings.ParameterMapping;
+import net.ornithemc.mappingutils.io.Mappings.Mapping;
 import net.ornithemc.mappingutils.io.diff.DiffSide;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.ClassDiff;
+import net.ornithemc.mappingutils.io.diff.MappingsDiff.Diff;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.FieldDiff;
+import net.ornithemc.mappingutils.io.diff.MappingsDiff.JavadocDiff;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.MethodDiff;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.ParameterDiff;
 import net.ornithemc.mappingutils.io.diff.tree.MappingsDiffTree;
@@ -16,17 +16,17 @@ import net.ornithemc.mappingutils.io.diff.tree.Version;
 
 class MappingsDiffPropagator {
 
-	static void run(MappingsDiffTree tree, MappingsDiff diff, String version) throws Exception {
-		new MappingsDiffPropagator(tree, diff, version).run();
+	static void run(MappingsDiffTree tree, MappingsDiff changes, String version) throws Exception {
+		new MappingsDiffPropagator(tree, changes, version).run();
 	}
 
 	private final MappingsDiffTree tree;
-	private final MappingsDiff diff;
+	private final MappingsDiff changes;
 	private final String version;
 
-	private MappingsDiffPropagator(MappingsDiffTree tree, MappingsDiff diff, String version) {
+	private MappingsDiffPropagator(MappingsDiffTree tree, MappingsDiff changes, String version) {
 		this.tree = tree;
-		this.diff = diff;
+		this.changes = changes;
 		this.version = version;
 	}
 
@@ -37,17 +37,17 @@ class MappingsDiffPropagator {
 			throw new IllegalStateException("mappings for version " + version + " do not exist!");
 		}
 
-		for (ClassDiff cd : diff.getClasses()) {
-			propagateClassDiff(v, cd);
+		for (ClassDiff cd : changes.getClasses()) {
+			propagateChange(v, cd);
 
 			for (FieldDiff fd : cd.getFields()) {
-				propagateFieldDiff(v, cd, fd);
+				propagateChange(v, fd);
 			}
 			for (MethodDiff md : cd.getMethods()) {
-				propagateMethodDiff(v, cd, md);
+				propagateChange(v, md);
 
 				for (ParameterDiff pd : md.getParameters()) {
-					propagateParameterDiff(v, cd, md, pd);
+					propagateChange(v, pd);
 				}
 			}
 		}
@@ -55,235 +55,210 @@ class MappingsDiffPropagator {
 		tree.write();
 	}
 
-	private void propagateClassDiff(Version v, ClassDiff cd) throws Exception {
-		if (cd.isDiff()) {
-			propagateUp(v, cd);
+	private void propagateChange(Version v, Diff<?> change) throws Exception {
+		DiffMode mode = DiffMode.NONE;
 
-			for (Version c : v.getChildren()) {
-				propagateDown(c, cd);
-			}
+		if (change.isDiff()) {
+			mode = mode.with(DiffMode.MAPPINGS);
+		}
+		if (change.getJavadoc().isDiff()) {
+			mode = mode.with(DiffMode.JAVADOCS);
+		}
+
+		propagateChange(v, change, DiffSide.B, mode);
+
+		for (Version c : v.getChildren()) {
+			propagateChange(c, change, DiffSide.A, mode);
 		}
 	}
 
-	private void propagateFieldDiff(Version v, ClassDiff cd, FieldDiff fd) throws Exception {
-		if (fd.isDiff()) {
-			propagateUp(v, cd, fd);
-
-			for (Version c : v.getChildren()) {
-				propagateDown(c, cd, fd);
-			}
+	private void propagateChange(Version v, Diff<?> change, DiffSide side, DiffMode mode) throws Exception {
+		if (mode == DiffMode.NONE) {
+			return;
 		}
-	}
 
-	private void propagateMethodDiff(Version v, ClassDiff cd, MethodDiff md) throws Exception {
-		if (md.isDiff()) {
-			propagateUp(v, cd, md);
-
-			for (Version c : v.getChildren()) {
-				propagateDown(c, cd, md);
-			}
-		}
-	}
-
-	private void propagateParameterDiff(Version v, ClassDiff cd, MethodDiff md, ParameterDiff pd) throws Exception {
-		if (pd.isDiff()) {
-			propagateUp(v, cd, md, pd);
-
-			for (Version c : v.getChildren()) {
-				propagateDown(c, cd, md, pd);
-			}
-		}
-	}
-
-	private void propagateUp(Version v, ClassDiff cd) throws Exception {
 		if (v.isRoot()) {
-			Mappings mappings = v.getMappings();
-			ClassMapping cm = mappings.getClass(cd.src());
+			if (side == DiffSide.B) {
+				Result<Mapping<?>> result = applyChange(v.getMappings(), change, side, mode);
 
-			if (cm == null) {
-				mappings.addClass(cd.src(), cd.get(DiffSide.B));
+				if (result.success()) {
+					v.markDirty();
+				}
+			}
+		} else {
+			Result<Diff<?>> result = applyChange(v.getDiff(), change, side, mode);
+
+			if (result.success()) {
+				v.markDirty();
+			}
+
+			mode = mode.without(result.mode);
+
+			if (side == DiffSide.B) {
+				propagateChange(v.getParent(), change, side, mode);
 			} else {
-				cm.set(cd.get(DiffSide.B));
-			}
-
-			v.markDirty();
-		} else {
-			MappingsDiff vdiff = v.getDiff();
-			ClassDiff vcd = vdiff.getClass(cd.src());
-
-			if (vcd == null) {
-				propagateUp(v.getParent(), cd);
-			} else {
-				vcd.set(DiffSide.B, cd.get(DiffSide.B));
-				v.markDirty();
-			}
-		}
-	}
-
-	private void propagateDown(Version v, ClassDiff cd) throws Exception {
-		MappingsDiff vdiff = v.getDiff();
-		ClassDiff vcd = vdiff.getClass(cd.src());
-
-		if (vcd == null) {
-			for (Version c : v.getChildren()) {
-				propagateDown(c, cd);
-			}
-		} else {
-			vcd.set(DiffSide.A, cd.get(DiffSide.B));
-			v.markDirty();
-		}
-	}
-
-	private void propagateUp(Version v, ClassDiff cd, FieldDiff fd) throws Exception {
-		if (v.isRoot()) {
-			Mappings mappings = v.getMappings();
-			ClassMapping cm = mappings.getClass(cd.src());
-
-			if (cm != null) {
-				FieldMapping fm = cm.getField(fd.src(), fd.getDesc());
-
-				if (fm == null) {
-					cm.addField(fd.src(), fd.get(DiffSide.B), fd.getDesc());
-				} else {
-					fm.set(fd.get(DiffSide.B));
-				}
-
-				v.markDirty();
-			}
-		} else {
-			MappingsDiff vdiff = v.getDiff();
-			ClassDiff vcd = vdiff.getClass(cd.src());
-
-			if (vcd != null) {
-				FieldDiff vfd = vcd.getField(fd.src(), fd.getDesc());
-
-				if (vfd == null) {
-					propagateUp(v.getParent(), cd, fd);
-				} else {
-					vfd.set(DiffSide.B, fd.get(DiffSide.B));
-					v.markDirty();
+				for (Version c : v.getChildren()) {
+					propagateChange(c, change, side, mode);
 				}
 			}
 		}
 	}
 
-	private void propagateDown(Version v, ClassDiff cd, FieldDiff fd) throws Exception {
-		MappingsDiff vdiff = v.getDiff();
-		ClassDiff vcd = vdiff.getClass(cd.src());
-		FieldDiff vfd = (vcd == null) ? null : vcd.getField(fd.src(), fd.getDesc());
+	private Result<Mapping<?>> applyChange(Mappings mappings, Diff<?> change, DiffSide side, DiffMode mode) {
+		Mapping<?> m;
+		Result<Mapping<?>> result;
 
-		if (vfd == null) {
-			for (Version c : v.getChildren()) {
-				propagateDown(c, cd, fd);
+		Diff<?> parentChange = change.getParent();
+
+		if (parentChange == null) {
+			if (change.target() != MappingTarget.CLASS) {
+				throw new IllegalStateException("cannot get mapping of target " + change.target() + " from the root mappings");
+			}
+
+			m = mappings.getClass(change.src());
+
+			if (m == null) {
+				m = mappings.addClass(change.src(), change.src());
 			}
 		} else {
-			vfd.set(DiffSide.A, fd.get(DiffSide.B));
-			v.markDirty();
-		}
-	}
+			Result<Mapping<?>> parentResult = applyChange(mappings, parentChange, side, DiffMode.NONE);
 
-	private void propagateUp(Version v, ClassDiff cd, MethodDiff md) throws Exception {
-		if (v.isRoot()) {
-			Mappings mappings = v.getMappings();
-			ClassMapping cm = mappings.getClass(cd.src());
-
-			if (cm != null) {
-				MethodMapping mm = cm.getMethod(md.src(), md.getDesc());
-
-				if (mm == null) {
-					cm.addMethod(md.src(), md.get(DiffSide.B), md.getDesc());
-				} else {
-					mm.set(md.get(DiffSide.B));
-				}
-
-				v.markDirty();
+			if (parentResult.subject == null) {
+				throw new IllegalStateException("unable to apply " + parentChange);
 			}
-		} else {
-			MappingsDiff vdiff = v.getDiff();
-			ClassDiff vcd = vdiff.getClass(cd.src());
 
-			if (vcd != null) {
-				MethodDiff vmd = vcd.getMethod(md.src(), md.getDesc());
+			MappingTarget target = change.target();
+			String key = change.key();
 
-				if (vmd == null) {
-					propagateUp(v.getParent(), cd, md);
-				} else {
-					vmd.set(DiffSide.B, md.get(DiffSide.B));
-					v.markDirty();
-				}
+			m = parentResult.subject.getChild(target, key);
+
+			if (m == null) {
+				m = parentResult.subject.addChild(target, key, change.src());
 			}
 		}
-	}
 
-	private void propagateDown(Version v, ClassDiff cd, MethodDiff md) throws Exception {
-		MappingsDiff vdiff = v.getDiff();
-		ClassDiff vcd = vdiff.getClass(cd.src());
-		MethodDiff vmd = (vcd == null) ? null : vcd.getMethod(md.src(), md.getDesc());
+		result = new Result<>(m, mode);
 
-		if (vmd == null) {
-			for (Version c : v.getChildren()) {
-				propagateDown(c, cd, md);
-			}
-		} else {
-			vmd.set(DiffSide.A, md.get(DiffSide.B));
-			v.markDirty();
+		if (mode.is(DiffMode.MAPPINGS)) {
+			m.set(change.get(side));
 		}
+		if (mode.is(DiffMode.JAVADOCS)) {
+			m.setJavadoc(change.getJavadoc().get(side));
+		}
+
+		return result;
 	}
 
-	private void propagateUp(Version v, ClassDiff cd, MethodDiff md, ParameterDiff pd) throws Exception {
-		if (v.isRoot()) {
-			Mappings mappings = v.getMappings();
-			ClassMapping cm = mappings.getClass(cd.src());
+	private Result<Diff<?>> applyChange(MappingsDiff diff, Diff<?> change, DiffSide side, DiffMode mode) {
+		Diff<?> d;
+		Result<Diff<?>> result;
 
-			if (cm != null) {
-				MethodMapping mm = cm.getMethod(md.src(), md.getDesc());
+		Diff<?> parentChange = change.getParent();
 
-				if (mm != null) {
-					ParameterMapping pm = mm.getParameter(pd.getIndex());
+		if (parentChange == null) {
+			if (change.target() != MappingTarget.CLASS) {
+				throw new IllegalStateException("cannot get diff of target " + change.target() + " from the root diff");
+			}
 
-					if (pm == null) {
-						mm.addParameter(pd.src(), pd.get(DiffSide.B), pd.getIndex());
-					} else {
-						pm.set(md.get(DiffSide.B));
-					}
+			d = diff.getClass(change.src());
+		} else {
+			Result<Diff<?>> parentResult = applyChange(diff, parentChange, side, DiffMode.NONE);
 
-					v.markDirty();
+			if (parentResult.subject == null) {
+				throw new IllegalStateException("unable to apply " + parentChange);
+			}
+
+			MappingTarget target = change.target();
+			String key = change.key();
+
+			d = parentResult.subject.getChild(target, key);
+		}
+
+		result = new Result<>(d);
+
+		if (d != null) {
+			if (mode.is(DiffMode.MAPPINGS)) {
+				if (d.isDiff()) {
+					d.set(side, change.get(side));
+					result.with(DiffMode.MAPPINGS);
 				}
 			}
-		} else {
-			MappingsDiff vdiff = v.getDiff();
-			ClassDiff vcd = vdiff.getClass(cd.src());
-			
-			if (vcd != null) {
-				MethodDiff vmd = vcd.getMethod(md.src(), md.getDesc());
+			if (mode.is(DiffMode.JAVADOCS)) {
+				JavadocDiff jchange = change.getJavadoc();
+				JavadocDiff jd = d.getJavadoc();
 
-				if (vmd != null) {
-					ParameterDiff vpd = vmd.getParameter(pd.getIndex());
-
-					if (vpd == null) {
-						propagateUp(v.getParent(), cd, md, pd);
-					} else {
-						vpd.set(DiffSide.B, pd.get(DiffSide.B));
-						v.markDirty();
-					}
+				if (jd.isDiff()) {
+					jd.set(side, jchange.get(side));
+					result.with(DiffMode.JAVADOCS);
 				}
 			}
 		}
+
+		return result;
 	}
 
-	private void propagateDown(Version v, ClassDiff cd, MethodDiff md, ParameterDiff pd) throws Exception {
-		MappingsDiff vdiff = v.getDiff();
-		ClassDiff vcd = vdiff.getClass(cd.src());
-		MethodDiff vmd = (vcd == null) ? null : vcd.getMethod(md.src(), md.getDesc());
-		ParameterDiff vpd = (vmd == null) ? null : vmd.getParameter(pd.getIndex());
+	private enum DiffMode {
 
-		if (vpd == null) {
-			for (Version c : v.getChildren()) {
-				propagateDown(c, cd, md, pd);
+		NONE    (0b00),
+		MAPPINGS(0b01),
+		JAVADOCS(0b10),
+		BOTH    (0b11);
+
+		private static final DiffMode[] ALL;
+
+		static {
+
+			DiffMode[] values = values();
+			ALL = new DiffMode[values.length];
+
+			for (DiffMode mode : values) {
+				ALL[mode.flags] = mode;
 			}
-		} else {
-			vpd.set(DiffSide.A, pd.get(DiffSide.B));
-			v.markDirty();
+		}
+
+		private final int flags;
+
+		private DiffMode(int flags) {
+			this.flags = flags;
+		}
+
+		public boolean is(DiffMode mode) {
+			return this == mode || this == BOTH;
+		}
+
+		public DiffMode with(DiffMode mode) {
+			return ALL[flags | mode.flags];
+		}
+
+		public DiffMode without(DiffMode mode) {
+			return ALL[flags & (~mode.flags)];
+		}
+	}
+
+	private class Result<T> {
+
+		// the mapping/diff the change was applied to
+		public final T subject;
+
+		// the type of change that was applied
+		public DiffMode mode;
+
+		public Result(T subject) {
+			this(subject, DiffMode.NONE);
+		}
+
+		public Result(T subject, DiffMode mode) {
+			this.subject = subject;
+
+			this.mode = mode;
+		}
+
+		public void with(DiffMode mode) {
+			this.mode = this.mode.with(mode);
+		}
+
+		public boolean success() {
+			return mode != DiffMode.NONE;
 		}
 	}
 }

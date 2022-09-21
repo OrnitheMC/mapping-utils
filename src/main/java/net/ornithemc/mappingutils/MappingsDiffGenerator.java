@@ -3,19 +3,13 @@ package net.ornithemc.mappingutils;
 import java.util.LinkedList;
 import java.util.List;
 
+import net.ornithemc.mappingutils.io.MappingTarget;
 import net.ornithemc.mappingutils.io.Mappings;
 import net.ornithemc.mappingutils.io.Mappings.ClassMapping;
-import net.ornithemc.mappingutils.io.Mappings.FieldMapping;
 import net.ornithemc.mappingutils.io.Mappings.Mapping;
-import net.ornithemc.mappingutils.io.Mappings.MethodMapping;
-import net.ornithemc.mappingutils.io.Mappings.ParameterMapping;
 import net.ornithemc.mappingutils.io.diff.DiffSide;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff;
-import net.ornithemc.mappingutils.io.diff.MappingsDiff.ClassDiff;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.Diff;
-import net.ornithemc.mappingutils.io.diff.MappingsDiff.FieldDiff;
-import net.ornithemc.mappingutils.io.diff.MappingsDiff.MethodDiff;
-import net.ornithemc.mappingutils.io.diff.MappingsDiff.ParameterDiff;
 
 class MappingsDiffGenerator {
 
@@ -27,7 +21,7 @@ class MappingsDiffGenerator {
 	private final Mappings a;
 	private final Mappings b;
 
-	private final List<MappingPair<?>> mappingPairs;
+	private final List<MappingPair> mappingPairs;
 
 	private MappingsDiffGenerator(Mappings a, Mappings b, MappingsDiff diff) {
 		if (!a.getSrcNamespace().equals(b.getSrcNamespace())) {
@@ -47,22 +41,6 @@ class MappingsDiffGenerator {
 		this.mappingPairs = new LinkedList<>();
 	}
 
-	public ClassMapping getClass(DiffSide side, String name) {
-		return side == DiffSide.A ? a.getClass(name) : b.getClass(name);
-	}
-
-	public FieldMapping getField(DiffSide side, String name, String desc, ClassMapping ca, ClassMapping cb) {
-		return side == DiffSide.A ? ca.getField(name, desc) : cb.getField(name, desc);
-	}
-
-	public MethodMapping getMethod(DiffSide side, String name, String desc, ClassMapping ca, ClassMapping cb) {
-		return side == DiffSide.A ? ca.getMethod(name, desc) : cb.getMethod(name, desc);
-	}
-
-	public ParameterMapping getParameter(DiffSide side, int index, MethodMapping ma, MethodMapping mb) {
-		return side == DiffSide.A ? ma.getParameter(index) : mb.getParameter(index);
-	}
-
 	private void run() throws Exception {
 		collectMappingPairs();
 		createMappingDiffs();
@@ -70,85 +48,35 @@ class MappingsDiffGenerator {
 
 	private void collectMappingPairs() {
 		for (ClassMapping ca : a.getTopLevelClasses()) {
-			addClassPair(ca, null);
+			addMappingPair(null, ca, null);
 		}
 		for (ClassMapping cb : b.getTopLevelClasses()) {
 			ClassMapping ca = a.getClass(cb.src());
 
 			if (ca == null) {
-				addClassPair(null, cb);
+				addMappingPair(null, null, cb);
 			}
 		}
 	}
 
-	private void addClassPair(ClassMapping ca, ClassMapping cb) {
-		ClassMappingPair pair = new ClassMappingPair(ca, cb);
-
+	private void addMappingPair(MappingPair parent, Mapping<?> a, Mapping<?> b) {
+		MappingPair pair = new MappingPair(parent, a, b);
 		mappingPairs.add(pair);
 
-		if (ca != null) {
-			for (FieldMapping fa : ca.getFields()) {
-				addFieldPair(fa, null, pair);
-			}
-			for (MethodMapping ma : ca.getMethods()) {
-				addMethodPair(ma, null, pair);
-			}
-			for (ClassMapping cca : ca.getClasses()) {
-				addClassPair(cca, null);
+		for (Mapping<?> ca : a.getChildren()) {
+			addMappingPair(pair, ca, null);
+		}
+		for (Mapping<?> cb : b.getChildren()) {
+			Mapping<?> ca = b.getChild(cb.target(), cb.key());
+
+			if (ca == null) {
+				addMappingPair(pair, null, cb);
 			}
 		}
-		if (cb != null) {
-			for (FieldMapping fb : cb.getFields()) {
-				if (ca == null || ca.getField(fb.src(), fb.getDesc()) == null) {
-					addFieldPair(null, fb, pair);
-				}
-			}
-			for (MethodMapping mb : cb.getMethods()) {
-				if (ca == null || ca.getMethod(mb.src(), mb.getDesc()) == null) {
-					addMethodPair(null, mb, pair);
-				}
-			}
-			for (ClassMapping ccb : cb.getClasses()) {
-				if (ca == null || ca.getClass(ccb.src()) == null) {
-					addClassPair(null, ccb);
-				}
-			}
-		}
-	}
-
-	private void addFieldPair(FieldMapping fa, FieldMapping fb, ClassMappingPair parent) {
-		FieldMappingPair pair = new FieldMappingPair(fa, fb, parent);
-
-		mappingPairs.add(pair);
-	}
-
-	private void addMethodPair(MethodMapping ma, MethodMapping mb, ClassMappingPair parent) {
-		MethodMappingPair pair = new MethodMappingPair(ma, mb, parent);
-
-		mappingPairs.add(pair);
-
-		if (ma != null) {
-			for (ParameterMapping pa : ma.getParameters()) {
-				addParameterPair(pa, null, pair);
-			}
-		}
-		if (mb != null) {
-			for (ParameterMapping pb : mb.getParameters()) {
-				if (ma == null || ma.getParameter(pb.getIndex()) == null) {
-					addParameterPair(null, pb, pair);
-				}
-			}
-		}
-	}
-
-	private void addParameterPair(ParameterMapping pa, ParameterMapping pb, MethodMappingPair parent) {
-		ParameterMappingPair pair = new ParameterMappingPair(pa, pb, parent);
-
-		mappingPairs.add(pair);
 	}
 
 	private void createMappingDiffs() {
-		for (MappingPair<?> pair : mappingPairs) {
+		for (MappingPair pair : mappingPairs) {
 			Mapping<?> a = pair.get(DiffSide.A);
 			Mapping<?> b = pair.get(DiffSide.B);
 
@@ -168,126 +96,92 @@ class MappingsDiffGenerator {
 	}
 
 	private void diff(Mapping<?> a, Mapping<?> b, DiffMode mode) {
-		mode.run(a, b, getDiff(a));
+		mode.run(a, b, addDiff(a));
 	}
 
-	private Diff<?> getDiff(Mapping<?> mapping) {
-		if (mapping instanceof ClassMapping) {
-			return getDiff((ClassMapping)mapping);
+	public Mapping<?> findMapping(DiffSide side, MappingPair parent, MappingTarget target, String key) {
+		Mapping<?> m;
+
+		if (parent == null) {
+			if (target != MappingTarget.CLASS) {
+				throw new IllegalStateException("cannot get mapping of target " + target + " from the root mappings");
+			}
+
+			m = (side == DiffSide.A) ? a.getClass(key) : b.getClass(key);
+		} else {
+			Mapping<?> parentMapping = parent.get(side);
+
+			if (parentMapping == null) {
+				throw new IllegalStateException("unable to get mapping for " + parent);
+			}
+
+			m = parentMapping.getChild(target, key);
 		}
-		if (mapping instanceof FieldMapping) {
-			return getDiff((FieldMapping)mapping);
+
+		return m;
+	}
+
+	private Diff<?> addDiff(Mapping<?> mapping) {
+		Diff<?> d;
+		Mapping<?> parentMapping = mapping.getParent();
+
+		if (parentMapping == null) {
+			if (mapping.target() != MappingTarget.CLASS) {
+				throw new IllegalStateException("cannot get diff of target " + mapping.target() + " from the root diff");
+			}
+
+			d = diff.getClass(mapping.key());
+
+			if (d == null) {
+				d = diff.addClass(mapping.src());
+			}
+		} else {
+			Diff<?> parent = addDiff(parentMapping);
+
+			if (parent == null) {
+				throw new IllegalStateException("unable to get diff for " + parentMapping);
+			}
+
+			MappingTarget target = mapping.target();
+			String key = mapping.key();
+
+			d = parent.getChild(target, key);
+
+			if (d == null) {
+				d = parent.addChild(target, key, "", "");
+			}
 		}
-		if (mapping instanceof MethodMapping) {
-			return getDiff((MethodMapping)mapping);
-		}
-		if (mapping instanceof ParameterMapping) {
-			return getDiff((ParameterMapping)mapping);
-		}
 
-		throw new IllegalArgumentException("unable to get diff of unknown mapping type " + mapping.getClass());
+		return d;
 	}
 
-	private ClassDiff getDiff(ClassMapping c) {
-		ClassDiff cd = diff.getClass(c.src());
-		return cd != null ? cd : diff.addClass(c.src());
-	}
+	private class MappingPair {
 
-	private FieldDiff getDiff(FieldMapping f) {
-		ClassDiff cd = getDiff(f.getParent());
-		FieldDiff fd = cd.getField(f.src(), f.getDesc());
-		return fd != null ? fd : cd.addField(f.src(), f.getDesc());
-	}
+		private final MappingPair parent;
 
-	private MethodDiff getDiff(MethodMapping m) {
-		ClassDiff cd = getDiff(m.getParent());
-		MethodDiff md = cd.getMethod(m.src(), m.getDesc());
-		return md != null ? md : cd.addMethod(m.src(), m.getDesc());
-	}
+		private Mapping<?> a;
+		private Mapping<?> b;
 
-	private ParameterDiff getDiff(ParameterMapping p) {
-		MethodDiff md = getDiff(p.getParent());
-		ParameterDiff pd = md.getParameter(p.getIndex());
-		return pd != null ? pd : md.addParameter(p.src(), p.getIndex());
-	}
+		protected MappingPair(MappingPair parent, Mapping<?> a, Mapping<?> b) {
+			if (a != null && b != null && a.target() != b.target()) {
+				throw new IllegalArgumentException("mismatched targets for mapping pair: " + a.target() + " and " + b.target());
+			}
 
-	private abstract class MappingPair<T extends Mapping<T>> {
+			this.parent = parent;
 
-		private T a;
-		private T b;
-
-		protected MappingPair(T a, T b) {
 			this.a = a;
 			this.b = b;
 		}
 
-		protected abstract T find(DiffSide side, T other);
-
-		public T get(DiffSide side) {
-			if (a == null) a = find(DiffSide.A, b);
-			if (b == null) b = find(DiffSide.B, a);
+		public Mapping<?> get(DiffSide side) {
+			if (a == null) {
+				a = findMapping(DiffSide.A, parent, b.target(), b.key());
+			}
+			if (b == null) {
+				b = findMapping(DiffSide.B, parent, a.target(), a.key());
+			}
 
 			return side == DiffSide.A ? a : b;
-		}
-	}
-
-	private class ClassMappingPair extends MappingPair<ClassMapping> {
-
-		protected ClassMappingPair(ClassMapping a, ClassMapping b) {
-			super(a, b);
-		}
-
-		@Override
-		protected ClassMapping find(DiffSide side, ClassMapping other) {
-			return MappingsDiffGenerator.this.getClass(side, other.src());
-		}
-	}
-
-	private class FieldMappingPair extends MappingPair<FieldMapping> {
-
-		private final ClassMappingPair parent;
-
-		protected FieldMappingPair(FieldMapping a, FieldMapping b, ClassMappingPair parent) {
-			super(a, b);
-
-			this.parent = parent;
-		}
-
-		@Override
-		protected FieldMapping find(DiffSide side, FieldMapping other) {
-			return MappingsDiffGenerator.this.getField(side, other.src(), other.getDesc(), parent.get(DiffSide.A), parent.get(DiffSide.B));
-		}
-	}
-
-	private class MethodMappingPair extends MappingPair<MethodMapping> {
-
-		private final ClassMappingPair parent;
-
-		protected MethodMappingPair(MethodMapping a, MethodMapping b, ClassMappingPair parent) {
-			super(a, b);
-
-			this.parent = parent;
-		}
-
-		@Override
-		protected MethodMapping find(DiffSide side, MethodMapping other) {
-			return MappingsDiffGenerator.this.getMethod(side, other.src(), other.getDesc(), parent.get(DiffSide.A), parent.get(DiffSide.B));
-		}
-	}
-
-	private class ParameterMappingPair extends MappingPair<ParameterMapping> {
-
-		private final MethodMappingPair parent;
-
-		protected ParameterMappingPair(ParameterMapping a, ParameterMapping b, MethodMappingPair parent) {
-			super(a, b);
-
-			this.parent = parent;
-		}
-
-		@Override
-		protected ParameterMapping find(DiffSide side, ParameterMapping other) {
-			return MappingsDiffGenerator.this.getParameter(side, other.getIndex(), parent.get(DiffSide.A), parent.get(DiffSide.B));
 		}
 	}
 
