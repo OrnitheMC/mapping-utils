@@ -40,16 +40,12 @@ class MappingsDiffApplier {
 
 	private Mappings run() throws Exception {
 		for (MappingsDiff diff : diffs) {
-			apply(diff);
+			for (ClassDiff cd : diff.getTopLevelClasses()) {
+				applyDiff(cd);
+			}
 		}
 
 		return dst;
-	}
-
-	private void apply(MappingsDiff diff) {
-		for (ClassDiff cd : diff.getClasses()) {
-			applyDiff(cd);
-		}
 	}
 
 	private void applyDiff(Diff<?> d) {

@@ -7,10 +7,7 @@ import net.ornithemc.mappingutils.io.diff.DiffSide;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.ClassDiff;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.Diff;
-import net.ornithemc.mappingutils.io.diff.MappingsDiff.FieldDiff;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.JavadocDiff;
-import net.ornithemc.mappingutils.io.diff.MappingsDiff.MethodDiff;
-import net.ornithemc.mappingutils.io.diff.MappingsDiff.ParameterDiff;
 import net.ornithemc.mappingutils.io.diff.tree.MappingsDiffTree;
 import net.ornithemc.mappingutils.io.diff.tree.Version;
 
@@ -37,19 +34,8 @@ class MappingsDiffPropagator {
 			throw new IllegalStateException("mappings for version " + version + " do not exist!");
 		}
 
-		for (ClassDiff cd : changes.getClasses()) {
+		for (ClassDiff cd : changes.getTopLevelClasses()) {
 			propagateChange(v, cd);
-
-			for (FieldDiff fd : cd.getFields()) {
-				propagateChange(v, fd);
-			}
-			for (MethodDiff md : cd.getMethods()) {
-				propagateChange(v, md);
-
-				for (ParameterDiff pd : md.getParameters()) {
-					propagateChange(v, pd);
-				}
-			}
 		}
 
 		tree.write();
@@ -69,6 +55,10 @@ class MappingsDiffPropagator {
 
 		for (Version c : v.getChildren()) {
 			propagateChange(c, change, DiffSide.A, mode);
+		}
+
+		for (Diff<?> childChange : change.getChildren()) {
+			propagateChange(v, childChange);
 		}
 	}
 

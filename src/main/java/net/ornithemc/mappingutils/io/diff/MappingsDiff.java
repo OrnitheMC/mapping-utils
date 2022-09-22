@@ -19,11 +19,33 @@ public class MappingsDiff {
 
 	}
 
+	private ClassDiff findParent(String key, boolean orThrowException) {
+		int i = key.lastIndexOf('$');
+
+		if (i < 0) {
+			return null;
+		}
+
+		String parentKey = key.substring(0, i);
+		ClassDiff parent = getClass(parentKey);
+
+		if (parent == null && orThrowException) {
+			throw new IllegalStateException("unable to find parent class diff " + parentKey + " of class diff " + key);
+		}
+
+		return parent;
+	}
+
 	public ClassDiff getClass(String key) {
+		ClassDiff parent = findParent(key, false);
+		return parent == null ? getTopLevelClass(key) : parent.getClass(key);
+	}
+
+	public ClassDiff getTopLevelClass(String key) {
 		return classDiffs.get(key);
 	}
 
-	public Collection<ClassDiff> getClasses() {
+	public Collection<ClassDiff> getTopLevelClasses() {
 		return classDiffs.values();
 	}
 
@@ -36,17 +58,29 @@ public class MappingsDiff {
 	}
 
 	private ClassDiff addClass(ClassDiff c) {
-		return classDiffs.compute(c.key(), (key, value) -> {
-			return checkReplace(value, c);
-		});
+		ClassDiff parent = findParent(c.key(), true);
+
+		if (parent == null) {
+			return classDiffs.compute(c.key(), (key, value) -> {
+				return checkReplace(value, c);
+			});
+		}
+
+		return parent.addClass(c);
 	}
 
-	public void removeClass(String key) {
+	public ClassDiff removeClass(String key) {
 		ClassDiff c = getClass(key);
 
 		if (c != null) {
-			removeClass(c);
+			if (c.parent == null) {
+				removeClass(key);
+			} else {
+				c.parent.removeClass(key);
+			}
 		}
+
+		return c;
 	}
 
 	private ClassDiff removeClass(ClassDiff c) {
@@ -173,12 +207,16 @@ public class MappingsDiff {
 
 	public static class ClassDiff extends Diff<ClassDiff> {
 
+		private final Map<String, ClassDiff> classDiffs;
 		private final Map<String, FieldDiff> fieldDiffs;
 		private final Map<String, MethodDiff> methodDiffs;
+
+		private ClassDiff parent;
 
 		private ClassDiff(MappingsDiff root, String src, String dstA, String dstB) {
 			super(root, src, dstA, dstB);
 
+			this.classDiffs = new LinkedHashMap<>();
 			this.fieldDiffs = new LinkedHashMap<>();
 			this.methodDiffs = new LinkedHashMap<>();
 		}
@@ -189,8 +227,15 @@ public class MappingsDiff {
 		}
 
 		@Override
+		public ClassDiff getParent() {
+			return parent;
+		}
+
+		@Override
 		public Diff<?> getChild(MappingTarget target, String key) {
 			switch (target) {
+			case CLASS:
+				return getClass(key);
 			case FIELD:
 				return getField(key);
 			case METHOD:
@@ -203,6 +248,8 @@ public class MappingsDiff {
 		@Override
 		public Diff<?> addChild(MappingTarget target, String key, String dstA, String dstB) {
 			switch (target) {
+			case CLASS:
+				return addClass(key, dstA, dstB);
 			case FIELD:
 				return addField(key, dstA, dstB);
 			case METHOD:
@@ -215,6 +262,8 @@ public class MappingsDiff {
 		@Override
 		public Diff<?> removeChild(MappingTarget target, String key) {
 			switch (target) {
+			case CLASS:
+				return removeClass(key);
 			case FIELD:
 				return removeField(key);
 			case METHOD:
@@ -228,6 +277,7 @@ public class MappingsDiff {
 		public Collection<Diff<?>> getChildren() {
 			Collection<Diff<?>> children = new LinkedList<>();
 
+			children.addAll(classDiffs.values());
 			children.addAll(fieldDiffs.values());
 			children.addAll(methodDiffs.values());
 
@@ -236,13 +286,16 @@ public class MappingsDiff {
 
 		@Override
 		public boolean hasChildren() {
-			return !fieldDiffs.isEmpty() || !methodDiffs.isEmpty();
+			return !classDiffs.isEmpty() || !fieldDiffs.isEmpty() || !methodDiffs.isEmpty();
 		}
 
 		@Override
 		protected void validate() {
 			super.validate();
 
+			for (ClassDiff c : classDiffs.values()) {
+				c.validate();
+			}
 			for (FieldDiff f : fieldDiffs.values()) {
 				f.validate();
 			}
@@ -260,6 +313,9 @@ public class MappingsDiff {
 			ClassDiff copy = new ClassDiff(root, src, dstA, dstB);
 			copy.javadoc = javadoc.copy();
 
+			for (ClassDiff c : classDiffs.values()) {
+				copy.addClass(c.copy());
+			}
 			for (FieldDiff f : fieldDiffs.values()) {
 				copy.addField(f.copy());
 			}
@@ -268,6 +324,10 @@ public class MappingsDiff {
 			}
 
 			return copy;
+		}
+
+		public ClassDiff getClass(String key) {
+			return classDiffs.get(key);
 		}
 
 		public FieldDiff getField(String name, String desc) {
@@ -286,12 +346,32 @@ public class MappingsDiff {
 			return methodDiffs.get(key);
 		}
 
+		public Collection<ClassDiff> getClasses() {
+			return classDiffs.values();
+		}
+
 		public Collection<FieldDiff> getFields() {
 			return fieldDiffs.values();
 		}
 
 		public Collection<MethodDiff> getMethods() {
 			return methodDiffs.values();
+		}
+
+		public ClassDiff addClass(String key) {
+			return addClass(key, "", "");
+		}
+
+		public ClassDiff addClass(String src, String dstA, String dstB) {
+			return addClass(new ClassDiff(root, src, dstA, dstB));
+		}
+
+		private ClassDiff addClass(ClassDiff c) {
+			c.parent = this;
+
+			return classDiffs.compute(c.key(), (key, value) -> {
+				return checkReplace(value, c);
+			});
 		}
 
 		public FieldDiff addField(String name, String desc) {
@@ -340,6 +420,20 @@ public class MappingsDiff {
 			return methodDiffs.compute(m.key(), (key, value) -> {
 				return checkReplace(value, m);
 			});
+		}
+
+		public ClassDiff removeClass(String key) {
+			ClassDiff c = getClass(key);
+
+			if (c != null) {
+				removeClass(c);
+			}
+
+			return c;
+		}
+
+		private ClassDiff removeClass(ClassDiff c) {
+			return classDiffs.remove(c.key());
 		}
 
 		public FieldDiff removeField(String name, String desc) {

@@ -128,7 +128,7 @@ class MappingsDiffGenerator {
 		Diff<?> d;
 		Mapping<?> parentMapping = mapping.getParent();
 
-		if (parentMapping == null || mapping.target() == MappingTarget.CLASS) {
+		if (parentMapping == null) {
 			if (mapping.target() != MappingTarget.CLASS) {
 				throw new IllegalStateException("cannot get diff of target " + mapping.target() + " from the root diff");
 			}

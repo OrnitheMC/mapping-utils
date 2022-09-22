@@ -36,7 +36,7 @@ public class TinyV1DiffWriter extends TinyDiffWriter<TinyV1Diff> {
 
 	@Override
 	protected void writeDiffs() throws Exception {
-		for (ClassDiff c : diff.getClasses()) {
+		for (ClassDiff c : diff.getTopLevelClasses()) {
 			writeClass(c);
 		}
 	}
@@ -58,6 +58,9 @@ public class TinyV1DiffWriter extends TinyDiffWriter<TinyV1Diff> {
 		}
 		for (MethodDiff m : c.getMethods()) {
 			writeMethod(m);
+		}
+		for (ClassDiff cc : c.getClasses()) {
+			writeClass(cc);
 		}
 	}
 
