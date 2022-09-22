@@ -19,10 +19,10 @@ import net.ornithemc.mappingutils.io.matcher.Matches.MethodMatch;
  * 
  * @author Space Walker
  */
-class MappingUpdater {
+class MappingsUpdater {
 
 	static void run(Mappings src, Mappings dst, Mappings calamusSrc, Mappings calamusDst, Matches matches) {
-		new MappingUpdater(src, dst, calamusSrc, calamusDst, matches).run();
+		new MappingsUpdater(src, dst, calamusSrc, calamusDst, matches).run();
 	}
 
 	private final Mappings src;
@@ -32,7 +32,7 @@ class MappingUpdater {
 	private final Mappings calamusDst;
 	private final Matches matches;
 
-	private MappingUpdater(Mappings src, Mappings dst, Mappings calamusSrc, Mappings calamusDst, Matches matches) {
+	private MappingsUpdater(Mappings src, Mappings dst, Mappings calamusSrc, Mappings calamusDst, Matches matches) {
 		this.src = src;
 		this.dst = dst;
 		this.calamusSrc = calamusSrc;

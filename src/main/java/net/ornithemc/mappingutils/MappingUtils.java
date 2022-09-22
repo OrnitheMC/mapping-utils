@@ -14,29 +14,27 @@ import net.ornithemc.mappingutils.io.diff.tree.MappingsDiffTree;
 import net.ornithemc.mappingutils.io.diff.tree.Version;
 import net.ornithemc.mappingutils.io.matcher.Matches;
 import net.ornithemc.mappingutils.io.matcher.MatchesReader;
-import net.ornithemc.mappingutils.io.tiny.v1.TinyV1Mappings;
-import net.ornithemc.mappingutils.io.tiny.v1.TinyV1Reader;
-import net.ornithemc.mappingutils.io.tiny.v2.TinyV2Mappings;
-import net.ornithemc.mappingutils.io.tiny.v2.TinyV2Reader;
-import net.ornithemc.mappingutils.io.tiny.v2.TinyV2Writer;
 
 public class MappingUtils {
 
-	public static void updateMappingsV2WithCalamusV1(Path srcPath, Path dstPath, Path calamusSrcPath, Path calamusDstPath, Path matchesPath) throws Exception {
-		FileUtils.requireReadable(srcPath);
-		FileUtils.requireWritable(dstPath);
-		FileUtils.requireReadable(calamusSrcPath);
-		FileUtils.requireReadable(calamusDstPath);
+	public static void updateMappings(Format namedFormat, Format intermediateFormat, Path namedSrcPath, Path namedDstPath, Path intermediateSrcPath, Path intermediateDstPath, Path matchesPath) throws Exception {
+		FileUtils.requireReadable(namedSrcPath);
+		FileUtils.requireWritable(namedDstPath);
+		FileUtils.requireReadable(intermediateSrcPath);
+		FileUtils.requireReadable(intermediateDstPath);
 		FileUtils.requireReadable(matchesPath);
 
-		TinyV2Mappings src = TinyV2Reader.read(srcPath);
-		TinyV2Mappings dst = new TinyV2Mappings(src.getSrcNamespace(), src.getDstNamespace());
-		TinyV1Mappings calamusSrc = TinyV1Reader.read(calamusSrcPath);
-		TinyV1Mappings calamusDst = TinyV1Reader.read(calamusDstPath);
+		Mappings namedSrc = namedFormat.readMappings(namedSrcPath);
+		Mappings namedDst = namedFormat.newMappings();
+		Mappings intermediateSrc = intermediateFormat.readMappings(intermediateSrcPath);
+		Mappings intermediateDst = intermediateFormat.readMappings(intermediateDstPath);
 		Matches matches = MatchesReader.read(matchesPath);
 
-		MappingUpdater.run(src, dst, calamusSrc, calamusDst, matches);
-		TinyV2Writer.write(dstPath, dst);
+		namedDst.setSrcNamespace(namedSrc.getSrcNamespace());
+		namedDst.setDstNamespace(namedSrc.getDstNamespace());
+
+		MappingsUpdater.run(namedSrc, namedDst, intermediateSrc, intermediateDst, matches);
+		namedFormat.writeMappings(namedDstPath, namedDst);
 	}
 
 	public static void diffMappings(Format format, Path pathA, Path pathB, Path diffPath) throws Exception {

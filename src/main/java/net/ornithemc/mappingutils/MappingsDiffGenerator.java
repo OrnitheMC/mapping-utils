@@ -5,7 +5,6 @@ import java.util.List;
 
 import net.ornithemc.mappingutils.io.MappingTarget;
 import net.ornithemc.mappingutils.io.Mappings;
-import net.ornithemc.mappingutils.io.Mappings.ClassMapping;
 import net.ornithemc.mappingutils.io.Mappings.Mapping;
 import net.ornithemc.mappingutils.io.diff.DiffSide;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff;
@@ -47,14 +46,14 @@ class MappingsDiffGenerator {
 	}
 
 	private void collectMappingPairs() {
-		for (ClassMapping ca : a.getTopLevelClasses()) {
-			addMappingPair(null, ca, null);
+		for (Mapping<?> ma : a.getTopLevelClasses()) {
+			addMappingPair(null, ma, null);
 		}
-		for (ClassMapping cb : b.getTopLevelClasses()) {
-			ClassMapping ca = a.getClass(cb.src());
+		for (Mapping<?> mb : b.getTopLevelClasses()) {
+			Mapping<?> ma = a.getClass(mb.src());
 
-			if (ca == null) {
-				addMappingPair(null, null, cb);
+			if (ma == null) {
+				addMappingPair(null, null, mb);
 			}
 		}
 	}

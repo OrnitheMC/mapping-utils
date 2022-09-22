@@ -5,7 +5,6 @@ import net.ornithemc.mappingutils.io.Mappings;
 import net.ornithemc.mappingutils.io.Mappings.Mapping;
 import net.ornithemc.mappingutils.io.diff.DiffSide;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff;
-import net.ornithemc.mappingutils.io.diff.MappingsDiff.ClassDiff;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.Diff;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.JavadocDiff;
 import net.ornithemc.mappingutils.io.diff.tree.MappingsDiffTree;
@@ -34,8 +33,8 @@ class MappingsDiffPropagator {
 			throw new IllegalStateException("mappings for version " + version + " do not exist!");
 		}
 
-		for (ClassDiff cd : changes.getTopLevelClasses()) {
-			propagateChange(v, cd);
+		for (Diff<?> d : changes.getTopLevelClasses()) {
+			propagateChange(v, d);
 		}
 
 		tree.write();
@@ -53,10 +52,6 @@ class MappingsDiffPropagator {
 
 		propagateChange(v, change, DiffSide.B, mode);
 
-		for (Version c : v.getChildren()) {
-			propagateChange(c, change, DiffSide.A, mode);
-		}
-
 		for (Diff<?> childChange : change.getChildren()) {
 			propagateChange(v, childChange);
 		}
@@ -67,12 +62,22 @@ class MappingsDiffPropagator {
 			return;
 		}
 
+		// side A = propagate down
+		// side B = propagate up
+		// we first propagate up to find the source of the mapping,
+		// then propagate it down from there
+
 		if (v.isRoot()) {
 			if (side == DiffSide.B) {
 				Result<Mapping<?>> result = applyChange(v.getMappings(), change, side, mode);
 
 				if (result.success()) {
 					v.markDirty();
+
+					// source of the mapping is root, now propagate down
+					for (Version c : v.getChildren()) {
+						propagateChange(c, change, DiffSide.A, mode);
+					}
 				}
 			}
 		} else {
@@ -80,10 +85,20 @@ class MappingsDiffPropagator {
 
 			if (result.success()) {
 				v.markDirty();
+
+				// check if we're propagating up or down
+				if (side == DiffSide.B) {
+					// found source of the mapping, now propagate down
+					for (Version c : v.getChildren()) {
+						propagateChange(c, change, DiffSide.A, mode);
+					}
+				}
 			}
 
+			// part of the change that was not yet applied
 			mode = mode.without(result.mode);
 
+			// keep propagating that part in the same direction
 			if (side == DiffSide.B) {
 				propagateChange(v.getParent(), change, side, mode);
 			} else {
