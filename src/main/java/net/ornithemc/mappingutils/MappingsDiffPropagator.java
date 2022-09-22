@@ -108,6 +108,10 @@ class MappingsDiffPropagator {
 		Mapping<?> m;
 		Result<Mapping<?>> result;
 
+		MappingTarget target = change.target();
+		String key = change.key();
+		String n = change.get(DiffSide.B);
+
 		Diff<?> parentChange = change.getParent();
 
 		if (parentChange == null) {
@@ -115,10 +119,20 @@ class MappingsDiffPropagator {
 				throw new IllegalStateException("cannot get mapping of target " + change.target() + " from the root mappings");
 			}
 
-			m = mappings.getClass(change.src());
+			m = mappings.getClass(key);
 
 			if (m == null) {
-				m = mappings.addClass(change.src(), change.src());
+				if (n.isEmpty()) {
+					System.out.println("ignoring invalid diff " + change + " - mapping does not exist in root!");
+				} else {
+					m = mappings.addClass(change.src(), change.src());
+				}
+			} else {
+				if (n.isEmpty()) {
+					mappings.removeClass(key);
+				} else {
+					m.set(n);
+				}
 			}
 		} else {
 			Result<Mapping<?>> parentResult = applyChange(mappings, parentChange, side, DiffMode.NONE);
@@ -127,23 +141,29 @@ class MappingsDiffPropagator {
 				throw new IllegalStateException("unable to apply " + parentChange);
 			}
 
-			MappingTarget target = change.target();
-			String key = change.key();
-
 			m = parentResult.subject.getChild(target, key);
 
 			if (m == null) {
-				m = parentResult.subject.addChild(target, key, change.src());
+				if (n.isEmpty()) {
+					System.out.println("ignoring invalid diff " + change + " - mapping does not exist in root!");
+				} else {
+					m = parentResult.subject.addChild(target, key, n);
+				}
+			} else {
+				if (n.isEmpty()) {
+					parentResult.subject.removeChild(target, key);
+				} else {
+					m.set(n);
+				}
 			}
 		}
 
 		result = new Result<>(m, mode);
 
-		if (mode.is(DiffMode.MAPPINGS)) {
-			m.set(change.get(DiffSide.B));
-		}
-		if (mode.is(DiffMode.JAVADOCS)) {
-			m.setJavadoc(change.getJavadoc().get(DiffSide.B));
+		if (m != null) {
+			if (mode.is(DiffMode.JAVADOCS)) {
+				m.setJavadoc(change.getJavadoc().get(DiffSide.B));
+			}
 		}
 
 		return result;

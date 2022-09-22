@@ -66,16 +66,22 @@ class MappingsDiffApplier {
 					m = findMapping(d, true);
 
 					if (m == null) {
-						throw new IllegalStateException("unable to apply diff " + d);
+						System.out.println("ignoring invalid diff " + d + " - unable to add mapping in dst!");
+					} else {
+						m.set(b);
 					}
-
-					m.set(b);
 				} else {
 					System.out.println("ignoring invalid diff " + d + " - mapping already exists in dst!");
 				}
 			} else if (b.isEmpty()) {
 				if (m == null) {
-					System.out.println("ignoring invalid diff " + d + " - mapping does not exist in dst!");
+					Diff<?> pd = d.getParent();
+
+					if (pd == null || !pd.get(DiffSide.B).isEmpty()) {
+						System.out.println("ignoring invalid diff " + d + " - mapping does not exist in dst!");
+					} else {
+						// fail quietly if parent mapping was also removed by this diff
+					}
 				} else {
 					Mapping<?> parent = m.getParent();
 
