@@ -49,8 +49,8 @@ public class MappingsDiff {
 		}
 	}
 
-	private void removeClass(ClassDiff c) {
-		classDiffs.remove(c.key());
+	private ClassDiff removeClass(ClassDiff c) {
+		return classDiffs.remove(c.key());
 	}
 
 	public void validate() {
@@ -148,7 +148,7 @@ public class MappingsDiff {
 			throw new IllegalStateException("cannot add child diff of target " + target);
 		}
 
-		public void removeChild(MappingTarget target, String key) {
+		public Diff<?> removeChild(MappingTarget target, String key) {
 			throw new IllegalStateException("cannot remove child diff of target " + target);
 		}
 
@@ -213,14 +213,14 @@ public class MappingsDiff {
 		}
 
 		@Override
-		public void removeChild(MappingTarget target, String key) {
+		public Diff<?> removeChild(MappingTarget target, String key) {
 			switch (target) {
 			case FIELD:
-				removeField(key);
+				return removeField(key);
 			case METHOD:
-				removeMethod(key);
+				return removeMethod(key);
 			default:
-				super.removeChild(target, key);
+				return super.removeChild(target, key);
 			}
 		}
 
@@ -342,36 +342,40 @@ public class MappingsDiff {
 			});
 		}
 
-		public void removeField(String name, String desc) {
-			removeField(FieldDiff.key(name, desc));
+		public FieldDiff removeField(String name, String desc) {
+			return removeField(FieldDiff.key(name, desc));
 		}
 
-		public void removeField(String key) {
+		public FieldDiff removeField(String key) {
 			FieldDiff f = getField(key);
 
 			if (f != null) {
 				removeField(f);
 			}
+
+			return f;
 		}
 
-		private void removeField(FieldDiff f) {
-			fieldDiffs.remove(f.key());
+		private FieldDiff removeField(FieldDiff f) {
+			return fieldDiffs.remove(f.key());
 		}
 
-		public void removeMethod(String name, String desc) {
-			removeField(FieldDiff.key(name, desc));
+		public MethodDiff removeMethod(String name, String desc) {
+			return removeMethod(FieldDiff.key(name, desc));
 		}
 
-		public void removeMethod(String key) {
+		public MethodDiff removeMethod(String key) {
 			MethodDiff m = getMethod(key);
 
 			if (m != null) {
 				removeMethod(m);
 			}
+
+			return m;
 		}
 
-		private void removeMethod(MethodDiff m) {
-			methodDiffs.remove(m.key());
+		private MethodDiff removeMethod(MethodDiff m) {
+			return methodDiffs.remove(m.key());
 		}
 	}
 
@@ -497,11 +501,11 @@ public class MappingsDiff {
 		}
 
 		@Override
-		public void removeChild(MappingTarget target, String key) {
+		public Diff<?> removeChild(MappingTarget target, String key) {
 			if (target == MappingTarget.PARAMETER) {
-				removeParameter(key);
+				return removeParameter(key);
 			} else {
-				super.removeChild(target, key);
+				return super.removeChild(target, key);
 			}
 		}
 
@@ -588,24 +592,28 @@ public class MappingsDiff {
 			});
 		}
 
-		public void removeParameter(int index) {
+		public ParameterDiff removeParameter(int index) {
 			ParameterDiff p = getParameter(index);
 
 			if (p != null) {
 				removeParameter(p);
 			}
+
+			return p;
 		}
 
-		public void removeParameter(String key) {
+		public ParameterDiff removeParameter(String key) {
 			ParameterDiff p = getParameter(key);
 
 			if (p != null) {
 				removeParameter(p);
 			}
+
+			return p;
 		}
 
-		private void removeParameter(ParameterDiff p) {
-			parameterDiffs.remove(p.key());
+		private ParameterDiff removeParameter(ParameterDiff p) {
+			return parameterDiffs.remove(p.key());
 		}
 	}
 

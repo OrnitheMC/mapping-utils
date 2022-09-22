@@ -100,7 +100,7 @@ public class Mappings {
 		return parent.addClass(c);
 	}
 
-	public void removeClass(String key) {
+	public ClassMapping removeClass(String key) {
 		ClassMapping c = getClass(key);
 
 		if (c != null) {
@@ -110,6 +110,8 @@ public class Mappings {
 				c.parent.removeClass(key);
 			}
 		}
+
+		return c;
 	}
 
 	public void validate() {
@@ -211,7 +213,7 @@ public class Mappings {
 			throw new IllegalStateException("cannot add child mapping of target " + target);
 		}
 
-		public void removeChild(MappingTarget target, String key) {
+		public Mapping<?> removeChild(MappingTarget target, String key) {
 			throw new IllegalStateException("cannot remove child mapping of target " + target);
 		}
 
@@ -302,16 +304,16 @@ public class Mappings {
 		}
 
 		@Override
-		public void removeChild(MappingTarget target, String key) {
+		public Mapping<?> removeChild(MappingTarget target, String key) {
 			switch (target) {
 			case CLASS:
-				removeClass(key);
+				return removeClass(key);
 			case FIELD:
-				removeField(key);
+				return removeField(key);
 			case METHOD:
-				removeMethod(key);
+				return removeMethod(key);
 			default:
-				super.removeChild(target, key);
+				return super.removeChild(target, key);
 			}
 		}
 
@@ -486,24 +488,24 @@ public class Mappings {
 			});
 		}
 
-		public void removeClass(String key) {
-			classMappings.remove(key);
+		public ClassMapping removeClass(String key) {
+			return classMappings.remove(key);
 		}
 
-		public void removeField(String name, String desc) {
-			removeField(FieldMapping.key(name, desc));
+		public FieldMapping removeField(String name, String desc) {
+			return removeField(FieldMapping.key(name, desc));
 		}
 
-		public void removeField(String key) {
-			fieldMappings.remove(key);
+		public FieldMapping removeField(String key) {
+			return fieldMappings.remove(key);
 		}
 
-		public void removeMethod(String name, String desc) {
-			removeMethod(MethodMapping.key(name, desc));
+		public MethodMapping removeMethod(String name, String desc) {
+			return removeMethod(MethodMapping.key(name, desc));
 		}
 
-		public void removeMethod(String key) {
-			methodMappings.remove(key);
+		public MethodMapping removeMethod(String key) {
+			return methodMappings.remove(key);
 		}
 	}
 
@@ -628,11 +630,11 @@ public class Mappings {
 		}
 
 		@Override
-		public void removeChild(MappingTarget target, String key) {
+		public Mapping<?> removeChild(MappingTarget target, String key) {
 			if (target == MappingTarget.PARAMETER) {
-				removeParameter(key);
+				return removeParameter(key);
 			} else {
-				super.removeChild(target, key);
+				return super.removeChild(target, key);
 			}
 		}
 
@@ -723,22 +725,26 @@ public class Mappings {
 			});
 		}
 
-		public void removeParameter(int index) {
+		public ParameterMapping removeParameter(int index) {
 			ParameterMapping p = parameters[index];
 
 			if (p != null) {
 				parameters[p.index] = null;
 				parameterMappings.remove(p.key());
 			}
+
+			return p;
 		}
 
-		public void removeParameter(String key) {
+		public ParameterMapping removeParameter(String key) {
 			ParameterMapping p = parameterMappings.get(key);
 
 			if (p != null) {
 				parameters[p.index] = null;
 				parameterMappings.remove(p.key());
 			}
+
+			return p;
 		}
 	}
 
