@@ -3,6 +3,7 @@ package net.ornithemc.mappingutils;
 import java.util.LinkedList;
 import java.util.List;
 
+import net.ornithemc.mappingutils.io.Format;
 import net.ornithemc.mappingutils.io.MappingTarget;
 import net.ornithemc.mappingutils.io.Mappings;
 import net.ornithemc.mappingutils.io.Mappings.Mapping;
@@ -12,8 +13,8 @@ import net.ornithemc.mappingutils.io.diff.MappingsDiff.Diff;
 
 class MappingsDiffGenerator {
 
-	static void run(Mappings a, Mappings b, MappingsDiff diff) throws Exception {
-		new MappingsDiffGenerator(a, b, diff).run();
+	static MappingsDiff run(Format format, Mappings a, Mappings b) throws Exception {
+		return new MappingsDiffGenerator(format, a, b).run();
 	}
 
 	private final MappingsDiff diff;
@@ -22,7 +23,7 @@ class MappingsDiffGenerator {
 
 	private final List<MappingPair> mappingPairs;
 
-	private MappingsDiffGenerator(Mappings a, Mappings b, MappingsDiff diff) {
+	private MappingsDiffGenerator(Format format, Mappings a, Mappings b) {
 		if (!a.getSrcNamespace().equals(b.getSrcNamespace())) {
 			throw new IllegalArgumentException("src namespaces do not match!");
 		}
@@ -33,16 +34,18 @@ class MappingsDiffGenerator {
 		a.validate();
 		b.validate();
 
-		this.diff = diff;
+		this.diff = format.newDiff();
 		this.a = a;
 		this.b = b;
 
 		this.mappingPairs = new LinkedList<>();
 	}
 
-	private void run() throws Exception {
+	private MappingsDiff run() throws Exception {
 		collectMappingPairs();
 		createMappingDiffs();
+
+		return diff;
 	}
 
 	private void collectMappingPairs() {

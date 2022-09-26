@@ -44,10 +44,12 @@ public class MappingUtils {
 
 		Mappings a = format.readMappings(pathA);
 		Mappings b = format.readMappings(pathB);
-		MappingsDiff diff = format.newDiff();
 
-		MappingsDiffGenerator.run(a, b, diff);
-		format.writeDiff(diffPath, diff);
+		format.writeDiff(diffPath, diffMappings(format, a, b));
+	}
+
+	public static MappingsDiff diffMappings(Format format, Mappings a, Mappings b) throws Exception {
+		return MappingsDiffGenerator.run(format, a, b);
 	}
 
 	public static void applyDiffs(Format format, Path srcPath, Path dstPath, Path... diffPaths) throws Exception {
@@ -65,8 +67,16 @@ public class MappingUtils {
 			diffs[i] = format.readDiff(diffPaths.get(i));
 		}
 
-		MappingsDiffApplier.run(mappings, diffs);
+		applyDiffs(mappings, diffs);
 		format.writeMappings(dstPath, mappings);
+	}
+
+	public static void applyDiffs(Mappings mappings, MappingsDiff... diffs) throws Exception {
+		MappingsDiffApplier.run(mappings, diffs);
+	}
+
+	public static void applyDiffs(Mappings mappings, List<MappingsDiff> diffs) throws Exception {
+		MappingsDiffApplier.run(mappings, diffs);
 	}
 
 	public static void separateMappings(Format format, Path dir, Path dstPath, String version) throws Exception {
@@ -74,13 +84,19 @@ public class MappingUtils {
 		FileUtils.requireWritable(dstPath);
 
 		MappingsDiffTree tree = MappingsDiffTree.of(format, dir);
+
+		format.writeMappings(dstPath, separateMappings(tree, version));
+	}
+
+	public static Mappings separateMappings(MappingsDiffTree tree, String version) throws Exception {
 		Version root = tree.root();
 
-		Mappings mappings = root.getMappings();
+		Mappings mappings = root.getMappings().copy();
 		List<MappingsDiff> diffs = tree.getDiffsFromRoot(version);
 
 		MappingsDiffApplier.run(mappings, diffs);
-		format.writeMappings(dstPath, mappings);
+
+		return mappings;
 	}
 
 	public static void insertMappings(Format format, PropagationDirection dir, Path dirPath, Path changesPath, String version) throws Exception {
@@ -90,12 +106,19 @@ public class MappingUtils {
 		MappingsDiffTree tree = MappingsDiffTree.of(format, dirPath);
 		MappingsDiff changes = format.readDiff(changesPath);
 
-		MappingsDiffPropagator.run(dir, tree, changes, version);
+		insertMappings(dir, tree, changes, version);
+	}
+
+	public static void insertMappings(PropagationDirection dir, MappingsDiffTree tree, MappingsDiff diff, String version) throws Exception {
+		MappingsDiffPropagator.run(dir, tree, diff, version);
 	}
 
 	public static void generateDummyMappings(Format format, Path jarPath, Path mappingsPath) throws Exception {
-		Mappings mappings = DummyMappingsGenerator.run(format, jarPath);
-		format.writeMappings(mappingsPath, mappings);
+		format.writeMappings(mappingsPath, generateDummyMappings(format, jarPath));
+	}
+
+	public static Mappings generateDummyMappings(Format format, Path jarPath) throws Exception {
+		return DummyMappingsGenerator.run(format, jarPath);
 	}
 
 	public static String translateFieldDescriptor(String desc, Mappings mappings) {
