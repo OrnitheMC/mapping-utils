@@ -7,6 +7,7 @@ import java.util.List;
 import org.objectweb.asm.Type;
 
 import net.ornithemc.mappingutils.io.Format;
+import net.ornithemc.mappingutils.io.MappingNamespace;
 import net.ornithemc.mappingutils.io.Mappings;
 import net.ornithemc.mappingutils.io.Mappings.ClassMapping;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff;
@@ -113,12 +114,12 @@ public class MappingUtils {
 		MappingsDiffPropagator.run(dir, tree, diff, version);
 	}
 
-	public static void generateDummyMappings(Format format, Path jarPath, Path mappingsPath) throws Exception {
-		format.writeMappings(mappingsPath, generateDummyMappings(format, jarPath));
+	public static void generateDummyMappings(Format format, MappingNamespace srcNamespace, MappingNamespace dstNamespace, Path jarPath, Path mappingsPath) throws Exception {
+		format.writeMappings(mappingsPath, generateDummyMappings(format, srcNamespace, dstNamespace, jarPath));
 	}
 
-	public static Mappings generateDummyMappings(Format format, Path jarPath) throws Exception {
-		return DummyMappingsGenerator.run(format, jarPath);
+	public static Mappings generateDummyMappings(Format format, MappingNamespace srcNamespace, MappingNamespace dstNamespace, Path jarPath) throws Exception {
+		return DummyMappingsGenerator.run(format, srcNamespace, dstNamespace, jarPath);
 	}
 
 	public static String translateFieldDescriptor(String desc, Mappings mappings) {

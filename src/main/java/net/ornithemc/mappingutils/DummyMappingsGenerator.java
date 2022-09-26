@@ -15,26 +15,34 @@ import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
 import net.ornithemc.mappingutils.io.Format;
+import net.ornithemc.mappingutils.io.MappingNamespace;
 import net.ornithemc.mappingutils.io.Mappings;
 import net.ornithemc.mappingutils.io.Mappings.ClassMapping;
 import net.ornithemc.mappingutils.io.Mappings.MethodMapping;
 
 class DummyMappingsGenerator {
 
-	static Mappings run(Format format, Path jarPath) throws Exception {
-		return new DummyMappingsGenerator(format, jarPath).run();
+	static Mappings run(Format format, MappingNamespace srcNamespace, MappingNamespace dstNamespace, Path jarPath) throws Exception {
+		return new DummyMappingsGenerator(format, srcNamespace, dstNamespace, jarPath).run();
 	}
 
 	private final Format format;
+	private final MappingNamespace srcNamespace;
+	private final MappingNamespace dstNamespace;
 	private final Path jarPath;
 
-	private DummyMappingsGenerator(Format format, Path jarPath) {
+	private DummyMappingsGenerator(Format format, MappingNamespace srcNamespace, MappingNamespace dstNamespace, Path jarPath) {
 		this.format = format;
+		this.srcNamespace = srcNamespace;
+		this.dstNamespace = dstNamespace;
 		this.jarPath = jarPath;
 	}
 
 	private Mappings run() throws Exception {
 		Mappings mappings = format.newMappings();
+
+		mappings.setSrcNamespace(srcNamespace);
+		mappings.setDstNamespace(dstNamespace);
 
 		// TinyRemapper outputs classes in a practically random order,
 		// so we need to sort them before generating mappings.
