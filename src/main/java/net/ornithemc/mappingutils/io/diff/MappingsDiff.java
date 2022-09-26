@@ -255,6 +255,10 @@ public class MappingsDiff {
 			dstA = validateDst(dstA);
 			dstB = validateDst(dstB);
 
+			if (!isDiff()) {
+				clear();
+			}
+
 			Iterator<Diff<?>> it = children.values().iterator();
 
 			while (it.hasNext()) {
@@ -265,7 +269,7 @@ public class MappingsDiff {
 				}
 			}
 
-			return ((isDiff() || javadoc.isDiff()) && root.validator.validate(this)) || hasChildren();
+			return (root.validator.validate(this) && (isDiff() || javadoc.isDiff())) || hasChildren();
 		}
 
 		protected T copy() {

@@ -223,7 +223,7 @@ class MappingsDiffPropagator {
 			Diff<?> parent = parentResult.subject();
 
 			if (parent == null) {
-				if (op != Operation.NONE) {
+				if (op != Operation.NONE && insert) {
 					System.out.println("ignoring invalid change " + change + " to " + v + " - parent diff does not exist! (were the diffs provided in the wrong order?)");
 					op = Operation.NONE;
 				}

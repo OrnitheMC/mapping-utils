@@ -124,7 +124,7 @@ public class Mappings {
 	public void validate() {
 		Iterator<ClassMapping> it = classMappings.values().iterator();
 
-		while (!it.hasNext()) {
+		while (it.hasNext()) {
 			ClassMapping c = it.next();
 
 			if (!c.validate()) {
