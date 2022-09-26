@@ -22,6 +22,8 @@ class MappingsDiffPropagator {
 	private final String version;
 
 	private MappingsDiffPropagator(PropagationDirection dir, MappingsDiffTree tree, MappingsDiff changes, String version) {
+		changes.validate();
+
 		this.dir = dir;
 		this.tree = tree;
 		this.changes = changes;
@@ -214,14 +216,14 @@ class MappingsDiffPropagator {
 			d = diff.getClass(key);
 
 			if (d == null && insert) {
-				d = diff.addClass(key, "", "");
+				d = diff.addClass(key, o, o);
 			}
 		} else {
-			Result<Diff<?>> parentResult = applyChange(v, diff, parentChange, side, mode, op, insert);
+			Result<Diff<?>> parentResult = applyChange(v, diff, parentChange, side, DiffMode.NONE, Operation.NONE, insert);
 			Diff<?> parent = parentResult.subject();
 
 			if (parent == null) {
-				if (insert) {
+				if (op != Operation.NONE) {
 					System.out.println("ignoring invalid change " + change + " to " + v + " - parent diff does not exist! (were the diffs provided in the wrong order?)");
 					op = Operation.NONE;
 				}
@@ -229,13 +231,13 @@ class MappingsDiffPropagator {
 				d = parent.getChild(target, key);
 
 				if (d == null && insert) {
-					d = parent.addChild(target, key, "", "");
+					d = parent.addChild(target, key, o, o);
 				}
 			}
 		}
 
 		if (mode.is(DiffMode.MAPPINGS)) {
-			if (d == null || !d.isDiff() || !change.isDiff()) {
+			if (d == null || (!d.isDiff() && !insert) || !change.isDiff()) {
 				mode = mode.without(DiffMode.MAPPINGS);
 				op = Operation.NONE;
 			} else {
