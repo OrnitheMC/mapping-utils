@@ -16,8 +16,16 @@ public class MappingsDiff {
 
 	private final Map<String, ClassDiff> classDiffs;
 
+	private MappingsDiffValidator validator;
+
 	public MappingsDiff() {
 		this.classDiffs = new LinkedHashMap<>();
+
+		this.validator = MappingsDiffValidator.ALWAYS;
+	}
+
+	public void setValidator(MappingsDiffValidator validator) {
+		this.validator = validator;
 	}
 
 	private ClassDiff findParent(String key, boolean orThrowException) {
@@ -257,7 +265,7 @@ public class MappingsDiff {
 				}
 			}
 
-			return isDiff() || javadoc.isDiff() || hasChildren();
+			return ((isDiff() || javadoc.isDiff()) && root.validator.validate(this)) || hasChildren();
 		}
 
 		protected T copy() {
