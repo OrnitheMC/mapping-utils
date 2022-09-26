@@ -93,6 +93,11 @@ public class MappingUtils {
 		MappingsDiffPropagator.run(dir, tree, changes, version);
 	}
 
+	public static void generateDummyMappings(Format format, Path jarPath, Path mappingsPath) throws Exception {
+		Mappings mappings = DummyMappingsGenerator.run(format, jarPath);
+		format.writeMappings(mappingsPath, mappings);
+	}
+
 	public static String translateFieldDescriptor(String desc, Mappings mappings) {
 		Type type = Type.getType(desc);
 		type = translateType(type, mappings);
