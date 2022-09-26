@@ -59,10 +59,14 @@ class MappingsDiffGenerator {
 	}
 
 	private void addMappingPair(MappingPair parent, Mapping<?> a, Mapping<?> b) {
-		MappingPair pair = new MappingPair(parent, a, b);
-		a = pair.get(DiffSide.A);
-		b = pair.get(DiffSide.B);
+		if (a == null) {
+			a = findMapping(DiffSide.A, parent, b.target(), b.key());
+		}
+		if (b == null) {
+			b = findMapping(DiffSide.B, parent, a.target(), a.key());
+		}
 
+		MappingPair pair = new MappingPair(a, b);
 		mappingPairs.add(pair);
 
 		if (a != null) {
@@ -124,18 +128,21 @@ class MappingsDiffGenerator {
 	}
 
 	private Diff<?> addDiff(Mapping<?> mapping) {
-		Diff<?> d;
+		MappingTarget target = mapping.target();
+		String key = mapping.key();
+		Diff<?> d = null;
+
 		Mapping<?> parentMapping = mapping.getParent();
 
 		if (parentMapping == null) {
-			if (mapping.target() != MappingTarget.CLASS) {
-				throw new IllegalStateException("cannot get diff of target " + mapping.target() + " from the root diff");
+			if (target != MappingTarget.CLASS) {
+				throw new IllegalStateException("cannot get diff of target " + target + " from the root diff");
 			}
 
-			d = diff.getClass(mapping.key());
+			d = diff.getClass(key);
 
 			if (d == null) {
-				d = diff.addClass(mapping.src());
+				d = diff.addClass(key, "", "");
 			}
 		} else {
 			Diff<?> parent = addDiff(parentMapping);
@@ -143,9 +150,6 @@ class MappingsDiffGenerator {
 			if (parent == null) {
 				throw new IllegalStateException("unable to get diff for " + parentMapping);
 			}
-
-			MappingTarget target = mapping.target();
-			String key = mapping.key();
 
 			d = parent.getChild(target, key);
 
@@ -159,21 +163,10 @@ class MappingsDiffGenerator {
 
 	private class MappingPair {
 
-		private Mapping<?> a;
-		private Mapping<?> b;
+		private final Mapping<?> a;
+		private final Mapping<?> b;
 
-		protected MappingPair(MappingPair parent, Mapping<?> a, Mapping<?> b) {
-			if (a != null && b != null && a.target() != b.target()) {
-				throw new IllegalArgumentException("mismatched targets for mapping pair: " + a.target() + " and " + b.target());
-			}
-
-			if (a == null) {
-				a = findMapping(DiffSide.A, parent, b.target(), b.key());
-			}
-			if (b == null) {
-				b = findMapping(DiffSide.B, parent, a.target(), a.key());
-			}
-
+		protected MappingPair(Mapping<?> a, Mapping<?> b) {
 			this.a = a;
 			this.b = b;
 		}

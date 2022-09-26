@@ -12,15 +12,17 @@ import net.ornithemc.mappingutils.io.diff.tree.Version;
 
 class MappingsDiffPropagator {
 
-	static void run(MappingsDiffTree tree, MappingsDiff changes, String version) throws Exception {
-		new MappingsDiffPropagator(tree, changes, version).run();
+	static void run(PropagationDirection dir, MappingsDiffTree tree, MappingsDiff changes, String version) throws Exception {
+		new MappingsDiffPropagator(dir, tree, changes, version).run();
 	}
 
+	private final PropagationDirection dir;
 	private final MappingsDiffTree tree;
 	private final MappingsDiff changes;
 	private final String version;
 
-	private MappingsDiffPropagator(MappingsDiffTree tree, MappingsDiff changes, String version) {
+	private MappingsDiffPropagator(PropagationDirection dir, MappingsDiffTree tree, MappingsDiff changes, String version) {
+		this.dir = dir;
 		this.tree = tree;
 		this.changes = changes;
 		this.version = version;
@@ -33,193 +35,234 @@ class MappingsDiffPropagator {
 			throw new IllegalStateException("mappings for version " + version + " do not exist!");
 		}
 
-		for (Diff<?> d : changes.getTopLevelClasses()) {
-			propagateChange(v, d);
+		for (Diff<?> change : changes.getTopLevelClasses()) {
+			propagateChange(v, change);
 		}
 
 		tree.write();
 	}
 
 	private void propagateChange(Version v, Diff<?> change) throws Exception {
-		DiffMode mode = DiffMode.NONE;
+		DiffMode mode = DiffMode.of(change);
+		Operation op = Operation.of(change, mode);
 
-		if (change.isDiff()) {
-			mode = mode.with(DiffMode.MAPPINGS);
-		}
-		if (change.getJavadoc().isDiff()) {
-			mode = mode.with(DiffMode.JAVADOCS);
-		}
-
-		propagateChange(v, change, DiffSide.B, mode);
+		// we first propagate up to find the source of the mapping,
+		// then propagate the change down from there
+		propagateChange(v, change, PropagationDirection.UP, mode, op);
 
 		for (Diff<?> childChange : change.getChildren()) {
 			propagateChange(v, childChange);
 		}
 	}
 
-	private void propagateChange(Version v, Diff<?> change, DiffSide side, DiffMode mode) throws Exception {
+	private void propagateChange(Version v, Diff<?> change, PropagationDirection dir, DiffMode mode, Operation op) throws Exception {
 		if (mode == DiffMode.NONE) {
 			return;
 		}
 
-		// side A = propagate down
-		// side B = propagate up
-		// we first propagate up to find the source of the mapping,
-		// then propagate it down from there
+		Result<?> result;
 
 		if (v.isRoot()) {
-			if (side == DiffSide.B) {
-				Result<Mapping<?>> result = applyChange(v.getMappings(), change, side, mode);
+			result = applyChange(v, v.getMappings(), change, mode, Operation.of(change, mode));
+		} else {
+			DiffSide side = (dir == PropagationDirection.UP) ? DiffSide.B : DiffSide.A;
+			boolean insert = (dir == PropagationDirection.UP) ? !this.dir.up() : !this.dir.down();
 
-				if (result.success()) {
-					v.markDirty();
+			result = applyChange(v, v.getDiff(), change, side, mode, Operation.of(change, mode), insert);
+		}
 
-					// source of the mapping is root, now propagate down
-					for (Version c : v.getChildren()) {
-						propagateChange(c, change, DiffSide.A, mode);
-					}
-				}
+		if (result.success()) {
+			v.markDirty();
+
+			// found the source of the mapping, now propagate down
+			for (Version c : v.getChildren()) {
+				propagateChange(c, change, PropagationDirection.DOWN, result.mode(), result.operation());
+			}
+		}
+
+		// the part of the change that was not yet applied
+		mode = mode.without(result.mode());
+
+		// keep propagating that part in the same direction
+		if (dir == PropagationDirection.UP) {
+			if (!v.isRoot()) {
+				propagateChange(v.getParent(), change, dir, mode, op);
 			}
 		} else {
-			Result<Diff<?>> result = applyChange(v.getDiff(), change, side, mode);
-
-			if (result.success()) {
-				v.markDirty();
-
-				// check if we're propagating up or down
-				if (side == DiffSide.B) {
-					// found source of the mapping, now propagate down
-					for (Version c : v.getChildren()) {
-						propagateChange(c, change, DiffSide.A, mode);
-					}
-				}
-			}
-
-			// part of the change that was not yet applied
-			mode = mode.without(result.mode);
-
-			// keep propagating that part in the same direction
-			if (side == DiffSide.B) {
-				propagateChange(v.getParent(), change, side, mode);
-			} else {
-				for (Version c : v.getChildren()) {
-					propagateChange(c, change, side, mode);
-				}
+			for (Version c : v.getChildren()) {
+				propagateChange(c, change, dir, mode, op);
 			}
 		}
 	}
 
-	private Result<Mapping<?>> applyChange(Mappings mappings, Diff<?> change, DiffSide side, DiffMode mode) {
-		Mapping<?> m;
-		Result<Mapping<?>> result;
-
+	private Result<Mapping<?>> applyChange(Version v, Mappings mappings, Diff<?> change, DiffMode mode, Operation op) {
 		MappingTarget target = change.target();
 		String key = change.key();
+		Mapping<?> m = null;
+
+		String o = change.get(DiffSide.A);
 		String n = change.get(DiffSide.B);
 
 		Diff<?> parentChange = change.getParent();
 
 		if (parentChange == null) {
-			if (change.target() != MappingTarget.CLASS) {
-				throw new IllegalStateException("cannot get mapping of target " + change.target() + " from the root mappings");
+			if (target != MappingTarget.CLASS) {
+				throw new IllegalStateException("cannot get mapping of target " + target + " from the root mappings of " + v);
 			}
 
 			m = mappings.getClass(key);
 
-			if (m == null) {
-				if (n.isEmpty()) {
-					System.out.println("ignoring invalid diff " + change + " - mapping does not exist in root!");
-				} else {
-					m = mappings.addClass(change.src(), change.src());
+			if (mode.is(DiffMode.MAPPINGS)) {
+				if (op == Operation.ADD) {
+					if (m == null) {
+						m = mappings.addClass(key, n);
+					} else {
+						System.out.println("ignoring invalid change " + change + " to " + v + " - mapping already exists!");
+						mode = mode.without(DiffMode.MAPPINGS);
+						op = Operation.NONE;
+					}
 				}
-			} else {
-				if (n.isEmpty()) {
-					mappings.removeClass(key);
-				} else {
-					m.set(n);
+				if (op == Operation.REMOVE) {
+					if (m == null) {
+						System.out.println("ignoring invalid change " + change + " to " + v + " - mapping does not exist!");
+						mode = mode.without(DiffMode.MAPPINGS);
+						op = Operation.NONE;
+					} else {
+						m = mappings.removeClass(key);
+					}
 				}
 			}
 		} else {
-			Result<Mapping<?>> parentResult = applyChange(mappings, parentChange, side, DiffMode.NONE);
+			Result<Mapping<?>> parentResult = applyChange(v, mappings, parentChange, DiffMode.NONE, Operation.NONE);
+			Mapping<?> parent = parentResult.subject();
 
-			if (parentResult.subject == null) {
-				throw new IllegalStateException("unable to apply " + parentChange);
-			}
-
-			m = parentResult.subject.getChild(target, key);
-
-			if (m == null) {
-				if (n.isEmpty()) {
-					System.out.println("ignoring invalid diff " + change + " - mapping does not exist in root!");
-				} else {
-					m = parentResult.subject.addChild(target, key, n);
+			if (parent == null) {
+				if (op != Operation.NONE) {
+//					System.out.println("ignoring invalid change " + change + " to " + v + " - parent mapping does not exist! (were the diffs provided in the wrong order?)");
+					mode = DiffMode.NONE;
+					op = Operation.NONE;
 				}
 			} else {
-				if (n.isEmpty()) {
-					parentResult.subject.removeChild(target, key);
-				} else {
-					m.set(n);
+				m = parent.getChild(target, key);
+
+				if (mode.is(DiffMode.MAPPINGS)) {
+					if (op == Operation.ADD) {
+						if (m == null) {
+							m = parent.addChild(target, key, n);
+						} else {
+							System.out.println("ignoring invalid change " + change + " to " + v + " - mapping already exists!");
+							mode = mode.without(DiffMode.MAPPINGS);
+							op = Operation.NONE;
+						}
+					}
+					if (op == Operation.REMOVE) {
+						if (m == null) {
+							System.out.println("ignoring invalid change " + change + " to " + v + " - mapping does not exist!");
+							mode = mode.without(DiffMode.MAPPINGS);
+							op = Operation.NONE;
+						} else {
+							m = parent.removeChild(target, key);
+						}
+					}
 				}
 			}
 		}
 
-		result = new Result<>(m, mode);
-
-		if (m != null) {
-			if (mode.is(DiffMode.JAVADOCS)) {
-				m.setJavadoc(change.getJavadoc().get(DiffSide.B));
+		if (mode.is(DiffMode.MAPPINGS) && op == Operation.CHANGE) {
+			if (m == null) {
+				System.out.println("ignoring invalid change " + change + " to " + v + " - mapping does not exist!");
+				mode = mode.without(DiffMode.MAPPINGS);
+				op = Operation.NONE;
+			} else if (m.get().equals(o)) {
+				m.set(n);
+			} else {
+				System.out.println("ignoring invalid change " + change + " to " + v + " - mapping does not match!");
+				mode = mode.without(DiffMode.MAPPINGS);
+				op = Operation.NONE;
 			}
 		}
 
-		return result;
+		JavadocDiff jchange = change.getJavadoc();
+
+		if (mode.is(DiffMode.JAVADOCS) && jchange.isDiff()) {
+			if (m == null) {
+				System.out.println("ignoring invalid change " + jchange + " to " + v + " - mapping does not exist!");
+				mode = mode.without(DiffMode.JAVADOCS);
+			} else {
+				m.setJavadoc(jchange.get(DiffSide.B));
+			}
+		}
+
+		return new Result<>(m, mode, op);
 	}
 
-	private Result<Diff<?>> applyChange(MappingsDiff diff, Diff<?> change, DiffSide side, DiffMode mode) {
-		Diff<?> d;
-		Result<Diff<?>> result;
+	private Result<Diff<?>> applyChange(Version v, MappingsDiff diff, Diff<?> change, DiffSide side, DiffMode mode, Operation op, boolean insert) {
+		MappingTarget target = change.target();
+		String key = change.key();
+		Diff<?> d = null;
+
+		String o = change.get(DiffSide.A);
+		String n = change.get(DiffSide.B);
 
 		Diff<?> parentChange = change.getParent();
 
 		if (parentChange == null) {
-			if (change.target() != MappingTarget.CLASS) {
-				throw new IllegalStateException("cannot get diff of target " + change.target() + " from the root diff");
+			if (target != MappingTarget.CLASS) {
+				throw new IllegalStateException("cannot get diff of target " + target + " from the root diff for " + v);
 			}
 
-			d = diff.getClass(change.src());
+			d = diff.getClass(key);
+
+			if (d == null && insert) {
+				d = diff.addClass(key, "", "");
+			}
 		} else {
-			Result<Diff<?>> parentResult = applyChange(diff, parentChange, side, DiffMode.NONE);
+			Result<Diff<?>> parentResult = applyChange(v, diff, parentChange, side, mode, op, insert);
+			Diff<?> parent = parentResult.subject();
 
-			if (parentResult.subject == null) {
-				throw new IllegalStateException("unable to apply " + parentChange);
-			}
-
-			MappingTarget target = change.target();
-			String key = change.key();
-
-			d = parentResult.subject.getChild(target, key);
-		}
-
-		result = new Result<>(d);
-
-		if (d != null) {
-			if (mode.is(DiffMode.MAPPINGS)) {
-				if (d.isDiff()) {
-					d.set(side, change.get(DiffSide.B));
-					result.with(DiffMode.MAPPINGS);
+			if (parent == null) {
+				if (insert) {
+					System.out.println("ignoring invalid change " + change + " to " + v + " - parent diff does not exist! (were the diffs provided in the wrong order?)");
+					op = Operation.NONE;
 				}
-			}
-			if (mode.is(DiffMode.JAVADOCS)) {
-				JavadocDiff jchange = change.getJavadoc();
-				JavadocDiff jd = d.getJavadoc();
+			} else {
+				d = parent.getChild(target, key);
 
-				if (jd.isDiff()) {
-					jd.set(side, jchange.get(DiffSide.B));
-					result.with(DiffMode.JAVADOCS);
+				if (d == null && insert) {
+					d = parent.addChild(target, key, "", "");
 				}
 			}
 		}
 
-		return result;
+		if (mode.is(DiffMode.MAPPINGS)) {
+			if (d == null || !d.isDiff() || !change.isDiff()) {
+				mode = mode.without(DiffMode.MAPPINGS);
+				op = Operation.NONE;
+			} else {
+				if (d.get(side).equals(o)) {
+					d.set(side, n);
+				} else {
+					System.out.println("ignoring invalid change " + change + " to " + v + " - diff does not match!");
+					op = Operation.NONE;
+				}
+			}
+		}
+
+		JavadocDiff jchange = change.getJavadoc();
+
+		if (mode.is(DiffMode.JAVADOCS) && jchange.isDiff()) {
+			if (d == null) {
+				if (insert) {
+					System.out.println("ignoring invalid change " + jchange + " to " + v + " - diff does not exist!");
+				}
+
+				mode = mode.without(DiffMode.JAVADOCS);
+			} else {
+				d.getJavadoc().set(side, jchange.get(DiffSide.B));
+			}
+		}
+
+		return new Result<>(d, mode, op);
 	}
 
 	private enum DiffMode {
@@ -258,28 +301,63 @@ class MappingsDiffPropagator {
 		public DiffMode without(DiffMode mode) {
 			return ALL[flags & (~mode.flags)];
 		}
+
+		public static DiffMode of(Diff<?> diff) {
+			DiffMode mode = NONE;
+
+			if (diff.isDiff()) {
+				mode = mode.with(DiffMode.MAPPINGS);
+			}
+			if (diff.getJavadoc().isDiff()) {
+				mode = mode.with(DiffMode.JAVADOCS);
+			}
+
+			return mode;
+		}
+	}
+
+	private enum Operation {
+
+		NONE, CHANGE, ADD, REMOVE;
+
+		public static Operation of(Diff<?> diff, DiffMode mode) {
+			if (diff.isDiff() && mode.is(DiffMode.MAPPINGS)) {
+				if (diff.get(DiffSide.A).isEmpty()) {
+					return ADD;
+				}
+				if (diff.get(DiffSide.B).isEmpty()) {
+					return REMOVE;
+				}
+
+				return CHANGE;
+			} else {
+				return NONE;
+			}
+		}
 	}
 
 	private class Result<T> {
 
-		// the mapping/diff the change was applied to
-		public final T subject;
+		private final T subject;
+		private final DiffMode mode;
+		private final Operation op;
 
-		// the type of change that was applied
-		public DiffMode mode;
-
-		public Result(T subject) {
-			this(subject, DiffMode.NONE);
-		}
-
-		public Result(T subject, DiffMode mode) {
+		public Result(T subject, DiffMode mode, Operation op) {
 			this.subject = subject;
-
 			this.mode = mode;
+			this.op = op;
 		}
 
-		public void with(DiffMode mode) {
-			this.mode = this.mode.with(mode);
+		public T subject() {
+			return subject;
+		}
+
+		public DiffMode mode() {
+			return mode;
+		}
+
+		public Operation operation() {
+			return op;
 		}
 
 		public boolean success() {

@@ -59,13 +59,14 @@ public class MappingUtils {
 		FileUtils.requireWritable(dstPath);
 		FileUtils.requireReadable(diffPaths);
 
-		Mappings src = format.readMappings(srcPath);
+		Mappings mappings = format.readMappings(srcPath);
 		MappingsDiff[] diffs = new MappingsDiff[diffPaths.size()];
 		for (int i = 0; i < diffPaths.size(); i++) {
 			diffs[i] = format.readDiff(diffPaths.get(i));
 		}
 
-		format.writeMappings(dstPath, MappingsDiffApplier.run(src, diffs));
+		MappingsDiffApplier.run(mappings, diffs);
+		format.writeMappings(dstPath, mappings);
 	}
 
 	public static void separateMappings(Format format, Path dir, Path dstPath, String version) throws Exception {
@@ -75,20 +76,21 @@ public class MappingUtils {
 		MappingsDiffTree tree = MappingsDiffTree.of(format, dir);
 		Version root = tree.root();
 
-		Mappings src = root.getMappings();
+		Mappings mappings = root.getMappings();
 		List<MappingsDiff> diffs = tree.getDiffsFromRoot(version);
 
-		format.writeMappings(dstPath, MappingsDiffApplier.run(src, diffs));
+		MappingsDiffApplier.run(mappings, diffs);
+		format.writeMappings(dstPath, mappings);
 	}
 
-	public static void propagateMappings(Format format, Path dir, Path diffPath, String version) throws Exception {
-		FileUtils.requireReadable(dir);
-		FileUtils.requireReadable(diffPath);
+	public static void insertMappings(Format format, PropagationDirection dir, Path dirPath, Path changesPath, String version) throws Exception {
+		FileUtils.requireReadable(dirPath);
+		FileUtils.requireReadable(changesPath);
 
-		MappingsDiffTree tree = MappingsDiffTree.of(format, dir);
-		MappingsDiff diff = format.readDiff(diffPath);
+		MappingsDiffTree tree = MappingsDiffTree.of(format, dirPath);
+		MappingsDiff changes = format.readDiff(changesPath);
 
-		MappingsDiffPropagator.run(tree, diff, version);
+		MappingsDiffPropagator.run(dir, tree, changes, version);
 	}
 
 	public static String translateFieldDescriptor(String desc, Mappings mappings) {
