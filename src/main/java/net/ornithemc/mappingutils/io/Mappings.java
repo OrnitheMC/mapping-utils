@@ -18,6 +18,7 @@ public class Mappings {
 
 	private MappingNamespace srcNamespace;
 	private MappingNamespace dstNamespace;
+	private MappingValidator validator;
 
 	private Mappings inverted;
 
@@ -30,6 +31,7 @@ public class Mappings {
 
 		this.srcNamespace = srcNamespace;
 		this.dstNamespace = dstNamespace;
+		this.validator = MappingValidator.ALWAYS;
 	}
 
 	private Mappings(Mappings inverted) {
@@ -53,6 +55,10 @@ public class Mappings {
 
 	public void setDstNamespace(MappingNamespace namespace) {
 		this.dstNamespace = Objects.requireNonNull(namespace);
+	}
+
+	public void setValidator(MappingValidator validator) {
+		this.validator = validator;
 	}
 
 	private ClassMapping findParent(String key, boolean orThrowException) {
@@ -309,7 +315,7 @@ public class Mappings {
 				}
 			}
 
-			return true;
+			return root.validator.validate(this);
 		}
 
 		protected T copy() {
