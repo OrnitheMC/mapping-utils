@@ -151,7 +151,7 @@ public class Mappings {
 
 	protected Mappings copy(Mappings copy) {
 		for (ClassMapping c : classMappings.values()) {
-			copy.addClass(c.copy());
+			copy.addClass(c.copy(copy));
 		}
 
 		return copy;
@@ -182,6 +182,7 @@ public class Mappings {
 
 			this.src = src;
 			this.dst = dst;
+			this.jav = "";
 		}
 
 		@Override
@@ -204,11 +205,7 @@ public class Mappings {
 		}
 
 		public final void set(String dst) {
-			this.dst = dst;
-		}
-
-		public final void reset() {
-			set(src);
+			this.dst = validateDst(dst);
 		}
 
 		public final String getJavadoc() {
@@ -216,7 +213,7 @@ public class Mappings {
 		}
 
 		public final void setJavadoc(String jav) {
-			this.jav = jav;
+			this.jav = validateDst(jav);
 		}
 
 		public Mapping<?> getParent() {
@@ -305,6 +302,9 @@ public class Mappings {
 		protected abstract T inverted();
 
 		protected boolean validate() {
+			dst = validateDst(dst);
+			jav = validateDst(jav);
+
 			Iterator<Mapping<?>> it = children.values().iterator();
 
 			while (it.hasNext()) {
@@ -318,19 +318,19 @@ public class Mappings {
 			return root.validator.validate(this);
 		}
 
-		protected T copy() {
-			T copy = copied();
+		protected T copy(Mappings rootCopy) {
+			T copy = copied(rootCopy);
 
 			copy.jav = jav;
 
 			for (Mapping<?> m : children.values()) {
-				copy.addChild(m.copy());
+				copy.addChild(m.copy(rootCopy));
 			}
 
 			return copy;
 		}
 
-		protected abstract T copied();
+		protected abstract T copied(Mappings rootCopy);
 
 	}
 
@@ -356,33 +356,31 @@ public class Mappings {
 
 		@Override
 		protected ClassMapping inverted() {
-			return new ClassMapping(root.inverted, this, dst, src);
+			return new ClassMapping(root.inverted, this, getComplete(), getSimplified(src));
 		}
 
 		@Override
 		protected boolean validate() {
-			String[] srcArgs = src.split("[$]");
-			String[] dstArgs = dst.split("[$]");
-
-			if (srcArgs.length != dstArgs.length) {
-				throw new IllegalStateException("src and dst class names do not have the same nesting depth!");
+			if (dst.contains("$")) {
+				throw new IllegalStateException("simple name of " + this + " cannot be nested!");
 			}
+
+			String[] srcArgs = src.split("[$]");
+
 			if (srcArgs.length == 1) {
 				return super.validate();
 			}
 
 			int i = src.lastIndexOf('$');
-			int j = dst.lastIndexOf('$');
 			String srcParentName = src.substring(0, i);
-			String dstParentName = dst.substring(0, j);
 
-			if (!parent.src.equals(srcParentName) || !parent.dst.equals(dstParentName)) {
+			if (!parent.src.equals(srcParentName)) {
 				throw new IllegalStateException("class mapping " + this + " is not consistent with parent class mapping " + parent);
 			}
 
 			try {
 				int srcIndex = Integer.parseInt(srcArgs[srcArgs.length - 1]);
-				int dstIndex = Integer.parseInt(dstArgs[dstArgs.length - 1]);
+				int dstIndex = Integer.parseInt(dst);
 
 				if (srcIndex != dstIndex) {
 					throw new IllegalStateException("src and dst anonymous class indices do not match!");
@@ -395,8 +393,17 @@ public class Mappings {
 		}
 
 		@Override
-		protected ClassMapping copied() {
-			return new ClassMapping(root, src, dst);
+		protected ClassMapping copied(Mappings rootCopy) {
+			return new ClassMapping(rootCopy, src, dst);
+		}
+
+		public String getComplete() {
+			return parent == null || dst.isEmpty() ? dst : parent.get() + "$" + dst;
+		}
+
+		public static String getSimplified(String name) {
+			int i = name.lastIndexOf('$');
+			return name.substring(i + 1);
 		}
 
 		public ClassMapping getClass(String key) {
@@ -511,8 +518,8 @@ public class Mappings {
 		}
 
 		@Override
-		protected FieldMapping copied() {
-			return new FieldMapping(root, null, src, dst, desc);
+		protected FieldMapping copied(Mappings rootCopy) {
+			return new FieldMapping(rootCopy, null, src, dst, desc);
 		}
 
 		public String getDesc() {
@@ -570,8 +577,8 @@ public class Mappings {
 		}
 
 		@Override
-		protected MethodMapping copied() {
-			return new MethodMapping(root, null, src, dst, desc);
+		protected MethodMapping copied(Mappings rootCopy) {
+			return new MethodMapping(rootCopy, null, src, dst, desc);
 		}
 
 		public String getDesc() {
@@ -677,8 +684,8 @@ public class Mappings {
 		}
 
 		@Override
-		protected ParameterMapping copied() {
-			return new ParameterMapping(root, null, src, dst, index);
+		protected ParameterMapping copied(Mappings rootCopy) {
+			return new ParameterMapping(rootCopy, null, src, dst, index);
 		}
 
 		public int getIndex() {
@@ -692,5 +699,9 @@ public class Mappings {
 		}
 
 		return n;
+	}
+
+	private static String validateDst(String dst) {
+		return dst == null ? "" : dst;
 	}
 }

@@ -67,7 +67,7 @@ public class TinyV1Reader extends TinyMappingsReader<TinyV1Mappings> {
 			src = args[1];
 			dst = args[2];
 
-			mappings.addClass(src, dst);
+			mappings.addClass(src, ClassMapping.getSimplified(dst));
 
 			break;
 		case TinyV1Mappings.FIELD:

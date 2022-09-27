@@ -65,7 +65,7 @@ class DummyMappingsGenerator {
 
 		while (!classes.isEmpty()) {
 			ClassNode cn = classes.poll();
-			ClassMapping c = mappings.addClass(cn.name, cn.name);
+			ClassMapping c = mappings.addClass(cn.name, ClassMapping.getSimplified(cn.name));
 
 			for (FieldNode fn : cn.fields) {
 				c.addField(fn.name, fn.name, fn.desc);

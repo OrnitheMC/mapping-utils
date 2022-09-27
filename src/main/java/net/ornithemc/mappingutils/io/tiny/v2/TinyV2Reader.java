@@ -135,7 +135,7 @@ public class TinyV2Reader extends TinyMappingsReader<TinyV2Mappings> {
 			src = args[1 + indents];
 			dst = args[2 + indents];
 
-			c = mappings.addClass(src, dst);
+			c = mappings.addClass(src, ClassMapping.getSimplified(dst));
 			f = null;
 			m = null;
 			p = null;

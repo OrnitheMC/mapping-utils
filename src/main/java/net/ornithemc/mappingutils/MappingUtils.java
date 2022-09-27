@@ -152,7 +152,7 @@ public class MappingUtils {
 			ClassMapping mapping = mappings.getClass(className);
 
 			if (mapping != null) {
-				className = mapping.get();
+				className = mapping.getComplete();
 				type = Type.getObjectType(className);
 			}
 

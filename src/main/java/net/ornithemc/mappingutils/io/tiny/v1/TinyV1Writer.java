@@ -49,7 +49,7 @@ public class TinyV1Writer extends TinyMappingsWriter<TinyV1Mappings> {
 		writer.write(TAB);
 		writer.write(c.src());
 		writer.write(TAB);
-		writer.write(c.get());
+		writer.write(c.getComplete());
 		writer.newLine();
 
 		for (FieldMapping f : c.getFields()) {

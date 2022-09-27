@@ -57,7 +57,7 @@ public class TinyV2Writer extends TinyMappingsWriter<TinyV2Mappings> {
 		writer.write(TAB);
 		writer.write(c.src());
 		writer.write(TAB);
-		writer.write(c.get());
+		writer.write(c.getComplete());
 		writer.newLine();
 
 		writeJavadoc(c);
@@ -125,7 +125,7 @@ public class TinyV2Writer extends TinyMappingsWriter<TinyV2Mappings> {
 	private void writeJavadoc(Mapping<?> mapping) throws Exception {
 		String jav = mapping.getJavadoc();
 
-		if (jav != null && !jav.isEmpty()) {
+		if (!jav.isEmpty()) {
 			indents++;
 
 			indent();
