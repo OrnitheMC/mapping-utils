@@ -100,11 +100,11 @@ public class Mappings {
 
 		if (parent == null) {
 			return classMappings.compute(c.key(), (key, value) -> {
-				return checkReplace(value, c);
+				return (ClassMapping)checkReplace(value, c);
 			});
 		}
 
-		return parent.addChild(c);
+		return (ClassMapping)parent.addChild(c);
 	}
 
 	public ClassMapping removeClass(String key) {
@@ -138,7 +138,7 @@ public class Mappings {
 			inverted = new Mappings(this);
 
 			for (ClassMapping c : classMappings.values()) {
-				inverted.addClass(c.invert());
+				inverted.addClass((ClassMapping)c.invert());
 			}
 		}
 
@@ -151,7 +151,7 @@ public class Mappings {
 
 	protected Mappings copy(Mappings copy) {
 		for (ClassMapping c : classMappings.values()) {
-			copy.addClass(c.copy(copy));
+			c.copy(copy.addClass(c.key(), c.dst));
 		}
 
 		return copy;
@@ -162,7 +162,7 @@ public class Mappings {
 		protected final Mappings root;
 		protected final Map<String, Mapping<?>> children;
 
-		protected T inverted;
+		protected Mapping<?> inverted;
 		protected Mapping<?> parent;
 
 		protected String src;
@@ -265,12 +265,11 @@ public class Mappings {
 			}
 		}
 
-		@SuppressWarnings("unchecked")
-		protected <M extends Mapping<M>> M addChild(M m) {
+		protected Mapping<?> addChild(Mapping<?> m) {
 			m.parent = this;
 
-			return (M)children.compute(m.key(), (key, value) -> {
-				return checkReplace((M)value, m);
+			return children.compute(m.key(), (key, value) -> {
+				return checkReplace(value, m);
 			});
 		}
 
@@ -283,7 +282,7 @@ public class Mappings {
 			return (M)children.remove(key);
 		}
 
-		public final T invert() {
+		public final Mapping<?> invert() {
 			root.invert();
 
 			if (inverted == null) {
@@ -299,7 +298,7 @@ public class Mappings {
 			return inverted;
 		}
 
-		protected abstract T inverted();
+		protected abstract Mapping<?> inverted();
 
 		protected boolean validate() {
 			dst = validateDst(dst);
@@ -318,20 +317,15 @@ public class Mappings {
 			return root.validator.validate(this);
 		}
 
-		protected T copy(Mappings rootCopy) {
-			T copy = copied(rootCopy);
-
+		protected Mapping<?> copy(Mapping<?> copy) {
 			copy.jav = jav;
 
 			for (Mapping<?> m : children.values()) {
-				copy.addChild(m.copy(rootCopy));
+				m.copy(copy.addChild(m.target(), m.key(), m.dst));
 			}
 
 			return copy;
 		}
-
-		protected abstract T copied(Mappings rootCopy);
-
 	}
 
 	public static class ClassMapping extends Mapping<ClassMapping> {
@@ -392,11 +386,6 @@ public class Mappings {
 			return super.validate();
 		}
 
-		@Override
-		protected ClassMapping copied(Mappings rootCopy) {
-			return new ClassMapping(rootCopy, src, dst);
-		}
-
 		public String getComplete() {
 			return parent == null || dst.isEmpty() ? dst : parent.get() + "$" + dst;
 		}
@@ -439,7 +428,7 @@ public class Mappings {
 		}
 
 		public ClassMapping addClass(String src, String dst) {
-			return addChild(new ClassMapping(root, src, dst));
+			return (ClassMapping)addChild(new ClassMapping(root, src, dst));
 		}
 
 		public FieldMapping addField(String src, String dst, String desc) {
@@ -447,7 +436,7 @@ public class Mappings {
 		}
 
 		private FieldMapping addField(String key, String dst) {
-			return addChild(new FieldMapping(root, key, dst));
+			return (FieldMapping)addChild(new FieldMapping(root, key, dst));
 		}
 
 		public MethodMapping addMethod(String src, String dst, String desc) {
@@ -455,7 +444,7 @@ public class Mappings {
 		}
 
 		private MethodMapping addMethod(String key, String desc) {
-			return addChild(new MethodMapping(root, key, desc));
+			return (MethodMapping)addChild(new MethodMapping(root, key, desc));
 		}
 
 		public ClassMapping removeClass(String key) {
@@ -517,11 +506,6 @@ public class Mappings {
 			return new FieldMapping(root.inverted, this, dst, src, MappingUtils.translateFieldDescriptor(desc, root));
 		}
 
-		@Override
-		protected FieldMapping copied(Mappings rootCopy) {
-			return new FieldMapping(rootCopy, null, src, dst, desc);
-		}
-
 		public String getDesc() {
 			return desc;
 		}
@@ -576,11 +560,6 @@ public class Mappings {
 			return new MethodMapping(root.inverted, this, dst, src, MappingUtils.translateMethodDescriptor(desc, root));
 		}
 
-		@Override
-		protected MethodMapping copied(Mappings rootCopy) {
-			return new MethodMapping(rootCopy, null, src, dst, desc);
-		}
-
 		public String getDesc() {
 			return desc;
 		}
@@ -615,7 +594,7 @@ public class Mappings {
 				return null;
 			}
 
-			return addChild(p);
+			return (ParameterMapping)addChild(p);
 		}
 
 		public ParameterMapping removeParameter(int index) {
@@ -683,17 +662,12 @@ public class Mappings {
 			return new ParameterMapping(root.inverted, this, dst, src, index);
 		}
 
-		@Override
-		protected ParameterMapping copied(Mappings rootCopy) {
-			return new ParameterMapping(rootCopy, null, src, dst, index);
-		}
-
 		public int getIndex() {
 			return index;
 		}
 	}
 
-	private static <T extends Mapping<T>> T checkReplace(T o, T n) {
+	private static Mapping<?> checkReplace(Mapping<?> o, Mapping<?> n) {
 		if (o != null && n != null) {
 			System.err.println("replacing mapping " + o + " with " + n);
 		}

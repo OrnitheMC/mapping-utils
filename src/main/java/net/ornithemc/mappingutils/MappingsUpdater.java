@@ -48,7 +48,7 @@ class MappingsUpdater {
 	}
 
 	private void updateClass(ClassMapping c) {
-		ClassMapping cCalamusSrcInv = calamusSrcInv.getClass(c.src());
+		/*ClassMapping cCalamusSrcInv = calamusSrcInv.getClass(c.src());
 		ClassMatch cMatch = matches.getClass(cCalamusSrcInv.get());
 
 		// check if class exists in dst jar
@@ -103,6 +103,6 @@ class MappingsUpdater {
 		}
 		for (ClassMapping cc : c.getClasses()) {
 			updateClass(cc);
-		}
+		}*/
 	}
 }

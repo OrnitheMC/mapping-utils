@@ -67,11 +67,11 @@ public class MappingsDiff {
 
 		if (parent == null) {
 			return classDiffs.compute(c.key(), (key, value) -> {
-				return checkReplace(value, c);
+				return (ClassDiff)checkReplace(value, c);
 			});
 		}
 
-		return parent.addChild(c);
+		return (ClassDiff)parent.addChild(c);
 	}
 
 	public ClassDiff removeClass(String key) {
@@ -104,7 +104,7 @@ public class MappingsDiff {
 		MappingsDiff copy = new MappingsDiff();
 
 		for (ClassDiff c : classDiffs.values()) {
-			copy.addClass(c.copy());
+			c.copy(copy.addClass(c.key(), c.dstA, c.dstB));
 		}
 
 		return copy;
@@ -231,12 +231,11 @@ public class MappingsDiff {
 			}
 		}
 
-		@SuppressWarnings("unchecked")
-		protected <D extends Diff<D>> D addChild(D d) {
+		protected Diff<?> addChild(Diff<?> d) {
 			d.parent = this;
 
-			return (D)children.compute(d.key(), (key, value) -> {
-				return checkReplace((D)value, d);
+			return children.compute(d.key(), (key, value) -> {
+				return checkReplace(value, d);
 			});
 		}
 
@@ -272,21 +271,16 @@ public class MappingsDiff {
 			return (root.validator.validate(this) && (isDiff() || javadoc.isDiff())) || hasChildren();
 		}
 
-		protected T copy() {
-			T copy = copied();
-
+		protected Diff<?> copy(Diff<?> copy) {
 			copy.javadoc.javadocA = javadoc.javadocA;
 			copy.javadoc.javadocB = javadoc.javadocB;
 
 			for (Diff<?> d : children.values()) {
-				copy.addChild(d.target(), d.key(), d.dstA, d.dstB);
+				d.copy(copy.addChild(d.target(), d.key(), d.dstA, d.dstB));
 			}
 
 			return copy;
 		}
-
-		protected abstract T copied();
-
 	}
 
 	public static class ClassDiff extends Diff<ClassDiff> {
@@ -303,11 +297,6 @@ public class MappingsDiff {
 		@Override
 		public ClassDiff getParent() {
 			return (ClassDiff)parent;
-		}
-
-		@Override
-		protected ClassDiff copied() {
-			return new ClassDiff(root, src, dstA, dstB);
 		}
 
 		public ClassDiff getClass(String key) {
@@ -343,7 +332,7 @@ public class MappingsDiff {
 		}
 
 		public ClassDiff addClass(String src, String dstA, String dstB) {
-			return addChild(new ClassDiff(root, src, dstA, dstB));
+			return (ClassDiff)addChild(new ClassDiff(root, src, dstA, dstB));
 		}
 
 		public FieldDiff addField(String name, String dstA, String dstB, String desc) {
@@ -351,7 +340,7 @@ public class MappingsDiff {
 		}
 
 		public FieldDiff addField(String key, String dstA, String dstB) {
-			return addChild(new FieldDiff(root, key, dstA, dstB));
+			return (FieldDiff)addChild(new FieldDiff(root, key, dstA, dstB));
 		}
 
 		public MethodDiff addMethod(String name, String dstA, String dstB, String desc) {
@@ -359,7 +348,7 @@ public class MappingsDiff {
 		}
 
 		public MethodDiff addMethod(String key, String dstA, String dstB) {
-			return addChild(new MethodDiff(root, key, dstA, dstB));
+			return (MethodDiff)addChild(new MethodDiff(root, key, dstA, dstB));
 		}
 
 		public ClassDiff removeClass(String key) {
@@ -416,11 +405,6 @@ public class MappingsDiff {
 			return (ClassDiff)parent;
 		}
 
-		@Override
-		protected FieldDiff copied() {
-			return new FieldDiff(root, src, dstA, dstB, desc);
-		}
-
 		public String getDesc() {
 			return desc;
 		}
@@ -470,11 +454,6 @@ public class MappingsDiff {
 			return (ClassDiff)parent;
 		}
 
-		@Override
-		protected MethodDiff copied() {
-			return new MethodDiff(root, src, dstA, dstB, desc);
-		}
-
 		public String getDesc() {
 			return desc;
 		}
@@ -500,7 +479,7 @@ public class MappingsDiff {
 		}
 
 		public ParameterDiff addParameter(String key, String dstA, String dstB) {
-			return addChild(new ParameterDiff(root, key, dstA, dstB));
+			return (ParameterDiff)addChild(new ParameterDiff(root, key, dstA, dstB));
 		}
 
 		public ParameterDiff removeParameter(int index) {
@@ -553,11 +532,6 @@ public class MappingsDiff {
 		@Override
 		public MethodDiff getParent() {
 			return (MethodDiff)parent;
-		}
-
-		@Override
-		protected ParameterDiff copied() {
-			return new ParameterDiff(root, src, dstA, dstB, index);
 		}
 
 		public int getIndex() {
@@ -622,7 +596,7 @@ public class MappingsDiff {
 		}
 	}
 
-	private static <T extends Diff<T>> T checkReplace(T o, T n) {
+	private static Diff<?> checkReplace(Diff<?> o, Diff<?> n) {
 		if (o != null && n != null) {
 			System.err.println("replacing diff " + o + " with " + n);
 		}
