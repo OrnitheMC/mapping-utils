@@ -243,6 +243,11 @@ class MappingsDiffPropagator {
 				mode = mode.without(DiffMode.MAPPINGS);
 				op = Operation.NONE;
 			} else {
+				if (!d.isDiff()) {
+					d.set(side, o);
+					d.set(side.opposite(), o);
+				}
+
 				if (d.get(side).equals(o)) {
 					d.set(side, n);
 				} else {
