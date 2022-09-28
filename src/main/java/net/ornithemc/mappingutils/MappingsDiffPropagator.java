@@ -76,9 +76,11 @@ class MappingsDiffPropagator {
 		if (result.success()) {
 			v.markDirty();
 
-			// found the source of the mapping, now propagate down
-			for (Version c : v.getChildren()) {
-				propagateChange(c, change, PropagationDirection.DOWN, result.mode(), result.operation());
+			if (dir == PropagationDirection.UP) {
+				// found the source of the mapping, now propagate down
+				for (Version c : v.getChildren()) {
+					propagateChange(c, change, PropagationDirection.DOWN, result.mode(), result.operation());
+				}
 			}
 		}
 
