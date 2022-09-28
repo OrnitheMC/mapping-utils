@@ -387,7 +387,7 @@ public class Mappings {
 		}
 
 		public String getComplete() {
-			return parent == null || dst.isEmpty() ? dst : parent.get() + "$" + dst;
+			return parent == null || dst.isEmpty() ? dst : getParent().getComplete() + "$" + dst;
 		}
 
 		public static String getSimplified(String name) {
