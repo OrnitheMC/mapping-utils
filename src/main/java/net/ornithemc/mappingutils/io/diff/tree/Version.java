@@ -35,6 +35,23 @@ public class Version {
 	}
 
 	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!(obj instanceof Version)) {
+			return false;
+		}
+
+		return version.equals(((Version)obj).version);
+	}
+
+	@Override
+	public int hashCode() {
+		return version.hashCode();
+	}
+
+	@Override
 	public String toString() {
 		return version;
 	}

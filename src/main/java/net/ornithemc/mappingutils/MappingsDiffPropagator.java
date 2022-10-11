@@ -1,5 +1,8 @@
 package net.ornithemc.mappingutils;
 
+import java.util.Collection;
+import java.util.HashSet;
+
 import net.ornithemc.mappingutils.io.MappingTarget;
 import net.ornithemc.mappingutils.io.Mappings;
 import net.ornithemc.mappingutils.io.Mappings.Mapping;
@@ -21,6 +24,8 @@ class MappingsDiffPropagator {
 	private final MappingsDiff changes;
 	private final String version;
 
+	private final Collection<Version> barriers;
+
 	private MappingsDiffPropagator(PropagationDirection dir, MappingsDiffTree tree, MappingsDiff changes, String version) {
 		changes.validate();
 
@@ -28,6 +33,8 @@ class MappingsDiffPropagator {
 		this.tree = tree;
 		this.changes = changes;
 		this.version = version;
+
+		this.barriers = new HashSet<>();
 	}
 
 	private void run() throws Exception {
@@ -35,6 +42,13 @@ class MappingsDiffPropagator {
 
 		if (v == null) {
 			throw new IllegalStateException("mappings for version " + version + " do not exist!");
+		}
+
+		if (!dir.up()) {
+			barriers.add(v);
+		}
+		if (!dir.down()) {
+			barriers.addAll(v.getChildren());
 		}
 
 		for (Diff<?> change : changes.getTopLevelClasses()) {
@@ -68,7 +82,7 @@ class MappingsDiffPropagator {
 			result = applyChange(v, v.getMappings(), change, mode, Operation.of(change, mode));
 		} else {
 			DiffSide side = (dir == PropagationDirection.UP) ? DiffSide.B : DiffSide.A;
-			boolean insert = (dir == PropagationDirection.UP) ? !this.dir.up() : !this.dir.down();
+			boolean insert = barriers.contains(v);
 
 			result = applyChange(v, v.getDiff(), change, side, mode, Operation.of(change, mode), insert);
 		}
