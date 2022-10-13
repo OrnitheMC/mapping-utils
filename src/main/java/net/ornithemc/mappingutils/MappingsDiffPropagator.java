@@ -273,15 +273,29 @@ class MappingsDiffPropagator {
 
 		JavadocDiff jchange = change.getJavadoc();
 
-		if (mode.is(DiffMode.JAVADOCS) && jchange.isDiff()) {
-			if (d == null) {
+		if (mode.is(DiffMode.JAVADOCS)) {
+			JavadocDiff jd = (d == null) ? null : d.getJavadoc();
+
+			if (jd == null || (!jd.isDiff() && !insert) || !jchange.isDiff()) {
 				if (insert) {
 					System.out.println("ignoring invalid change " + jchange + " to " + v + " - diff does not exist!");
 				}
 
 				mode = mode.without(DiffMode.JAVADOCS);
 			} else {
-				d.getJavadoc().set(side, jchange.get(DiffSide.B));
+				String jo = jchange.get(DiffSide.A);
+				String jn = jchange.get(DiffSide.A);
+
+				if (!jd.isDiff()) {
+					jd.set(side, jo);
+					jd.set(side.opposite(), jo);
+				}
+
+				if (jd.get(side).equals(jo)) {
+					jd.set(side, jn);
+				} else {
+					System.out.println("ignoring invalid change " + jchange + " to " + v + " - diff does not match!");
+				}
 			}
 		}
 
