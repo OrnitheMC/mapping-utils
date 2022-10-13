@@ -2,15 +2,18 @@ package net.ornithemc.mappingutils;
 
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import org.objectweb.asm.Type;
 
 import net.ornithemc.mappingutils.io.Format;
 import net.ornithemc.mappingutils.io.MappingNamespace;
+import net.ornithemc.mappingutils.io.MappingTarget;
 import net.ornithemc.mappingutils.io.Mappings;
 import net.ornithemc.mappingutils.io.Mappings.ClassMapping;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff;
+import net.ornithemc.mappingutils.io.diff.tree.MappingHistory;
 import net.ornithemc.mappingutils.io.diff.tree.MappingsDiffTree;
 import net.ornithemc.mappingutils.io.diff.tree.Version;
 import net.ornithemc.mappingutils.io.matcher.Matches;
@@ -120,6 +123,30 @@ public class MappingUtils {
 
 	public static Mappings generateDummyMappings(Format format, MappingNamespace srcNamespace, MappingNamespace dstNamespace, Path jarPath) throws Exception {
 		return DummyMappingsGenerator.run(format, srcNamespace, dstNamespace, jarPath);
+	}
+
+	public static Collection<MappingHistory> findMappings(Format format, Path dir, MappingTarget target, String key) throws Exception {
+		FileUtils.requireReadable(dir);
+
+		MappingsDiffTree tree = MappingsDiffTree.of(format, dir);
+
+		return findMappings(tree, target, key);
+	}
+
+	public static Collection<MappingHistory> findMappings(MappingsDiffTree tree, MappingTarget target, String key) throws Exception {
+		return MappingFinder.run(tree, target, key);
+	}
+
+	public static Collection<MappingHistory> findMappingHistories(Format format, Path dir, MappingTarget target, String key) throws Exception {
+		FileUtils.requireReadable(dir);
+
+		MappingsDiffTree tree = MappingsDiffTree.of(format, dir);
+
+		return findMappingHistories(tree, target, key);
+	}
+
+	public static Collection<MappingHistory> findMappingHistories(MappingsDiffTree tree, MappingTarget target, String key) throws Exception {
+		return MappingHistoryFinder.run(tree, target, key);
 	}
 
 	public static String translateFieldDescriptor(String desc, Mappings mappings) {
