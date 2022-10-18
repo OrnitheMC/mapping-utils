@@ -284,7 +284,7 @@ class MappingsDiffPropagator {
 				mode = mode.without(DiffMode.JAVADOCS);
 			} else {
 				String jo = jchange.get(DiffSide.A);
-				String jn = jchange.get(DiffSide.A);
+				String jn = jchange.get(DiffSide.B);
 
 				if (!jd.isDiff()) {
 					jd.set(side, jo);
