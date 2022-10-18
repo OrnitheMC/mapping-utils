@@ -276,7 +276,7 @@ class MappingsDiffPropagator {
 		if (mode.is(DiffMode.JAVADOCS)) {
 			JavadocDiff jd = (d == null) ? null : d.getJavadoc();
 
-			if (jd == null || (!jd.isDiff() && !insert) || !jchange.isDiff()) {
+			if (jd == null || (!d.isDiff() && !jd.isDiff() && !insert) || !jchange.isDiff()) {
 				if (insert) {
 					System.out.println("ignoring invalid change " + jchange + " to " + v + " - diff does not exist!");
 				}
