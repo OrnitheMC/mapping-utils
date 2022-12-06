@@ -9,14 +9,14 @@ import net.ornithemc.mappingutils.io.diff.tree.MappingHistory;
 import net.ornithemc.mappingutils.io.diff.tree.MappingsDiffTree;
 import net.ornithemc.mappingutils.io.diff.tree.Version;
 
-class MappingHistoryFinder {
+class HistoryFinder {
 
 	static Collection<MappingHistory> run(MappingsDiffTree tree, String key) throws Exception {
 		return run(tree, null, key);
 	}
 
 	static Collection<MappingHistory> run(MappingsDiffTree tree, MappingTarget target, String key) throws Exception {
-		Collection<MappingHistory> histories = MappingFinder.run(tree, target, key);
+		Collection<MappingHistory> histories = Finder.run(tree, target, key);
 
 		for (MappingHistory history : histories) {
 			run(tree, history);
@@ -26,13 +26,13 @@ class MappingHistoryFinder {
 	}
 
 	static void run(MappingsDiffTree tree, MappingHistory history) throws Exception {
-		new MappingHistoryFinder(tree, history).run();
+		new HistoryFinder(tree, history).run();
 	}
 
 	private final MappingsDiffTree tree;
 	private final MappingHistory history;
 
-	private MappingHistoryFinder(MappingsDiffTree tree, MappingHistory history) {
+	private HistoryFinder(MappingsDiffTree tree, MappingHistory history) {
 		this.tree = tree;
 		this.history = history;
 	}

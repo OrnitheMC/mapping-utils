@@ -33,28 +33,34 @@ public class Matches {
 	static final int METHOD_INDENTS = 1;
 	static final int PARAMETER_INDENTS = 2;
 
-	private final Map<String, ClassMatch> classMatches = new LinkedHashMap<>();
+	private final Map<String, ClassMatch> classMatchesA = new LinkedHashMap<>();
+	private final Map<String, ClassMatch> classMatchesB = new LinkedHashMap<>();
 
 	public ClassMatch addClass(String a, String b) {
 		return addClass(new ClassMatch(a, b));
 	}
 
 	public ClassMatch addClass(ClassMatch c) {
-		return classMatches.compute(c.key(MatchSide.A), (key, value) -> {
+		classMatchesA.compute(c.key(MatchSide.A), (key, value) -> {
 			return checkReplace(value, c);
 		});
+		classMatchesB.compute(c.key(MatchSide.B), (key, value) -> {
+			return checkReplace(value, c);
+		});
+
+		return c;
 	}
 
-	public ClassMatch getClass(String nameA) {
-		return getClassByDesc("L" + nameA + ";");
+	public ClassMatch getClass(String name, MatchSide side) {
+		return getClassByDesc("L" + name + ";", side);
 	}
 
-	public ClassMatch getClassByDesc(String a) {
-		return classMatches.get(a);
+	public ClassMatch getClassByDesc(String desc, MatchSide side) {
+		return (side == MatchSide.A ? classMatchesA : classMatchesB).get(desc);
 	}
 
 	public Collection<ClassMatch> getClasses() {
-		return classMatches.values();
+		return classMatchesA.values();
 	}
 
 	public static abstract class Match<T extends Match<T>> {
@@ -86,8 +92,10 @@ public class Matches {
 
 	public static class ClassMatch extends Match<ClassMatch> {
 
-		private final Map<String, FieldMatch> fieldMatches;
-		private final Map<String, MethodMatch> methodMatches;
+		private final Map<String, FieldMatch> fieldMatchesA;
+		private final Map<String, FieldMatch> fieldMatchesB;
+		private final Map<String, MethodMatch> methodMatchesA;
+		private final Map<String, MethodMatch> methodMatchesB;
 
 		private String nameA;
 		private String nameB;
@@ -98,8 +106,10 @@ public class Matches {
 			this.nameA = this.a.substring(1, this.a.length() - 1);
 			this.nameB = this.b.substring(1, this.b.length() - 1);
 
-			this.fieldMatches = new LinkedHashMap<>();
-			this.methodMatches = new LinkedHashMap<>();
+			this.fieldMatchesA = new LinkedHashMap<>();
+			this.fieldMatchesB = new LinkedHashMap<>();
+			this.methodMatchesA = new LinkedHashMap<>();
+			this.methodMatchesB = new LinkedHashMap<>();
 		}
 
 		@Override
@@ -114,9 +124,14 @@ public class Matches {
 		private FieldMatch addField(FieldMatch f) {
 			f.parent = this;
 
-			return fieldMatches.compute(f.key(MatchSide.A), (key, value) -> {
+			fieldMatchesA.compute(f.key(MatchSide.A), (key, value) -> {
 				return checkReplace(value, f);
 			});
+			fieldMatchesB.compute(f.key(MatchSide.B), (key, value) -> {
+				return checkReplace(value, f);
+			});
+
+			return f;
 		}
 
 		public MethodMatch addMethod(String a, String b) {
@@ -126,25 +141,30 @@ public class Matches {
 		private MethodMatch addMethod(MethodMatch m) {
 			m.parent = this;
 
-			return methodMatches.compute(m.key(MatchSide.A), (key, value) -> {
+			methodMatchesA.compute(m.key(MatchSide.A), (key, value) -> {
 				return checkReplace(value, m);
 			});
+			methodMatchesB.compute(m.key(MatchSide.B), (key, value) -> {
+				return checkReplace(value, m);
+			});
+
+			return m;
 		}
 
-		public FieldMatch getField(String nameA, String descA) {
-			return fieldMatches.get(nameA + ";;" + descA);
+		public FieldMatch getField(String name, String desc, MatchSide side) {
+			return (side == MatchSide.A ? fieldMatchesA : fieldMatchesB).get(name + ";;" + desc);
 		}
 
-		public MethodMatch getMethod(String nameA, String descA) {
-			return methodMatches.get(nameA + descA);
+		public MethodMatch getMethod(String name, String desc, MatchSide side) {
+			return (side == MatchSide.A ? methodMatchesA : methodMatchesB).get(name + desc);
 		}
 
 		public Collection<FieldMatch> getFields() {
-			return fieldMatches.values();
+			return fieldMatchesA.values();
 		}
 
 		public Collection<MethodMatch> getMethods() {
-			return methodMatches.values();
+			return methodMatchesA.values();
 		}
 	}
 
@@ -182,7 +202,8 @@ public class Matches {
 
 	public static class MethodMatch extends Match<MethodMatch> {
 
-		private final Map<String, ParameterMatch> parameterMatches;
+		private final Map<String, ParameterMatch> parameterMatchesA;
+		private final Map<String, ParameterMatch> parameterMatchesB;
 
 		private final String nameA;
 		private final String nameB;
@@ -194,7 +215,8 @@ public class Matches {
 		private MethodMatch(String a, String b) {
 			super(a, b);
 
-			this.parameterMatches = new LinkedHashMap<>();
+			this.parameterMatchesA = new LinkedHashMap<>();
+			this.parameterMatchesB = new LinkedHashMap<>();
 
 			this.nameA = this.a.substring(0, this.a.indexOf('('));
 			this.nameB = this.b.substring(0, this.b.indexOf('('));
@@ -222,17 +244,22 @@ public class Matches {
 		private ParameterMatch addParameter(ParameterMatch p) {
 			p.parent = this;
 
-			return parameterMatches.compute(p.key(MatchSide.A), (key, value) -> {
+			parameterMatchesA.compute(p.key(MatchSide.A), (key, value) -> {
 				return checkReplace(value, p);
 			});
+			parameterMatchesB.compute(p.key(MatchSide.B), (key, value) -> {
+				return checkReplace(value, p);
+			});
+
+			return p;
 		}
 
-		public ParameterMatch getParemeter(int indexA) {
-			return parameterMatches.get(Integer.toString(indexA));
+		public ParameterMatch getParemeter(int index, MatchSide side) {
+			return (side == MatchSide.A ? parameterMatchesA : parameterMatchesB).get(Integer.toString(index));
 		}
 
 		public Collection<ParameterMatch> getParameters() {
-			return parameterMatches.values();
+			return parameterMatchesA.values();
 		}
 	}
 
@@ -270,7 +297,7 @@ public class Matches {
 
 	private static <T extends Match<T>> T checkReplace(T o, T n) {
 		if (o != null && n != null) {
-			throw new IllegalStateException("Match conflict found! " + o + " and " + n + " target the same source!");
+			System.err.println("Match conflict found! " + o + " and " + n + " target the same source!");
 		}
 
 		return n;

@@ -11,10 +11,10 @@ import net.ornithemc.mappingutils.io.diff.DiffSide;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.Diff;
 
-class MappingsDiffGenerator {
+class DiffGenerator {
 
 	static MappingsDiff run(Format format, Mappings a, Mappings b) throws Exception {
-		return new MappingsDiffGenerator(format, a, b).run();
+		return new DiffGenerator(format, a, b).run();
 	}
 
 	private final MappingsDiff diff;
@@ -23,7 +23,7 @@ class MappingsDiffGenerator {
 
 	private final List<MappingPair> mappingPairs;
 
-	private MappingsDiffGenerator(Format format, Mappings a, Mappings b) {
+	private DiffGenerator(Format format, Mappings a, Mappings b) {
 		if (!a.getSrcNamespace().equals(b.getSrcNamespace())) {
 			throw new IllegalArgumentException("src namespaces do not match!");
 		}

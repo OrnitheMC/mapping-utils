@@ -6,6 +6,7 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
+import java.util.regex.Pattern;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Opcodes;
@@ -20,21 +21,23 @@ import net.ornithemc.mappingutils.io.Mappings;
 import net.ornithemc.mappingutils.io.Mappings.ClassMapping;
 import net.ornithemc.mappingutils.io.Mappings.MethodMapping;
 
-class DummyMappingsGenerator {
+class DummyGenerator {
 
-	static Mappings run(Format format, MappingNamespace srcNamespace, MappingNamespace dstNamespace, Path jarPath) throws Exception {
-		return new DummyMappingsGenerator(format, srcNamespace, dstNamespace, jarPath).run();
+	static Mappings run(Format format, MappingNamespace srcNamespace, MappingNamespace dstNamespace, String classNamePattern, Path jarPath) throws Exception {
+		return new DummyGenerator(format, srcNamespace, dstNamespace, classNamePattern, jarPath).run();
 	}
 
 	private final Format format;
 	private final MappingNamespace srcNamespace;
 	private final MappingNamespace dstNamespace;
+	private final Pattern classNamePattern;
 	private final Path jarPath;
 
-	private DummyMappingsGenerator(Format format, MappingNamespace srcNamespace, MappingNamespace dstNamespace, Path jarPath) {
+	private DummyGenerator(Format format, MappingNamespace srcNamespace, MappingNamespace dstNamespace, String classNamePattern, Path jarPath) throws Exception {
 		this.format = format;
 		this.srcNamespace = srcNamespace;
 		this.dstNamespace = dstNamespace;
+		this.classNamePattern = Pattern.compile(classNamePattern);
 		this.jarPath = jarPath;
 	}
 
@@ -65,6 +68,11 @@ class DummyMappingsGenerator {
 
 		while (!classes.isEmpty()) {
 			ClassNode cn = classes.poll();
+
+			if (!classNamePattern.matcher(cn.name).matches()) {
+				continue;
+			}
+
 			ClassMapping c = mappings.addClass(cn.name, ClassMapping.getSimplified(cn.name));
 
 			for (FieldNode fn : cn.fields) {

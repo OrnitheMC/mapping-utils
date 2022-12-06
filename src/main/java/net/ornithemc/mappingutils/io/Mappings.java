@@ -10,6 +10,7 @@ import java.util.Objects;
 
 import org.objectweb.asm.Type;
 
+import net.ornithemc.mappingutils.Mapper;
 import net.ornithemc.mappingutils.MappingUtils;
 
 public class Mappings {
@@ -503,7 +504,7 @@ public class Mappings {
 
 		@Override
 		protected FieldMapping inverted() {
-			return new FieldMapping(root.inverted, this, dst, src, MappingUtils.translateFieldDescriptor(desc, root));
+			return new FieldMapping(root.inverted, this, dst, src, MappingUtils.translateFieldDescriptor(desc, Mapper.of(root)));
 		}
 
 		public String getDesc() {
@@ -557,7 +558,7 @@ public class Mappings {
 
 		@Override
 		protected MethodMapping inverted() {
-			return new MethodMapping(root.inverted, this, dst, src, MappingUtils.translateMethodDescriptor(desc, root));
+			return new MethodMapping(root.inverted, this, dst, src, MappingUtils.translateMethodDescriptor(desc, Mapper.of(root)));
 		}
 
 		public String getDesc() {

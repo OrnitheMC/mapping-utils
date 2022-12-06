@@ -42,7 +42,12 @@ public class MatchesReader {
 		stage = Stage.START;
 
 		for (int lineNumber = 1; stage != null; lineNumber++) {
-			stage = parseLine(reader.readLine(), lineNumber);
+			try {
+				stage = parseLine(reader.readLine(), lineNumber);
+			} catch (Exception e) {
+				System.err.println("error on line " + lineNumber);
+				throw e;
+			}
 		}
 
 		return matches;

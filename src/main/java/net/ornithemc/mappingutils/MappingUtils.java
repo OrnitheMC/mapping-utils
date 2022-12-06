@@ -11,35 +11,12 @@ import net.ornithemc.mappingutils.io.Format;
 import net.ornithemc.mappingutils.io.MappingNamespace;
 import net.ornithemc.mappingutils.io.MappingTarget;
 import net.ornithemc.mappingutils.io.Mappings;
-import net.ornithemc.mappingutils.io.Mappings.ClassMapping;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff;
 import net.ornithemc.mappingutils.io.diff.tree.MappingHistory;
 import net.ornithemc.mappingutils.io.diff.tree.MappingsDiffTree;
 import net.ornithemc.mappingutils.io.diff.tree.Version;
-import net.ornithemc.mappingutils.io.matcher.Matches;
-import net.ornithemc.mappingutils.io.matcher.MatchesReader;
 
 public class MappingUtils {
-
-	public static void updateMappings(Format namedFormat, Format intermediateFormat, Path namedSrcPath, Path namedDstPath, Path intermediateSrcPath, Path intermediateDstPath, Path matchesPath) throws Exception {
-		FileUtils.requireReadable(namedSrcPath);
-		FileUtils.requireWritable(namedDstPath);
-		FileUtils.requireReadable(intermediateSrcPath);
-		FileUtils.requireReadable(intermediateDstPath);
-		FileUtils.requireReadable(matchesPath);
-
-		Mappings namedSrc = namedFormat.readMappings(namedSrcPath);
-		Mappings namedDst = namedFormat.newMappings();
-		Mappings intermediateSrc = intermediateFormat.readMappings(intermediateSrcPath);
-		Mappings intermediateDst = intermediateFormat.readMappings(intermediateDstPath);
-		Matches matches = MatchesReader.read(matchesPath);
-
-		namedDst.setSrcNamespace(namedSrc.getSrcNamespace());
-		namedDst.setDstNamespace(namedSrc.getDstNamespace());
-
-		MappingsUpdater.run(namedSrc, namedDst, intermediateSrc, intermediateDst, matches);
-		namedFormat.writeMappings(namedDstPath, namedDst);
-	}
 
 	public static void diffMappings(Format format, Path pathA, Path pathB, Path diffPath) throws Exception {
 		FileUtils.requireReadable(pathA);
@@ -53,7 +30,7 @@ public class MappingUtils {
 	}
 
 	public static MappingsDiff diffMappings(Format format, Mappings a, Mappings b) throws Exception {
-		return MappingsDiffGenerator.run(format, a, b);
+		return DiffGenerator.run(format, a, b);
 	}
 
 	public static void applyDiffs(Format format, Path srcPath, Path dstPath, Path... diffPaths) throws Exception {
@@ -76,11 +53,11 @@ public class MappingUtils {
 	}
 
 	public static void applyDiffs(Mappings mappings, MappingsDiff... diffs) throws Exception {
-		MappingsDiffApplier.run(mappings, diffs);
+		DiffApplier.run(mappings, diffs);
 	}
 
 	public static void applyDiffs(Mappings mappings, List<MappingsDiff> diffs) throws Exception {
-		MappingsDiffApplier.run(mappings, diffs);
+		DiffApplier.run(mappings, diffs);
 	}
 
 	public static void separateMappings(Format format, Path dir, Path dstPath, String version) throws Exception {
@@ -98,7 +75,7 @@ public class MappingUtils {
 		Mappings mappings = root.getMappings().copy();
 		List<MappingsDiff> diffs = tree.getDiffsFromRoot(version);
 
-		MappingsDiffApplier.run(mappings, diffs);
+		DiffApplier.run(mappings, diffs);
 
 		return mappings;
 	}
@@ -114,15 +91,15 @@ public class MappingUtils {
 	}
 
 	public static void insertMappings(PropagationDirection dir, MappingsDiffTree tree, MappingsDiff diff, String version) throws Exception {
-		MappingsDiffPropagator.run(dir, tree, diff, version);
+		ChangePropagator.run(dir, tree, diff, version);
 	}
 
-	public static void generateDummyMappings(Format format, MappingNamespace srcNamespace, MappingNamespace dstNamespace, Path jarPath, Path mappingsPath) throws Exception {
-		format.writeMappings(mappingsPath, generateDummyMappings(format, srcNamespace, dstNamespace, jarPath));
+	public static void generateDummyMappings(Format format, MappingNamespace srcNamespace, MappingNamespace dstNamespace, String classNamePattern, Path jarPath, Path mappingsPath) throws Exception {
+		format.writeMappings(mappingsPath, generateDummyMappings(format, srcNamespace, dstNamespace, classNamePattern, jarPath));
 	}
 
-	public static Mappings generateDummyMappings(Format format, MappingNamespace srcNamespace, MappingNamespace dstNamespace, Path jarPath) throws Exception {
-		return DummyMappingsGenerator.run(format, srcNamespace, dstNamespace, jarPath);
+	public static Mappings generateDummyMappings(Format format, MappingNamespace srcNamespace, MappingNamespace dstNamespace, String classNamePattern, Path jarPath) throws Exception {
+		return DummyGenerator.run(format, srcNamespace, dstNamespace, classNamePattern, jarPath);
 	}
 
 	public static Collection<MappingHistory> findMappings(Format format, Path dir, MappingTarget target, String key) throws Exception {
@@ -134,7 +111,7 @@ public class MappingUtils {
 	}
 
 	public static Collection<MappingHistory> findMappings(MappingsDiffTree tree, MappingTarget target, String key) throws Exception {
-		return MappingFinder.run(tree, target, key);
+		return Finder.run(tree, target, key);
 	}
 
 	public static Collection<MappingHistory> findMappingHistories(Format format, Path dir, MappingTarget target, String key) throws Exception {
@@ -146,47 +123,43 @@ public class MappingUtils {
 	}
 
 	public static Collection<MappingHistory> findMappingHistories(MappingsDiffTree tree, MappingTarget target, String key) throws Exception {
-		return MappingHistoryFinder.run(tree, target, key);
+		return HistoryFinder.run(tree, target, key);
 	}
 
-	public static String translateFieldDescriptor(String desc, Mappings mappings) {
+	public static String translateFieldDescriptor(String desc, Mapper mapper) {
 		Type type = Type.getType(desc);
-		type = translateType(type, mappings);
+		type = translateType(type, mapper);
 
 		return type.getDescriptor();
 	}
 
-	public static String translateMethodDescriptor(String desc, Mappings mappings) {
+	public static String translateMethodDescriptor(String desc, Mapper mapper) {
 		Type type = Type.getMethodType(desc);
 
 		Type[] argTypes = type.getArgumentTypes();
 		Type returnType = type.getReturnType();
 
 		for (int i = 0; i < argTypes.length; i++) {
-			argTypes[i] = translateType(argTypes[i], mappings);
+			argTypes[i] = translateType(argTypes[i], mapper);
 		}
-		returnType = translateType(returnType, mappings);
+		returnType = translateType(returnType, mapper);
 
 		type = Type.getMethodType(returnType, argTypes);
 
 		return type.getDescriptor();
 	}
 
-	public static Type translateType(Type type, Mappings mappings) {
+	public static Type translateType(Type type, Mapper mapper) {
 		switch (type.getSort()) {
 		case Type.OBJECT:
 			String className = type.getInternalName();
-			ClassMapping mapping = mappings.getClass(className);
-
-			if (mapping != null) {
-				className = mapping.getComplete();
-				type = Type.getObjectType(className);
-			}
+			className = mapper.mapClass(className);
+			type = Type.getObjectType(className);
 
 			break;
 		case Type.ARRAY:
 			Type elementType = type.getElementType();
-			elementType = translateType(elementType, mappings);
+			elementType = translateType(elementType, mapper);
 
 			int numDim = type.getDimensions();
 			String desc = "";

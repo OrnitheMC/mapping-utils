@@ -12,20 +12,20 @@ import net.ornithemc.mappingutils.io.diff.MappingsDiff.ClassDiff;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.Diff;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.JavadocDiff;
 
-class MappingsDiffApplier {
+class DiffApplier {
 
 	static void run(Mappings mappings, MappingsDiff... diffs) throws Exception {
 		run(mappings, Arrays.asList(diffs));
 	}
 
 	static void run(Mappings mappings, List<MappingsDiff> diffs) throws Exception {
-		new MappingsDiffApplier(mappings, diffs).run();
+		new DiffApplier(mappings, diffs).run();
 	}
 
 	private final Mappings mappings;
 	private final List<MappingsDiff> diffs;
 
-	private MappingsDiffApplier(Mappings mappings, List<MappingsDiff> diffs) {
+	private DiffApplier(Mappings mappings, List<MappingsDiff> diffs) {
 		mappings.validate();
 
 		for (MappingsDiff diff : diffs) {

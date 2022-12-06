@@ -13,10 +13,10 @@ import net.ornithemc.mappingutils.io.diff.MappingsDiff.JavadocDiff;
 import net.ornithemc.mappingutils.io.diff.tree.MappingsDiffTree;
 import net.ornithemc.mappingutils.io.diff.tree.Version;
 
-class MappingsDiffPropagator {
+class ChangePropagator {
 
 	static void run(PropagationDirection dir, MappingsDiffTree tree, MappingsDiff changes, String version) throws Exception {
-		new MappingsDiffPropagator(dir, tree, changes, version).run();
+		new ChangePropagator(dir, tree, changes, version).run();
 	}
 
 	private final PropagationDirection dir;
@@ -26,7 +26,7 @@ class MappingsDiffPropagator {
 
 	private final Collection<Version> barriers;
 
-	private MappingsDiffPropagator(PropagationDirection dir, MappingsDiffTree tree, MappingsDiff changes, String version) {
+	private ChangePropagator(PropagationDirection dir, MappingsDiffTree tree, MappingsDiff changes, String version) {
 		changes.validate();
 
 		this.dir = dir;
