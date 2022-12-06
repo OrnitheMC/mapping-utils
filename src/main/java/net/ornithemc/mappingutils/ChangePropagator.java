@@ -1,7 +1,10 @@
 package net.ornithemc.mappingutils;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import net.ornithemc.mappingutils.io.MappingTarget;
 import net.ornithemc.mappingutils.io.Mappings;
@@ -21,23 +24,23 @@ class ChangePropagator {
 
 	private final PropagationOptions options;
 	private final MappingsDiffTree tree;
-	private final MappingsDiff changes;
-	private final String version;
 
 	private final Collection<Version> barriers;
+
+	private Map<Version, MappingsDiff> queuedChanges;
+	private Map<Version, MappingsDiff> workingChanges;
 
 	private ChangePropagator(PropagationOptions options, MappingsDiffTree tree, MappingsDiff changes, String version) {
 		changes.validate();
 
 		this.options = options;
 		this.tree = tree;
-		this.changes = changes;
-		this.version = version;
 
 		this.barriers = new HashSet<>();
-	}
 
-	private void run() throws Exception {
+		this.queuedChanges = new HashMap<>();
+		this.workingChanges = new HashMap<>();
+
 		Version v = tree.getVersion(version);
 
 		if (v == null) {
@@ -51,11 +54,33 @@ class ChangePropagator {
 			barriers.addAll(v.getChildren());
 		}
 
-		for (Diff<?> change : changes.getTopLevelClasses()) {
-			propagateChange(v, change);
+		queuedChanges.put(v, changes);
+	}
+
+	private void run() throws Exception {
+		while (!queuedChanges.isEmpty()) {
+			prepareQueuedChanges();
+
+			for (Entry<Version, MappingsDiff> entry : workingChanges.entrySet()) {
+				propagateChanges(entry.getKey(), entry.getValue());
+			}
 		}
 
 		tree.write();
+	}
+
+	private void prepareQueuedChanges() {
+		Map<Version, MappingsDiff> old = workingChanges;
+		workingChanges = queuedChanges;
+		queuedChanges = old;
+
+		queuedChanges.clear();
+	}
+
+	private void propagateChanges(Version v, MappingsDiff changes) throws Exception {
+		for (Diff<?> change : changes.getTopLevelClasses()) {
+			propagateChange(v, change);
+		}
 	}
 
 	private void propagateChange(Version v, Diff<?> change) throws Exception {
@@ -91,63 +116,7 @@ class ChangePropagator {
 			result = applyChange(v, v.getDiff(), change, side, mode, Operation.of(change, mode), insert);
 
 			if (result.success() && options.lenient) {
-				// Propagate field/method change to siblings with same name
-				// as long as they do not exist in the same version.
-				Diff<?> d = (Diff<?>)result.subject();
-
-				MappingTarget target = d.target();
-				String name = d.src();
-
-				if (target == MappingTarget.FIELD || target == MappingTarget.METHOD) {
-					Diff<?> parent = d.getParent();
-					Diff<?> sibling = null;
-
-					for (Diff<?> child : parent.getChildren()) {
-						if (child == d) {
-							continue;
-						}
-						if (child.target() == target && child.src().equals(name)) {
-							if (sibling == null) {
-								sibling = child;
-							} else {
-								throw new IllegalStateException("found multiple siblings (" + sibling + ", " + child + ") of target " + d + " with the same name!");
-							}
-						}
-					}
-
-					if (sibling != null) {
-						for (DiffSide s : DiffSide.values()) {
-							if (d.get(s).isEmpty() == sibling.get(s).isEmpty()) {
-								throw new IllegalStateException("two targets with the same name (" + d + ", " + sibling + ") exist in the same version!");
-							}
-						}
-
-						Diff<?> parentChange = change.getParent();
-						Diff<?> siblingChange = parentChange.getChild(sibling.target(), sibling.key());
-
-						// only propagate further if change does not already exist
-						// or we get stuck in nasty loops
-						if (siblingChange == null) {
-							siblingChange = parentChange.addChild(
-								sibling.target(),
-								sibling.key(),
-								change.get(DiffSide.A),
-								change.get(DiffSide.B)
-							);
-
-							JavadocDiff javadocChange = change.getJavadoc();
-							JavadocDiff siblingJavadocChange = siblingChange.getJavadoc();
-							siblingJavadocChange.set(DiffSide.A, javadocChange.get(DiffSide.A));
-							siblingJavadocChange.set(DiffSide.B, javadocChange.get(DiffSide.B));
-
-							if (dir == PropagationDirection.UP) {
-								propagateChange(v.getParent(), siblingChange, mode, op);
-							} else {
-								propagateChange(v, siblingChange, mode, op);
-							}
-						}
-					}
-				}
+				queueSiblingChange(v, (Diff<?>)result.subject(), change, dir, mode, op);
 			}
 		}
 
@@ -364,6 +333,94 @@ class ChangePropagator {
 		}
 
 		return new Result<>(d, mode, op);
+	}
+
+	private void queueSiblingChange(Version v, Diff<?> d, Diff<?> change, PropagationDirection dir, DiffMode mode, Operation op) throws Exception {
+		MappingTarget target = d.target();
+		String name = d.src();
+
+		if (target != MappingTarget.FIELD && target != MappingTarget.METHOD) {
+			return;
+		}
+
+		Diff<?> parent = d.getParent();
+		Diff<?> sibling = null;
+
+		for (Diff<?> child : parent.getChildren()) {
+			if (child == d) {
+				continue;
+			}
+			if (child.target() == target && child.src().equals(name)) {
+				if (sibling == null) {
+					sibling = child;
+				} else {
+					throw new IllegalStateException("found multiple siblings (" + sibling + ", " + child + ") of target " + d + " with the same name!");
+				}
+			}
+		}
+
+		if (sibling == null) {
+			return;
+		}
+
+		for (DiffSide s : DiffSide.values()) {
+			if (d.get(s).isEmpty() == sibling.get(s).isEmpty()) {
+				throw new IllegalStateException("two targets with the same name (" + d + ", " + sibling + ") exist in the same version!");
+			}
+		}
+
+		if (dir == PropagationDirection.UP) {
+			queueSiblingChange(v.getParent(), sibling, change, mode, op);
+		} else {
+			queueSiblingChange(v, sibling, change, mode, op);
+		}
+	}
+
+	private Diff<?> queueSiblingChange(Version v, Diff<?> sibling, Diff<?> change, DiffMode mode, Operation op) throws Exception {
+		MappingsDiff changes = queuedChanges.computeIfAbsent(v, key -> new MappingsDiff());
+		return queueSiblingChange(v, sibling, changes, change, mode, op);
+	}
+
+	private Diff<?> queueSiblingChange(Version v, Diff<?> sibling, MappingsDiff changes, Diff<?> change, DiffMode mode, Operation op) throws Exception {
+		MappingTarget target = change.target();
+		String name = change.src();
+		Diff<?> siblingChange = null;
+
+		Diff<?> parentChange = change.getParent();
+
+		if (parentChange == null) {
+			if (target != MappingTarget.CLASS) {
+				throw new IllegalStateException("cannot get diff of target " + target + " from the root diff for " + v);
+			}
+
+			siblingChange = changes.getClass(name);
+
+			if (siblingChange == null) {
+				siblingChange = changes.addClass(name, "", "");
+			}
+		} else {
+			Diff<?> siblingParentChange = queueSiblingChange(v, sibling.getParent(), changes, parentChange, mode, Operation.NONE);
+			siblingChange = siblingParentChange.getChild(sibling.target(), sibling.key());
+
+			if (siblingChange == null) {
+				siblingChange = siblingParentChange.addChild(sibling.target(), sibling.key(), "", "");
+			}
+
+			if (op != Operation.NONE) {
+				if (mode.is(DiffMode.MAPPINGS)) {
+					siblingChange.set(DiffSide.A, change.get(DiffSide.A));
+					siblingChange.set(DiffSide.B, change.get(DiffSide.B));
+				}
+				if (mode.is(DiffMode.JAVADOCS)) {
+					JavadocDiff javadocChange = change.getJavadoc();
+					JavadocDiff siblingJavadocChange = change.getJavadoc();
+					siblingJavadocChange.set(DiffSide.A, javadocChange.get(DiffSide.A));
+					siblingJavadocChange.set(DiffSide.B, javadocChange.get(DiffSide.B));
+				}
+			}
+		}
+
+		return siblingChange;
 	}
 
 	private enum DiffMode {
