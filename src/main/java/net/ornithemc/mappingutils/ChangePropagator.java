@@ -364,8 +364,17 @@ class ChangePropagator {
 		}
 
 		for (DiffSide s : DiffSide.values()) {
-			if (d.get(s).isEmpty() == sibling.get(s).isEmpty()) {
-				throw new IllegalStateException("two targets with the same name (" + d + ", " + sibling + ") exist in the same version!");
+			String dst = sibling.get(s);
+
+			if (dst.isEmpty()) {
+				if (d.get(s).isEmpty()) {
+					throw new IllegalStateException("two targets with the same name (" + d + ", " + sibling + ") exist in the same version!");
+				}
+			} else {
+				if (!change.get(DiffSide.A).equals(dst)) {
+					// diff does not match, do not propagate to this sibling
+					return;
+				}
 			}
 		}
 
@@ -378,10 +387,10 @@ class ChangePropagator {
 
 	private Diff<?> queueSiblingChange(Version v, Diff<?> sibling, Diff<?> change, DiffMode mode, Operation op) throws Exception {
 		MappingsDiff changes = queuedChanges.computeIfAbsent(v, key -> new MappingsDiff());
-		return queueSiblingChange(v, sibling, changes, change, mode, op);
+		return queueSiblingChange(v, changes, sibling, change, mode, op);
 	}
 
-	private Diff<?> queueSiblingChange(Version v, Diff<?> sibling, MappingsDiff changes, Diff<?> change, DiffMode mode, Operation op) throws Exception {
+	private Diff<?> queueSiblingChange(Version v, MappingsDiff changes, Diff<?> sibling, Diff<?> change, DiffMode mode, Operation op) throws Exception {
 		MappingTarget target = change.target();
 		String name = change.src();
 		Diff<?> siblingChange = null;
@@ -399,7 +408,7 @@ class ChangePropagator {
 				siblingChange = changes.addClass(name, "", "");
 			}
 		} else {
-			Diff<?> siblingParentChange = queueSiblingChange(v, sibling.getParent(), changes, parentChange, mode, Operation.NONE);
+			Diff<?> siblingParentChange = queueSiblingChange(v, changes, sibling.getParent(), parentChange, mode, Operation.NONE);
 			siblingChange = siblingParentChange.getChild(sibling.target(), sibling.key());
 
 			if (siblingChange == null) {
