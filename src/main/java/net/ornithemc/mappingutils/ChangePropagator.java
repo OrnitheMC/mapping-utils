@@ -366,15 +366,12 @@ class ChangePropagator {
 		for (DiffSide s : DiffSide.values()) {
 			String dst = sibling.get(s);
 
-			if (dst.isEmpty()) {
-				if (d.get(s).isEmpty()) {
-					throw new IllegalStateException("two targets with the same name (" + d + ", " + sibling + ") exist in the same version!");
-				}
-			} else {
-				if (!change.get(DiffSide.A).equals(dst)) {
-					// diff does not match, do not propagate to this sibling
-					return;
-				}
+			if (dst.isEmpty() == d.get(s).isEmpty()) {
+				throw new IllegalStateException("two targets with the same name (" + d + ", " + sibling + ") exist in the same version!");
+			}
+			if (!dst.isEmpty() && !dst.equals(change.get(DiffSide.A))) {
+				// diff does not match, do not propagate to this sibling
+				return;
 			}
 		}
 
