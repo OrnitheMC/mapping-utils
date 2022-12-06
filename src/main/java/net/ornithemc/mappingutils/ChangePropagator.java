@@ -15,21 +15,21 @@ import net.ornithemc.mappingutils.io.diff.tree.Version;
 
 class ChangePropagator {
 
-	static void run(PropagationDirection dir, MappingsDiffTree tree, MappingsDiff changes, String version) throws Exception {
-		new ChangePropagator(dir, tree, changes, version).run();
+	static void run(PropagationOptions options, MappingsDiffTree tree, MappingsDiff changes, String version) throws Exception {
+		new ChangePropagator(options, tree, changes, version).run();
 	}
 
-	private final PropagationDirection dir;
+	private final PropagationOptions options;
 	private final MappingsDiffTree tree;
 	private final MappingsDiff changes;
 	private final String version;
 
 	private final Collection<Version> barriers;
 
-	private ChangePropagator(PropagationDirection dir, MappingsDiffTree tree, MappingsDiff changes, String version) {
+	private ChangePropagator(PropagationOptions options, MappingsDiffTree tree, MappingsDiff changes, String version) {
 		changes.validate();
 
-		this.dir = dir;
+		this.options = options;
 		this.tree = tree;
 		this.changes = changes;
 		this.version = version;
@@ -44,10 +44,10 @@ class ChangePropagator {
 			throw new IllegalStateException("mappings for version " + version + " do not exist!");
 		}
 
-		if (!dir.up()) {
+		if (!options.dir.up()) {
 			barriers.add(v);
 		}
-		if (!dir.down()) {
+		if (!options.dir.down()) {
 			barriers.addAll(v.getChildren());
 		}
 
@@ -62,6 +62,10 @@ class ChangePropagator {
 		DiffMode mode = DiffMode.of(change);
 		Operation op = Operation.of(change, mode);
 
+		propagateChange(v, change, mode, op);
+	}
+
+	private void propagateChange(Version v, Diff<?> change, DiffMode mode, Operation op) throws Exception {
 		// we first propagate up to find the source of the mapping,
 		// then propagate the change down from there
 		propagateChange(v, change, PropagationDirection.UP, mode, op);
@@ -85,6 +89,66 @@ class ChangePropagator {
 			boolean insert = barriers.contains(v);
 
 			result = applyChange(v, v.getDiff(), change, side, mode, Operation.of(change, mode), insert);
+
+			if (result.success() && options.lenient) {
+				// Propagate field/method change to siblings with same name
+				// as long as they do not exist in the same version.
+				Diff<?> d = (Diff<?>)result.subject();
+
+				MappingTarget target = d.target();
+				String name = d.src();
+
+				if (target == MappingTarget.FIELD || target == MappingTarget.METHOD) {
+					Diff<?> parent = d.getParent();
+					Diff<?> sibling = null;
+
+					for (Diff<?> child : parent.getChildren()) {
+						if (child == d) {
+							continue;
+						}
+						if (child.target() == target && child.src().equals(name)) {
+							if (sibling == null) {
+								sibling = child;
+							} else {
+								throw new IllegalStateException("found multiple siblings (" + sibling + ", " + child + ") of target " + d + " with the same name!");
+							}
+						}
+					}
+
+					if (sibling != null) {
+						for (DiffSide s : DiffSide.values()) {
+							if (d.get(s).isEmpty() == sibling.get(s).isEmpty()) {
+								throw new IllegalStateException("two targets with the same name (" + d + ", " + sibling + ") exist in the same version!");
+							}
+						}
+
+						Diff<?> parentChange = change.getParent();
+						Diff<?> siblingChange = parentChange.getChild(sibling.target(), sibling.key());
+
+						// only propagate further if change does not already exist
+						// or we get stuck in nasty loops
+						if (siblingChange == null) {
+							siblingChange = parentChange.addChild(
+								sibling.target(),
+								sibling.key(),
+								change.get(DiffSide.A),
+								change.get(DiffSide.B)
+							);
+
+							JavadocDiff javadocChange = change.getJavadoc();
+							JavadocDiff siblingJavadocChange = siblingChange.getJavadoc();
+							siblingJavadocChange.set(DiffSide.A, javadocChange.get(DiffSide.A));
+							siblingJavadocChange.set(DiffSide.B, javadocChange.get(DiffSide.B));
+
+							if (dir == PropagationDirection.UP) {
+								propagateChange(v.getParent(), siblingChange, mode, op);
+							} else {
+								propagateChange(v, siblingChange, mode, op);
+							}
+						}
+					}
+				}
+			}
 		}
 
 		if (result.success()) {

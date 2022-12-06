@@ -80,18 +80,18 @@ public class MappingUtils {
 		return mappings;
 	}
 
-	public static void insertMappings(Format format, PropagationDirection dir, Path dirPath, Path changesPath, String version) throws Exception {
+	public static void insertMappings(Format format, PropagationOptions options, Path dirPath, Path changesPath, String version) throws Exception {
 		FileUtils.requireReadable(dirPath);
 		FileUtils.requireReadable(changesPath);
 
 		MappingsDiffTree tree = MappingsDiffTree.of(format, dirPath);
 		MappingsDiff changes = format.readDiff(changesPath);
 
-		insertMappings(dir, tree, changes, version);
+		insertMappings(options, tree, changes, version);
 	}
 
-	public static void insertMappings(PropagationDirection dir, MappingsDiffTree tree, MappingsDiff diff, String version) throws Exception {
-		ChangePropagator.run(dir, tree, diff, version);
+	public static void insertMappings(PropagationOptions options, MappingsDiffTree tree, MappingsDiff diff, String version) throws Exception {
+		ChangePropagator.run(options, tree, diff, version);
 	}
 
 	public static void generateDummyMappings(Format format, MappingNamespace srcNamespace, MappingNamespace dstNamespace, String classNamePattern, Path jarPath, Path mappingsPath) throws Exception {
