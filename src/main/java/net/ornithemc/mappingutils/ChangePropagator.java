@@ -376,7 +376,9 @@ class ChangePropagator {
 		}
 
 		if (dir == PropagationDirection.UP) {
-			queueSiblingChange(v.getParent(), sibling, change, mode, op);
+			if (!barriers.contains(v)) {
+				queueSiblingChange(v.getParent(), sibling, change, mode, op);
+			}
 		} else {
 			queueSiblingChange(v, sibling, change, mode, op);
 		}
