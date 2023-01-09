@@ -3,7 +3,6 @@ package net.ornithemc.mappingutils;
 import java.util.LinkedList;
 import java.util.List;
 
-import net.ornithemc.mappingutils.io.Format;
 import net.ornithemc.mappingutils.io.MappingTarget;
 import net.ornithemc.mappingutils.io.Mappings;
 import net.ornithemc.mappingutils.io.Mappings.Mapping;
@@ -13,8 +12,8 @@ import net.ornithemc.mappingutils.io.diff.MappingsDiff.Diff;
 
 class DiffGenerator {
 
-	static MappingsDiff run(Format format, Mappings a, Mappings b) throws Exception {
-		return new DiffGenerator(format, a, b).run();
+	static MappingsDiff run(Mappings a, Mappings b) throws Exception {
+		return new DiffGenerator(a, b).run();
 	}
 
 	private final MappingsDiff diff;
@@ -23,7 +22,7 @@ class DiffGenerator {
 
 	private final List<MappingPair> mappingPairs;
 
-	private DiffGenerator(Format format, Mappings a, Mappings b) {
+	private DiffGenerator(Mappings a, Mappings b) {
 		if (!a.getSrcNamespace().equals(b.getSrcNamespace())) {
 			throw new IllegalArgumentException("src namespaces do not match!");
 		}
@@ -34,7 +33,7 @@ class DiffGenerator {
 		a.validate();
 		b.validate();
 
-		this.diff = format.newDiff();
+		this.diff = new MappingsDiff();
 		this.a = a;
 		this.b = b;
 

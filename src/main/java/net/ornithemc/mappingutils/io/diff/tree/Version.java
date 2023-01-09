@@ -56,10 +56,6 @@ public class Version {
 		return version;
 	}
 
-	public String get() {
-		return version;
-	}
-
 	public Format getFormat() {
 		return format;
 	}

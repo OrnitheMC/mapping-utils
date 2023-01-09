@@ -2,24 +2,23 @@ package net.ornithemc.mappingutils.io.tiny;
 
 import java.io.BufferedReader;
 
-import net.ornithemc.mappingutils.io.MappingsReader;
+import net.ornithemc.mappingutils.io.Mappings;
 
-public abstract class TinyMappingsReader<M extends TinyMappings<M>> extends MappingsReader<M> {
+public abstract class TinyMappingsReader {
 
 	protected static final String TAB = "\t";
 
-	protected final M mappings;
+	protected final BufferedReader reader;
+	protected final Mappings mappings;
 
 	private Stage stage;
 
-	protected TinyMappingsReader(BufferedReader reader, M mappings) {
-		super(reader);
-
+	protected TinyMappingsReader(BufferedReader reader, Mappings mappings) {
+		this.reader = reader;
 		this.mappings = mappings;
 	}
 
-	@Override
-	public M read() throws Exception {
+	public Mappings read() throws Exception {
 		stage = Stage.HEADER;
 
 		for (int lineNumber = 1; stage != null; lineNumber++) {

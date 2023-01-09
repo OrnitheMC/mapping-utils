@@ -5,32 +5,33 @@ import java.io.FileWriter;
 import java.nio.file.Path;
 
 import net.ornithemc.mappingutils.io.diff.DiffSide;
+import net.ornithemc.mappingutils.io.diff.MappingsDiff;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.ClassDiff;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.FieldDiff;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.MethodDiff;
 import net.ornithemc.mappingutils.io.diff.tiny.TinyDiffWriter;
 
-public class TinyV1DiffWriter extends TinyDiffWriter<TinyV1Diff> {
+public class TinyV1DiffWriter extends TinyDiffWriter {
 
-	public static void write(Path path, TinyV1Diff diff) throws Exception {
+	public static void write(Path path, MappingsDiff diff) throws Exception {
 		try (BufferedWriter writer = new BufferedWriter(new FileWriter(path.toFile()))) {
 			write(writer, diff);
+		} catch (Exception e) {
+			throw new IllegalStateException("error writing " + path.toString(), e);
 		}
 	}
 
-	public static void write(BufferedWriter writer, TinyV1Diff diff) throws Exception {
+	public static void write(BufferedWriter writer, MappingsDiff diff) throws Exception {
 		new TinyV1DiffWriter(writer, diff).write();
 	}
 
-	private TinyV1DiffWriter(BufferedWriter writer, TinyV1Diff diff) {
+	private TinyV1DiffWriter(BufferedWriter writer, MappingsDiff diff) {
 		super(writer, diff);
 	}
 
 	@Override
 	protected void writeHeader() throws Exception {
-		TinyV1DiffHeader header = diff.getHeader();
-
-		writer.write(header.getTinyVersion());
+		writer.write(TinyV1Format.VERSION);
 		writer.newLine();
 	}
 
@@ -42,7 +43,7 @@ public class TinyV1DiffWriter extends TinyDiffWriter<TinyV1Diff> {
 	}
 
 	private void writeClass(ClassDiff c) throws Exception {
-		writer.write(TinyV1Diff.CLASS);
+		writer.write(TinyV1Format.CLASS);
 		writer.write(TAB);
 		writer.write(c.src());
 		if (c.isDiff()) {
@@ -69,7 +70,7 @@ public class TinyV1DiffWriter extends TinyDiffWriter<TinyV1Diff> {
 			return;
 		}
 
-		writer.write(TinyV1Diff.FIELD);
+		writer.write(TinyV1Format.FIELD);
 		writer.write(TAB);
 		writer.write(f.getParent().src());
 		writer.write(TAB);
@@ -88,7 +89,7 @@ public class TinyV1DiffWriter extends TinyDiffWriter<TinyV1Diff> {
 			return;
 		}
 
-		writer.write(TinyV1Diff.METHOD);
+		writer.write(TinyV1Format.METHOD);
 		writer.write(TAB);
 		writer.write(m.getParent().src());
 		writer.write(TAB);

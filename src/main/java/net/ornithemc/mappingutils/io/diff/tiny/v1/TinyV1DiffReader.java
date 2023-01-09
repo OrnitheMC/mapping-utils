@@ -4,23 +4,26 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.nio.file.Path;
 
+import net.ornithemc.mappingutils.io.diff.MappingsDiff;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.ClassDiff;
 import net.ornithemc.mappingutils.io.diff.tiny.TinyDiffReader;
 
-public class TinyV1DiffReader extends TinyDiffReader<TinyV1Diff> {
+public class TinyV1DiffReader extends TinyDiffReader {
 
-	public static TinyV1Diff read(Path path) throws Exception {
+	public static MappingsDiff read(Path path) throws Exception {
 		try (BufferedReader reader = new BufferedReader(new FileReader(path.toFile()))) {
 			return read(reader);
+		} catch (Exception e) {
+			throw new IllegalStateException("error reading " + path.toString(), e);
 		}
 	}
 
-	public static TinyV1Diff read(BufferedReader reader) throws Exception {
+	public static MappingsDiff read(BufferedReader reader) throws Exception {
 		return new TinyV1DiffReader(reader).read();
 	}
 
 	private TinyV1DiffReader(BufferedReader reader) {
-		super(reader, new TinyV1Diff());
+		super(reader, new MappingsDiff());
 	}
 
 	@Override
@@ -31,12 +34,10 @@ public class TinyV1DiffReader extends TinyDiffReader<TinyV1Diff> {
 			throw new IllegalStateException("illegal number of arguments (" + args.length + ") for header - expected 1");
 		}
 
-		TinyV1DiffHeader header = diff.getHeader();
-
 		String version = args[0];
 
-		if (!header.getTinyVersion().equals(version)) {
-			throw new IllegalStateException("cannot read tiny version " + version + " - expected " + header.getTinyVersion());
+		if (!TinyV1Format.VERSION.equals(version)) {
+			throw new IllegalStateException("cannot read tiny version " + version + " - expected " + TinyV1Format.VERSION);
 		}
 
 		return Stage.DIFFS;
@@ -55,7 +56,7 @@ public class TinyV1DiffReader extends TinyDiffReader<TinyV1Diff> {
 		String desc;
 
 		switch (args[0]) {
-		case TinyV1Diff.CLASS:
+		case TinyV1Format.CLASS:
 			if (args.length < 2 || args.length > 4) {
 				throw new IllegalStateException("illegal number of arguments (" + args.length + ") for class diff on line " + lineNumber + " - expected 2-4");
 			}
@@ -67,7 +68,7 @@ public class TinyV1DiffReader extends TinyDiffReader<TinyV1Diff> {
 			diff.addClass(src, dstA, dstB);
 
 			break;
-		case TinyV1Diff.FIELD:
+		case TinyV1Format.FIELD:
 			if (args.length < 4 || args.length > 6) {
 				throw new IllegalStateException("illegal number of arguments (" + args.length + ") for field diff on line " + lineNumber + " - expected 4-6");
 			}
@@ -87,7 +88,7 @@ public class TinyV1DiffReader extends TinyDiffReader<TinyV1Diff> {
 			c.addField(src, dstA, dstB, desc);
 
 			break;
-		case TinyV1Diff.METHOD:
+		case TinyV1Format.METHOD:
 			if (args.length < 4 || args.length > 6) {
 				throw new IllegalStateException("illegal number of arguments (" + args.length + ") for field diff on line " + lineNumber + " - expected 4-6");
 			}

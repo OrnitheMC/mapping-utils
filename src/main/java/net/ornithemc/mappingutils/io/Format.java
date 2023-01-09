@@ -5,32 +5,22 @@ import java.io.BufferedWriter;
 import java.nio.file.Path;
 
 import net.ornithemc.mappingutils.io.diff.MappingsDiff;
-import net.ornithemc.mappingutils.io.diff.tiny.v1.TinyV1Diff;
 import net.ornithemc.mappingutils.io.diff.tiny.v1.TinyV1DiffReader;
 import net.ornithemc.mappingutils.io.diff.tiny.v1.TinyV1DiffWriter;
-import net.ornithemc.mappingutils.io.diff.tiny.v2.TinyV2Diff;
 import net.ornithemc.mappingutils.io.diff.tiny.v2.TinyV2DiffReader;
 import net.ornithemc.mappingutils.io.diff.tiny.v2.TinyV2DiffWriter;
-import net.ornithemc.mappingutils.io.tiny.v1.TinyV1Mappings;
+import net.ornithemc.mappingutils.io.enigma.dir.EnigmaDirReader;
+import net.ornithemc.mappingutils.io.enigma.dir.EnigmaDirWriter;
+import net.ornithemc.mappingutils.io.enigma.file.EnigmaFileReader;
+import net.ornithemc.mappingutils.io.enigma.file.EnigmaFileWriter;
 import net.ornithemc.mappingutils.io.tiny.v1.TinyV1Reader;
 import net.ornithemc.mappingutils.io.tiny.v1.TinyV1Writer;
-import net.ornithemc.mappingutils.io.tiny.v2.TinyV2Mappings;
 import net.ornithemc.mappingutils.io.tiny.v2.TinyV2Reader;
 import net.ornithemc.mappingutils.io.tiny.v2.TinyV2Writer;
 
 public enum Format {
 
 	TINY_V1(".tiny", ".tinydiff") {
-
-		@Override
-		public Mappings newMappings() {
-			return new TinyV1Mappings();
-		}
-
-		@Override
-		public MappingsDiff newDiff() {
-			return new TinyV1Diff();
-		}
 
 		@Override
 		public Mappings readMappings(Path path) throws Exception {
@@ -44,12 +34,12 @@ public enum Format {
 
 		@Override
 		public void writeMappings(Path path, Mappings mappings) throws Exception {
-			TinyV1Writer.write(path, (TinyV1Mappings)mappings);
+			TinyV1Writer.write(path, mappings);
 		}
 
 		@Override
 		public void writeMappings(BufferedWriter bw, Mappings mappings) throws Exception {
-			TinyV1Writer.write(bw, (TinyV1Mappings)mappings);
+			TinyV1Writer.write(bw, mappings);
 		}
 
 		@Override
@@ -64,25 +54,15 @@ public enum Format {
 
 		@Override
 		public void writeDiff(Path path, MappingsDiff diff) throws Exception {
-			TinyV1DiffWriter.write(path, (TinyV1Diff)diff);
+			TinyV1DiffWriter.write(path, diff);
 		}
 
 		@Override
 		public void writeDiff(BufferedWriter bw, MappingsDiff diff) throws Exception {
-			TinyV1DiffWriter.write(bw, (TinyV1Diff)diff);
+			TinyV1DiffWriter.write(bw, diff);
 		}
 	},
 	TINY_V2(".tiny", ".tinydiff") {
-
-		@Override
-		public Mappings newMappings() {
-			return new TinyV2Mappings();
-		}
-
-		@Override
-		public MappingsDiff newDiff() {
-			return new TinyV2Diff();
-		}
 
 		@Override
 		public Mappings readMappings(Path path) throws Exception {
@@ -96,12 +76,12 @@ public enum Format {
 
 		@Override
 		public void writeMappings(Path path, Mappings mappings) throws Exception {
-			TinyV2Writer.write(path, (TinyV2Mappings)mappings);
+			TinyV2Writer.write(path, mappings);
 		}
 
 		@Override
 		public void writeMappings(BufferedWriter bw, Mappings mappings) throws Exception {
-			TinyV2Writer.write(bw, (TinyV2Mappings)mappings);
+			TinyV2Writer.write(bw, mappings);
 		}
 
 		@Override
@@ -116,12 +96,46 @@ public enum Format {
 
 		@Override
 		public void writeDiff(Path path, MappingsDiff diff) throws Exception {
-			TinyV2DiffWriter.write(path, (TinyV2Diff)diff);
+			TinyV2DiffWriter.write(path, diff);
 		}
 
 		@Override
 		public void writeDiff(BufferedWriter bw, MappingsDiff diff) throws Exception {
-			TinyV2DiffWriter.write(bw, (TinyV2Diff)diff);
+			TinyV2DiffWriter.write(bw, diff);
+		}
+	},
+	ENIGMA_FILE(".mapping", null) {
+
+		@Override
+		public Mappings readMappings(Path path) throws Exception {
+			return EnigmaFileReader.read(path);
+		}
+
+		@Override
+		public Mappings readMappings(BufferedReader br) throws Exception {
+			return EnigmaFileReader.read(br);
+		}
+
+		@Override
+		public void writeMappings(Path path, Mappings mappings) throws Exception {
+			EnigmaFileWriter.write(path, mappings);
+		}
+
+		@Override
+		public void writeMappings(BufferedWriter bw, Mappings mappings) throws Exception {
+			EnigmaFileWriter.write(bw, mappings);
+		}
+	},
+	ENIGMA_DIR(null, null) {
+
+		@Override
+		public Mappings readMappings(Path path) throws Exception {
+			return EnigmaDirReader.read(path);
+		}
+
+		@Override
+		public void writeMappings(Path path, Mappings mappings) throws Exception {
+			EnigmaDirWriter.write(path, mappings);
 		}
 	};
 
@@ -141,24 +155,35 @@ public enum Format {
 		return diffExtension;
 	}
 
-	public abstract Mappings newMappings();
+	public Mappings readMappings(Path path) throws Exception {
+		throw new UnsupportedOperationException();
+	}
 
-	public abstract MappingsDiff newDiff();
+	public Mappings readMappings(BufferedReader br) throws Exception {
+		throw new UnsupportedOperationException();
+	}
 
-	public abstract Mappings readMappings(Path path) throws Exception;
+	public void writeMappings(Path path, Mappings mappings) throws Exception {
+		throw new UnsupportedOperationException();
+	}
 
-	public abstract Mappings readMappings(BufferedReader br) throws Exception;
+	public void writeMappings(BufferedWriter bw, Mappings mappings) throws Exception {
+		throw new UnsupportedOperationException();
+	}
 
-	public abstract void writeMappings(Path path, Mappings mappings) throws Exception;
+	public MappingsDiff readDiff(Path path) throws Exception {
+		throw new UnsupportedOperationException();
+	}
 
-	public abstract void writeMappings(BufferedWriter bw, Mappings mappings) throws Exception;
+	public MappingsDiff readDiff(BufferedReader br) throws Exception {
+		throw new UnsupportedOperationException();
+	}
 
-	public abstract MappingsDiff readDiff(Path path) throws Exception;
+	public void writeDiff(Path path, MappingsDiff diff) throws Exception {
+		throw new UnsupportedOperationException();
+	}
 
-	public abstract MappingsDiff readDiff(BufferedReader br) throws Exception;
-
-	public abstract void writeDiff(Path path, MappingsDiff diff) throws Exception;
-
-	public abstract void writeDiff(BufferedWriter bw, MappingsDiff diff) throws Exception;
-
+	public void writeDiff(BufferedWriter bw, MappingsDiff diff) throws Exception {
+		throw new UnsupportedOperationException();
+	}
 }

@@ -15,7 +15,6 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import net.ornithemc.mappingutils.io.Format;
 import net.ornithemc.mappingutils.io.MappingNamespace;
 import net.ornithemc.mappingutils.io.Mappings;
 import net.ornithemc.mappingutils.io.Mappings.ClassMapping;
@@ -23,18 +22,16 @@ import net.ornithemc.mappingutils.io.Mappings.MethodMapping;
 
 class DummyGenerator {
 
-	static Mappings run(Format format, MappingNamespace srcNamespace, MappingNamespace dstNamespace, String classNamePattern, Path jarPath) throws Exception {
-		return new DummyGenerator(format, srcNamespace, dstNamespace, classNamePattern, jarPath).run();
+	static Mappings run(MappingNamespace srcNamespace, MappingNamespace dstNamespace, String classNamePattern, Path jarPath) throws Exception {
+		return new DummyGenerator(srcNamespace, dstNamespace, classNamePattern, jarPath).run();
 	}
 
-	private final Format format;
 	private final MappingNamespace srcNamespace;
 	private final MappingNamespace dstNamespace;
 	private final Pattern classNamePattern;
 	private final Path jarPath;
 
-	private DummyGenerator(Format format, MappingNamespace srcNamespace, MappingNamespace dstNamespace, String classNamePattern, Path jarPath) throws Exception {
-		this.format = format;
+	private DummyGenerator(MappingNamespace srcNamespace, MappingNamespace dstNamespace, String classNamePattern, Path jarPath) throws Exception {
 		this.srcNamespace = srcNamespace;
 		this.dstNamespace = dstNamespace;
 		this.classNamePattern = Pattern.compile(classNamePattern);
@@ -42,7 +39,7 @@ class DummyGenerator {
 	}
 
 	private Mappings run() throws Exception {
-		Mappings mappings = format.newMappings();
+		Mappings mappings = new Mappings();
 
 		mappings.setSrcNamespace(srcNamespace);
 		mappings.setDstNamespace(dstNamespace);

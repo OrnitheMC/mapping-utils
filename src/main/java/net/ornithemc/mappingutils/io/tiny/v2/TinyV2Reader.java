@@ -4,21 +4,24 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.nio.file.Path;
 
+import net.ornithemc.mappingutils.io.Mappings;
 import net.ornithemc.mappingutils.io.Mappings.ClassMapping;
 import net.ornithemc.mappingutils.io.Mappings.FieldMapping;
 import net.ornithemc.mappingutils.io.Mappings.MethodMapping;
 import net.ornithemc.mappingutils.io.Mappings.ParameterMapping;
 import net.ornithemc.mappingutils.io.tiny.TinyMappingsReader;
 
-public class TinyV2Reader extends TinyMappingsReader<TinyV2Mappings> {
+public class TinyV2Reader extends TinyMappingsReader {
 
-	public static TinyV2Mappings read(Path path) throws Exception {
+	public static Mappings read(Path path) throws Exception {
 		try (BufferedReader reader = new BufferedReader(new FileReader(path.toFile()))) {
 			return read(reader);
+		} catch (Exception e) {
+			throw new IllegalStateException("error reading " + path.toString(), e);
 		}
 	}
 
-	public static TinyV2Mappings read(BufferedReader reader) throws Exception {
+	public static Mappings read(BufferedReader reader) throws Exception {
 		return new TinyV2Reader(reader).read();
 	}
 
@@ -30,7 +33,7 @@ public class TinyV2Reader extends TinyMappingsReader<TinyV2Mappings> {
 	private ParameterMapping p;
 
 	private TinyV2Reader(BufferedReader reader) {
-		super(reader, new TinyV2Mappings());
+		super(reader, new Mappings());
 	}
 
 	@Override
@@ -41,26 +44,24 @@ public class TinyV2Reader extends TinyMappingsReader<TinyV2Mappings> {
 			throw new IllegalStateException("illegal number of arguments (" + args.length + ") for header - expected 5");
 		}
 
-		TinyV2Header header = mappings.getHeader();
-
 		String format = args[0];
 		String version = args[1];
 		String minorVersion = args[2];
 		String srcNamespace = args[3];
 		String dstNamespace = args[4];
 
-		if (!header.getFormat().equals(format)) {
-			throw new IllegalStateException("cannot read mapping format " + format + " - expected " + header.getFormat());
+		if (!TinyV2Format.FORMAT.equals(format)) {
+			throw new IllegalStateException("cannot read mapping format " + format + " - expected " + TinyV2Format.FORMAT);
 		}
-		if (!header.getTinyVersion().equals(version)) {
-			throw new IllegalStateException("cannot read tiny version " + version + " - expected " + header.getTinyVersion());
+		if (!TinyV2Format.VERSION.equals(version)) {
+			throw new IllegalStateException("cannot read tiny version " + version + " - expected " + TinyV2Format.VERSION);
 		}
-		if (!header.getMinorVersion().equals(minorVersion)) {
-			throw new IllegalStateException("cannot read tiny 2 minor version " + minorVersion + " - expected " + header.getMinorVersion());
+		if (!TinyV2Format.MINOR_VERSION.equals(minorVersion)) {
+			throw new IllegalStateException("cannot read tiny 2 minor version " + minorVersion + " - expected " + TinyV2Format.MINOR_VERSION);
 		}
 
-		header.setSrcNamespace(srcNamespace);
-		header.setDstNamespace(dstNamespace);
+		mappings.setSrcNamespace(srcNamespace);
+		mappings.setDstNamespace(dstNamespace);
 
 		return Stage.MAPPINGS;
 	}
@@ -82,12 +83,12 @@ public class TinyV2Reader extends TinyMappingsReader<TinyV2Mappings> {
 		String desc;
 
 		switch (args[indents]) {
-		case TinyV2Mappings.COMMENT:
-//		case TinyV2Mappings.CLASS: // classes and comments use the same identifier
+		case TinyV2Format.COMMENT:
+//		case TinyV2Format.CLASS: // classes and comments use the same identifier
 			// first check if this line is a comment
 			int parentIndents = indents - 1;
 
-			if (parentIndents == TinyV2Mappings.CLASS_INDENTS) {
+			if (parentIndents == TinyV2Format.CLASS_INDENTS) {
 				if (ac != 2) {
 					throw new IllegalStateException("illegal number of arguments (" + ac + ") for class javadocs on line " + lineNumber + " - expected 2");
 				}
@@ -99,7 +100,7 @@ public class TinyV2Reader extends TinyMappingsReader<TinyV2Mappings> {
 
 				break;
 			}
-			if (parentIndents == TinyV2Mappings.FIELD_INDENTS || parentIndents == TinyV2Mappings.METHOD_INDENTS) {
+			if (parentIndents == TinyV2Format.FIELD_INDENTS || parentIndents == TinyV2Format.METHOD_INDENTS) {
 				if (ac != 2) {
 					throw new IllegalStateException("illegal number of arguments (" + ac + ") for field/method javadocs one line " + lineNumber + " - expected 2");
 				}
@@ -111,7 +112,7 @@ public class TinyV2Reader extends TinyMappingsReader<TinyV2Mappings> {
 
 				break;
 			}
-			if (parentIndents == TinyV2Mappings.PARAMETER_INDENTS) {
+			if (parentIndents == TinyV2Format.PARAMETER_INDENTS) {
 				if (ac != 2) {
 					throw new IllegalStateException("illegal number of arguments (" + ac + ") for parameter javadocs on line " + lineNumber + " - expected 2");
 				}
@@ -125,8 +126,8 @@ public class TinyV2Reader extends TinyMappingsReader<TinyV2Mappings> {
 			}
 
 			// it's not a comment; parse class mapping
-			if (indents != TinyV2Mappings.CLASS_INDENTS) {
-				throw new IllegalStateException("illegal number of indents (" + indents + ") for class mapping on line " + lineNumber + " - expected " + TinyV2Mappings.CLASS_INDENTS);
+			if (indents != TinyV2Format.CLASS_INDENTS) {
+				throw new IllegalStateException("illegal number of indents (" + indents + ") for class mapping on line " + lineNumber + " - expected " + TinyV2Format.CLASS_INDENTS);
 			}
 			if (ac != 3) {
 				throw new IllegalStateException("illegal number of arguments (" + ac + ") for class mapping on line " + lineNumber + " - expected 3");
@@ -141,9 +142,9 @@ public class TinyV2Reader extends TinyMappingsReader<TinyV2Mappings> {
 			p = null;
 
 			break;
-		case TinyV2Mappings.FIELD:
-			if (indents != TinyV2Mappings.FIELD_INDENTS) {
-				throw new IllegalStateException("illegal number of indents (" + indents + ") for field mapping on line " + lineNumber + " - expected " + TinyV2Mappings.FIELD_INDENTS);
+		case TinyV2Format.FIELD:
+			if (indents != TinyV2Format.FIELD_INDENTS) {
+				throw new IllegalStateException("illegal number of indents (" + indents + ") for field mapping on line " + lineNumber + " - expected " + TinyV2Format.FIELD_INDENTS);
 			}
 			if (ac != 4) {
 				throw new IllegalStateException("illegal number of arguments (" + ac + ") for field mapping on line " + lineNumber + " - expected 4");
@@ -161,9 +162,9 @@ public class TinyV2Reader extends TinyMappingsReader<TinyV2Mappings> {
 			p = null;
 
 			break;
-		case TinyV2Mappings.METHOD:
-			if (indents != TinyV2Mappings.METHOD_INDENTS) {
-				throw new IllegalStateException("illegal number of indents (" + indents + ") for method mapping on line " + lineNumber + " - expected " + TinyV2Mappings.METHOD_INDENTS);
+		case TinyV2Format.METHOD:
+			if (indents != TinyV2Format.METHOD_INDENTS) {
+				throw new IllegalStateException("illegal number of indents (" + indents + ") for method mapping on line " + lineNumber + " - expected " + TinyV2Format.METHOD_INDENTS);
 			}
 			if (ac != 4) {
 				throw new IllegalStateException("illegal number of arguments (" + ac + ") for method mapping on line " + lineNumber + " - expected 4");
@@ -181,9 +182,9 @@ public class TinyV2Reader extends TinyMappingsReader<TinyV2Mappings> {
 			p = null;
 
 			break;
-		case TinyV2Mappings.PARAMETER:
-			if (indents != TinyV2Mappings.PARAMETER_INDENTS) {
-				throw new IllegalStateException("illegal number of indents (" + indents + ") for parameter mapping on line " + lineNumber + " - expected " + TinyV2Mappings.PARAMETER_INDENTS);
+		case TinyV2Format.PARAMETER:
+			if (indents != TinyV2Format.PARAMETER_INDENTS) {
+				throw new IllegalStateException("illegal number of indents (" + indents + ") for parameter mapping on line " + lineNumber + " - expected " + TinyV2Format.PARAMETER_INDENTS);
 			}
 			if (ac != 4) {
 				throw new IllegalStateException("illegal number of arguments (" + ac + ") for parameter mapping on line " + lineNumber + " - expected 4");

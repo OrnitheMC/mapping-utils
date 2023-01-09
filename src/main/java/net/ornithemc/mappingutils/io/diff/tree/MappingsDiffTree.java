@@ -89,7 +89,7 @@ public class MappingsDiffTree {
 		iterateVersions(dir, (parent, version, path) -> {
 			if (parent == null) {
 				if (root != null) {
-					throw new IllegalStateException("multiple roots present: " + root.get() + ", " + version);
+					throw new IllegalStateException("multiple roots present: " + root + ", " + version);
 				}
 
 				root = addVersion(version, path);
@@ -109,7 +109,7 @@ public class MappingsDiffTree {
 		}
 		for (Version v : versions.values()) {
 			if (v.root() != root) {
-				throw new IllegalStateException("version " + v.get() + " has illegal root " + v.root());
+				throw new IllegalStateException("version " + v + " has illegal root " + v.root());
 			}
 		}
 
@@ -117,7 +117,7 @@ public class MappingsDiffTree {
 	}
 
 	private void iterateVersions(Path path, VersionConsumer operation) throws IOException {
-		FileUtils.iterateFiles(path, file -> {
+		FileUtils.iterate(path, file -> {
 			String fileName = file.getName();
 
 			// root mappings

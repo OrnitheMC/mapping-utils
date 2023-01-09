@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 
 import net.ornithemc.mappingutils.io.diff.DiffSide;
+import net.ornithemc.mappingutils.io.diff.MappingsDiff;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.ClassDiff;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.FieldDiff;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.JavadocDiff;
@@ -13,15 +14,17 @@ import net.ornithemc.mappingutils.io.diff.MappingsDiff.MethodDiff;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.ParameterDiff;
 import net.ornithemc.mappingutils.io.diff.tiny.TinyDiffReader;
 
-public class TinyV2DiffReader extends TinyDiffReader<TinyV2Diff> {
+public class TinyV2DiffReader extends TinyDiffReader {
 
-	public static TinyV2Diff read(Path path) throws Exception {
+	public static MappingsDiff read(Path path) throws Exception {
 		try (BufferedReader reader = new BufferedReader(new FileReader(path.toFile()))) {
 			return read(reader);
+		} catch (Exception e) {
+			throw new IllegalStateException("error reading " + path.toString(), e);
 		}
 	}
 
-	public static TinyV2Diff read(BufferedReader reader) throws Exception {
+	public static MappingsDiff read(BufferedReader reader) throws Exception {
 		return new TinyV2DiffReader(reader).read();
 	}
 
@@ -34,7 +37,7 @@ public class TinyV2DiffReader extends TinyDiffReader<TinyV2Diff> {
 	private JavadocDiff j;
 
 	private TinyV2DiffReader(BufferedReader reader) {
-		super(reader, new TinyV2Diff());
+		super(reader, new MappingsDiff());
 	}
 
 	@Override
@@ -45,20 +48,18 @@ public class TinyV2DiffReader extends TinyDiffReader<TinyV2Diff> {
 			throw new IllegalStateException("illegal number of arguments (" + args.length + ") for header - expected 3");
 		}
 
-		TinyV2DiffHeader header = diff.getHeader();
-
 		String format = args[0];
 		String version = args[1];
 		String minorVersion = args[2];
 
-		if (!header.getFormat().equals(format)) {
-			throw new IllegalStateException("cannot read mapping format " + format + " - expected " + header.getFormat());
+		if (!TinyV2Format.FORMAT.equals(format)) {
+			throw new IllegalStateException("cannot read mapping format " + format + " - expected " + TinyV2Format.FORMAT);
 		}
-		if (!header.getTinyVersion().equals(version)) {
-			throw new IllegalStateException("cannot read tiny version " + version + " - expected " + header.getTinyVersion());
+		if (!TinyV2Format.VERSION.equals(version)) {
+			throw new IllegalStateException("cannot read tiny version " + version + " - expected " + TinyV2Format.VERSION);
 		}
-		if (!header.getMinorVersion().equals(minorVersion)) {
-			throw new IllegalStateException("cannot read tiny 2 minor version " + minorVersion + " - expected " + header.getMinorVersion());
+		if (!TinyV2Format.MINOR_VERSION.equals(minorVersion)) {
+			throw new IllegalStateException("cannot read tiny 2 minor version " + minorVersion + " - expected " + TinyV2Format.MINOR_VERSION);
 		}
 
 		return Stage.DIFFS;
@@ -82,12 +83,12 @@ public class TinyV2DiffReader extends TinyDiffReader<TinyV2Diff> {
 		String desc;
 
 		switch (args[indents]) {
-		case TinyV2Diff.COMMENT:
-//		case TinyV2Diffs.CLASS: // classes and comments use the same identifier
+		case TinyV2Format.COMMENT:
+//		case TinyV2Formats.CLASS: // classes and comments use the same identifier
 			// first check if this line is a comment
 			int parentIndents = indents - 1;
 
-			if (parentIndents == TinyV2Diff.CLASS_INDENTS) {
+			if (parentIndents == TinyV2Format.CLASS_INDENTS) {
 				if (ac != 2 && ac != 3) {
 					throw new IllegalStateException("illegal number of arguments (" + ac + ") for class javadocs on line " + lineNumber + " - expected 2 or 3");
 				}
@@ -105,7 +106,7 @@ public class TinyV2DiffReader extends TinyDiffReader<TinyV2Diff> {
 
 				break;
 			}
-			if (parentIndents == TinyV2Diff.FIELD_INDENTS || parentIndents == TinyV2Diff.METHOD_INDENTS) {
+			if (parentIndents == TinyV2Format.FIELD_INDENTS || parentIndents == TinyV2Format.METHOD_INDENTS) {
 				if (ac != 2 && ac != 3) {
 					throw new IllegalStateException("illegal number of arguments (" + ac + ") for field/method javadocs on line " + lineNumber + " - expected 2 or 3");
 				}
@@ -123,7 +124,7 @@ public class TinyV2DiffReader extends TinyDiffReader<TinyV2Diff> {
 
 				break;
 			}
-			if (parentIndents == TinyV2Diff.PARAMETER_INDENTS) {
+			if (parentIndents == TinyV2Format.PARAMETER_INDENTS) {
 				if (ac != 2 && ac != 3) {
 					throw new IllegalStateException("illegal number of arguments (" + ac + ") for parameter javadocs on line " + lineNumber + " - expected 2 or 3");
 				}
@@ -143,8 +144,8 @@ public class TinyV2DiffReader extends TinyDiffReader<TinyV2Diff> {
 			}
 
 			// it's not a comment; parse class diff
-			if (indents != TinyV2Diff.CLASS_INDENTS) {
-				throw new IllegalStateException("illegal number of indents (" + indents + ") for class mapping on line " + lineNumber + " - expected " + TinyV2Diff.CLASS_INDENTS);
+			if (indents != TinyV2Format.CLASS_INDENTS) {
+				throw new IllegalStateException("illegal number of indents (" + indents + ") for class mapping on line " + lineNumber + " - expected " + TinyV2Format.CLASS_INDENTS);
 			}
 			if (ac < 2 || ac > 4) {
 				throw new IllegalStateException("illegal number of arguments (" + ac + ") for class mapping on line " + lineNumber + " - expected 2-4");
@@ -160,9 +161,9 @@ public class TinyV2DiffReader extends TinyDiffReader<TinyV2Diff> {
 			p = null;
 
 			break;
-		case TinyV2Diff.FIELD:
-			if (indents != TinyV2Diff.FIELD_INDENTS) {
-				throw new IllegalStateException("illegal number of indents (" + indents + ") for field mapping on line " + lineNumber + " - expected " + TinyV2Diff.FIELD_INDENTS);
+		case TinyV2Format.FIELD:
+			if (indents != TinyV2Format.FIELD_INDENTS) {
+				throw new IllegalStateException("illegal number of indents (" + indents + ") for field mapping on line " + lineNumber + " - expected " + TinyV2Format.FIELD_INDENTS);
 			}
 			if (ac < 3 || ac > 5) {
 				throw new IllegalStateException("illegal number of arguments (" + ac + ") for field mapping on line " + lineNumber + " - expected 3-5");
@@ -181,9 +182,9 @@ public class TinyV2DiffReader extends TinyDiffReader<TinyV2Diff> {
 			p = null;
 
 			break;
-		case TinyV2Diff.METHOD:
-			if (indents != TinyV2Diff.METHOD_INDENTS) {
-				throw new IllegalStateException("illegal number of indents (" + indents + ") for method mapping on line " + lineNumber + " - expected " + TinyV2Diff.METHOD_INDENTS);
+		case TinyV2Format.METHOD:
+			if (indents != TinyV2Format.METHOD_INDENTS) {
+				throw new IllegalStateException("illegal number of indents (" + indents + ") for method mapping on line " + lineNumber + " - expected " + TinyV2Format.METHOD_INDENTS);
 			}
 			if (ac < 3 || ac > 5) {
 				throw new IllegalStateException("illegal number of arguments (" + ac + ") for method mapping on line " + lineNumber + " - expected 3-5");
@@ -202,9 +203,9 @@ public class TinyV2DiffReader extends TinyDiffReader<TinyV2Diff> {
 			p = null;
 
 			break;
-		case TinyV2Diff.PARAMETER:
-			if (indents != TinyV2Diff.PARAMETER_INDENTS) {
-				throw new IllegalStateException("illegal number of indents (" + indents + ") for parameter mapping on line " + lineNumber + " - expected " + TinyV2Diff.PARAMETER_INDENTS);
+		case TinyV2Format.PARAMETER:
+			if (indents != TinyV2Format.PARAMETER_INDENTS) {
+				throw new IllegalStateException("illegal number of indents (" + indents + ") for parameter mapping on line " + lineNumber + " - expected " + TinyV2Format.PARAMETER_INDENTS);
 			}
 			if (ac < 3 || ac > 5) {
 				throw new IllegalStateException("illegal number of arguments (" + ac + ") for parameter mapping on line " + lineNumber + " - expected 3-5");

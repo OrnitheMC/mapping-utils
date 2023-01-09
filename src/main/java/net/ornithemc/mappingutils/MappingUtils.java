@@ -26,11 +26,11 @@ public class MappingUtils {
 		Mappings a = format.readMappings(pathA);
 		Mappings b = format.readMappings(pathB);
 
-		format.writeDiff(diffPath, diffMappings(format, a, b));
+		format.writeDiff(diffPath, diffMappings(a, b));
 	}
 
-	public static MappingsDiff diffMappings(Format format, Mappings a, Mappings b) throws Exception {
-		return DiffGenerator.run(format, a, b);
+	public static MappingsDiff diffMappings(Mappings a, Mappings b) throws Exception {
+		return DiffGenerator.run(a, b);
 	}
 
 	public static void applyDiffs(Format format, Path srcPath, Path dstPath, Path... diffPaths) throws Exception {
@@ -95,11 +95,11 @@ public class MappingUtils {
 	}
 
 	public static void generateDummyMappings(Format format, MappingNamespace srcNamespace, MappingNamespace dstNamespace, String classNamePattern, Path jarPath, Path mappingsPath) throws Exception {
-		format.writeMappings(mappingsPath, generateDummyMappings(format, srcNamespace, dstNamespace, classNamePattern, jarPath));
+		format.writeMappings(mappingsPath, generateDummyMappings(srcNamespace, dstNamespace, classNamePattern, jarPath));
 	}
 
-	public static Mappings generateDummyMappings(Format format, MappingNamespace srcNamespace, MappingNamespace dstNamespace, String classNamePattern, Path jarPath) throws Exception {
-		return DummyGenerator.run(format, srcNamespace, dstNamespace, classNamePattern, jarPath);
+	public static Mappings generateDummyMappings(MappingNamespace srcNamespace, MappingNamespace dstNamespace, String classNamePattern, Path jarPath) throws Exception {
+		return DummyGenerator.run(srcNamespace, dstNamespace, classNamePattern, jarPath);
 	}
 
 	public static Collection<MappingHistory> findMappings(Format format, Path dir, MappingTarget target, String key) throws Exception {

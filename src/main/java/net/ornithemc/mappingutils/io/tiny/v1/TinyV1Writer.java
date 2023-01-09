@@ -4,36 +4,37 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.nio.file.Path;
 
+import net.ornithemc.mappingutils.io.Mappings;
 import net.ornithemc.mappingutils.io.Mappings.ClassMapping;
 import net.ornithemc.mappingutils.io.Mappings.FieldMapping;
 import net.ornithemc.mappingutils.io.Mappings.MethodMapping;
 import net.ornithemc.mappingutils.io.tiny.TinyMappingsWriter;
 
-public class TinyV1Writer extends TinyMappingsWriter<TinyV1Mappings> {
+public class TinyV1Writer extends TinyMappingsWriter {
 
-	public static void write(Path path, TinyV1Mappings mappings) throws Exception {
+	public static void write(Path path, Mappings mappings) throws Exception {
 		try (BufferedWriter writer = new BufferedWriter(new FileWriter(path.toFile()))) {
 			write(writer, mappings);
+		} catch (Exception e) {
+			throw new IllegalStateException("error writing " + path.toString(), e);
 		}
 	}
 
-	public static void write(BufferedWriter writer, TinyV1Mappings mappings) throws Exception {
+	public static void write(BufferedWriter writer, Mappings mappings) throws Exception {
 		new TinyV1Writer(writer, mappings).write();
 	}
 
-	private TinyV1Writer(BufferedWriter writer, TinyV1Mappings mappings) {
+	private TinyV1Writer(BufferedWriter writer, Mappings mappings) {
 		super(writer, mappings);
 	}
 
 	@Override
 	protected void writeHeader() throws Exception {
-		TinyV1Header header = mappings.getHeader();
-
-		writer.write(header.getTinyVersion());
+		writer.write(TinyV1Format.VERSION);
 		writer.write(TAB);
-		writer.write(header.getSrcNamespace());
+		writer.write(mappings.getSrcNamespace().toString());
 		writer.write(TAB);
-		writer.write(header.getDstNamespace());
+		writer.write(mappings.getDstNamespace().toString());
 		writer.newLine();
 	}
 
@@ -45,11 +46,11 @@ public class TinyV1Writer extends TinyMappingsWriter<TinyV1Mappings> {
 	}
 
 	private void writeClass(ClassMapping c) throws Exception {
-		writer.write(TinyV1Mappings.CLASS);
+		writer.write(TinyV1Format.CLASS);
 		writer.write(TAB);
 		writer.write(c.src());
 		writer.write(TAB);
-		writer.write(c.getComplete());
+		writer.write(c.get().isEmpty() ? c.src() : c.getComplete());
 		writer.newLine();
 
 		for (FieldMapping f : c.getFields()) {
@@ -64,7 +65,7 @@ public class TinyV1Writer extends TinyMappingsWriter<TinyV1Mappings> {
 	}
 
 	private void writeField(FieldMapping f) throws Exception {
-		writer.write(TinyV1Mappings.FIELD);
+		writer.write(TinyV1Format.FIELD);
 		writer.write(TAB);
 		writer.write(f.getParent().src());
 		writer.write(TAB);
@@ -72,12 +73,12 @@ public class TinyV1Writer extends TinyMappingsWriter<TinyV1Mappings> {
 		writer.write(TAB);
 		writer.write(f.src());
 		writer.write(TAB);
-		writer.write(f.get());
+		writer.write(f.get().isEmpty() ? f.src() : f.get());
 		writer.newLine();
 	}
 
 	private void writeMethod(MethodMapping m) throws Exception {
-		writer.write(TinyV1Mappings.METHOD);
+		writer.write(TinyV1Format.METHOD);
 		writer.write(TAB);
 		writer.write(m.getParent().src());
 		writer.write(TAB);
@@ -85,7 +86,7 @@ public class TinyV1Writer extends TinyMappingsWriter<TinyV1Mappings> {
 		writer.write(TAB);
 		writer.write(m.src());
 		writer.write(TAB);
-		writer.write(m.get());
+		writer.write(m.get().isEmpty() ? m.src() : m.get());
 		writer.newLine();
 	}
 }

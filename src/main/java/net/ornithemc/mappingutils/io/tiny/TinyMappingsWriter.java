@@ -2,17 +2,22 @@ package net.ornithemc.mappingutils.io.tiny;
 
 import java.io.BufferedWriter;
 
-import net.ornithemc.mappingutils.io.MappingsWriter;
+import net.ornithemc.mappingutils.io.Mappings;
 
-public abstract class TinyMappingsWriter<M extends TinyMappings<M>> extends MappingsWriter<M> {
+public abstract class TinyMappingsWriter {
 
 	protected static final String TAB = "\t";
 
-	protected TinyMappingsWriter(BufferedWriter writer, M mappings) {
-		super(writer, mappings);
+	protected final BufferedWriter writer;
+	protected final Mappings mappings;
+
+	protected TinyMappingsWriter(BufferedWriter writer, Mappings mappings) {
+		mappings.validate();
+
+		this.writer = writer;
+		this.mappings = mappings;
 	}
 
-	@Override
 	public void write() throws Exception {
 		writeHeader();
 		writeMappings();

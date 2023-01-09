@@ -4,23 +4,26 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.nio.file.Path;
 
+import net.ornithemc.mappingutils.io.Mappings;
 import net.ornithemc.mappingutils.io.Mappings.ClassMapping;
 import net.ornithemc.mappingutils.io.tiny.TinyMappingsReader;
 
-public class TinyV1Reader extends TinyMappingsReader<TinyV1Mappings> {
+public class TinyV1Reader extends TinyMappingsReader {
 
-	public static TinyV1Mappings read(Path path) throws Exception {
+	public static Mappings read(Path path) throws Exception {
 		try (BufferedReader reader = new BufferedReader(new FileReader(path.toFile()))) {
 			return read(reader);
+		} catch (Exception e) {
+			throw new IllegalStateException("error reading " + path.toString(), e);
 		}
 	}
 
-	public static TinyV1Mappings read(BufferedReader reader) throws Exception {
+	public static Mappings read(BufferedReader reader) throws Exception {
 		return new TinyV1Reader(reader).read();
 	}
 
 	private TinyV1Reader(BufferedReader reader) {
-		super(reader, new TinyV1Mappings());
+		super(reader, new Mappings());
 	}
 
 	@Override
@@ -31,18 +34,16 @@ public class TinyV1Reader extends TinyMappingsReader<TinyV1Mappings> {
 			throw new IllegalStateException("illegal number of arguments (" + args.length + ") for header - expected 3");
 		}
 
-		TinyV1Header header = mappings.getHeader();
-
 		String version = args[0];
 		String srcNamespace = args[1];
 		String dstNamespace = args[2];
 
-		if (!header.getTinyVersion().equals(version)) {
-			throw new IllegalStateException("cannot read tiny version " + version + " - expected " + header.getTinyVersion());
+		if (!TinyV1Format.VERSION.equals(version)) {
+			throw new IllegalStateException("cannot read tiny version " + version + " - expected " + TinyV1Format.VERSION);
 		}
 
-		header.setSrcNamespace(srcNamespace);
-		header.setDstNamespace(dstNamespace);
+		mappings.setSrcNamespace(srcNamespace);
+		mappings.setDstNamespace(dstNamespace);
 
 		return Stage.MAPPINGS;
 	}
@@ -59,7 +60,7 @@ public class TinyV1Reader extends TinyMappingsReader<TinyV1Mappings> {
 		String desc;
 
 		switch (args[0]) {
-		case TinyV1Mappings.CLASS:
+		case TinyV1Format.CLASS:
 			if (args.length != 3) {
 				throw new IllegalStateException("illegal number of arguments (" + args.length + ") for class mapping on line " + lineNumber + " - expected 3");
 			}
@@ -70,7 +71,7 @@ public class TinyV1Reader extends TinyMappingsReader<TinyV1Mappings> {
 			mappings.addClass(src, ClassMapping.getSimplified(dst));
 
 			break;
-		case TinyV1Mappings.FIELD:
+		case TinyV1Format.FIELD:
 			if (args.length != 5) {
 				throw new IllegalStateException("illegal number of arguments (" + args.length + ") for field mapping on line " + lineNumber + " - expected 5");
 			}
@@ -89,7 +90,7 @@ public class TinyV1Reader extends TinyMappingsReader<TinyV1Mappings> {
 			c.addField(src, dst, desc);
 
 			break;
-		case TinyV1Mappings.METHOD:
+		case TinyV1Format.METHOD:
 			if (args.length != 5) {
 				throw new IllegalStateException("illegal number of arguments (" + args.length + ") for field mapping on line " + lineNumber + " - expected 5");
 			}

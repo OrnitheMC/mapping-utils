@@ -2,17 +2,22 @@ package net.ornithemc.mappingutils.io.diff.tiny;
 
 import java.io.BufferedWriter;
 
-import net.ornithemc.mappingutils.io.diff.MappingsDiffWriter;
+import net.ornithemc.mappingutils.io.diff.MappingsDiff;
 
-public abstract class TinyDiffWriter<D extends TinyDiff<D>> extends MappingsDiffWriter<D> {
+public abstract class TinyDiffWriter {
 
 	protected static final String TAB = "\t";
 
-	protected TinyDiffWriter(BufferedWriter writer, D diff) {
-		super(writer, diff);
+	protected final BufferedWriter writer;
+	protected final MappingsDiff diff;
+
+	protected TinyDiffWriter(BufferedWriter writer, MappingsDiff diff) {
+		diff.validate();
+
+		this.writer = writer;
+		this.diff = diff;
 	}
 
-	@Override
 	public void write() throws Exception {
 		writeHeader();
 		writeDiffs();

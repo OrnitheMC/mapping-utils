@@ -14,6 +14,8 @@ public class MatchesReader {
 	public static Matches read(Path path) throws Exception {
 		try (BufferedReader reader = new BufferedReader(new FileReader(path.toFile()))) {
 			return read(reader);
+		} catch (Exception e) {
+			throw new IllegalStateException("error reading " + path.toString(), e);
 		}
 	}
 

@@ -42,7 +42,7 @@ public class FileUtils {
 		requireWritable(Arrays.asList(paths));
 	}
 
-	public static void iterateFiles(Path path, Consumer<File> operation) throws IOException {
+	public static void iterate(Path path, Consumer<File> operation) throws IOException {
 		File dir = path.toFile();
 
 		if (!dir.isDirectory()) {
@@ -57,6 +57,18 @@ public class FileUtils {
 			requireReadable(file.toPath());
 
 			operation.accept(file);
+		}
+	}
+
+	public static void delete(File f) throws IOException {
+		if (f.exists()) {
+			if (f.isDirectory()) {
+				for (File ff : f.listFiles()) {
+					delete(ff);
+				}
+			}
+
+			f.delete();
 		}
 	}
 }

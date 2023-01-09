@@ -2,24 +2,23 @@ package net.ornithemc.mappingutils.io.diff.tiny;
 
 import java.io.BufferedReader;
 
-import net.ornithemc.mappingutils.io.diff.MappingsDiffReader;
+import net.ornithemc.mappingutils.io.diff.MappingsDiff;
 
-public abstract class TinyDiffReader<D extends TinyDiff<D>> extends MappingsDiffReader<D> {
+public abstract class TinyDiffReader {
 
 	protected static final String TAB = "\t";
 
-	protected final D diff;
+	protected final BufferedReader reader;
+	protected final MappingsDiff diff;
 
 	private Stage stage;
 
-	protected TinyDiffReader(BufferedReader reader, D diff) {
-		super(reader);
-
+	protected TinyDiffReader(BufferedReader reader, MappingsDiff diff) {
+		this.reader = reader;
 		this.diff = diff;
 	}
 
-	@Override
-	public D read() throws Exception {
+	public MappingsDiff read() throws Exception {
 		stage = Stage.HEADER;
 
 		for (int lineNumber = 1; stage != null; lineNumber++) {

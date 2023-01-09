@@ -6,7 +6,9 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.TreeMap;
 
 import org.objectweb.asm.Type;
 
@@ -32,6 +34,7 @@ public class Mappings {
 
 		this.srcNamespace = srcNamespace;
 		this.dstNamespace = dstNamespace;
+
 		this.validator = MappingValidator.ALWAYS;
 	}
 
@@ -56,6 +59,14 @@ public class Mappings {
 
 	public void setDstNamespace(MappingNamespace namespace) {
 		this.dstNamespace = Objects.requireNonNull(namespace);
+	}
+
+	public void setSrcNamespace(String namespace) {
+		setSrcNamespace(new MappingNamespace(namespace));
+	}
+
+	public void setDstNamespace(String namespace) {
+		setDstNamespace(new MappingNamespace(namespace));
 	}
 
 	public void setValidator(MappingValidator validator) {
@@ -122,6 +133,10 @@ public class Mappings {
 		return c;
 	}
 
+	public void sort() {
+		sort(classMappings);
+	}
+
 	public void validate() {
 		Iterator<ClassMapping> it = classMappings.values().iterator();
 
@@ -147,10 +162,8 @@ public class Mappings {
 	}
 
 	public Mappings copy() {
-		return copy(new Mappings(srcNamespace, dstNamespace));
-	}
+		Mappings copy = new Mappings(srcNamespace, dstNamespace);
 
-	protected Mappings copy(Mappings copy) {
 		for (ClassMapping c : classMappings.values()) {
 			c.copy(copy.addClass(c.key(), c.dst));
 		}
@@ -226,7 +239,7 @@ public class Mappings {
 		}
 
 		@SuppressWarnings("unchecked")
-		protected <M extends Mapping<M>> M getChild(String key) {
+		public <M extends Mapping<M>> M getChild(String key) {
 			return (M)children.get(key);
 		}
 
@@ -235,7 +248,7 @@ public class Mappings {
 		}
 
 		@SuppressWarnings("unchecked")
-		protected <M extends Mapping<M>> Collection<M> getChildren(MappingTarget target) {
+		public <M extends Mapping<M>> Collection<M> getChildren(MappingTarget target) {
 			List<M> c = new LinkedList<>();
 
 			for (Mapping<?> m : children.values()) {
@@ -356,6 +369,9 @@ public class Mappings {
 
 		@Override
 		protected boolean validate() {
+			if (dst.isEmpty()) {
+				return super.validate();
+			}
 			if (dst.contains("$")) {
 				throw new IllegalStateException("simple name of " + this + " cannot be nested!");
 			}
@@ -678,5 +694,29 @@ public class Mappings {
 
 	private static String validateDst(String dst) {
 		return dst == null ? "" : dst;
+	}
+
+	private static <T> void sort(Map<String, T> mappings) {
+		Map<String, T> sorted = new TreeMap<>((k1, k2) -> {
+			int l1 = k1.indexOf(':');
+			int l2 = k2.indexOf(':');
+
+			if (l1 < 0) l1 = k1.length();
+			if (l2 < 0) l2 = k2.length();
+
+			return l1 == l2 ? k1.compareTo(k2) : l1 - l2;
+		});
+
+		for (Entry<String, T> entry : mappings.entrySet()) {
+			String key = entry.getKey();
+			T mapping = entry.getValue();
+
+			sorted.put(key, mapping);
+
+			sort(((Mapping<?>)mapping).children);
+		}
+
+		mappings.clear();
+		mappings.putAll(sorted);
 	}
 }

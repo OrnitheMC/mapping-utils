@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.nio.file.Path;
 
+import net.ornithemc.mappingutils.io.Mappings;
 import net.ornithemc.mappingutils.io.Mappings.ClassMapping;
 import net.ornithemc.mappingutils.io.Mappings.FieldMapping;
 import net.ornithemc.mappingutils.io.Mappings.Mapping;
@@ -11,35 +12,37 @@ import net.ornithemc.mappingutils.io.Mappings.MethodMapping;
 import net.ornithemc.mappingutils.io.Mappings.ParameterMapping;
 import net.ornithemc.mappingutils.io.tiny.TinyMappingsWriter;
 
-public class TinyV2Writer extends TinyMappingsWriter<TinyV2Mappings> {
+public class TinyV2Writer extends TinyMappingsWriter {
 
-	public static void write(Path path, TinyV2Mappings mappings) throws Exception {
+	public static void write(Path path, Mappings mappings) throws Exception {
 		try (BufferedWriter writer = new BufferedWriter(new FileWriter(path.toFile()))) {
 			write(writer, mappings);
+		} catch (Exception e) {
+			throw new IllegalStateException("error writing " + path.toString(), e);
 		}
 	}
 
-	public static void write(BufferedWriter writer, TinyV2Mappings mappings) throws Exception {
+	public static void write(BufferedWriter writer, Mappings mappings) throws Exception {
 		new TinyV2Writer(writer, mappings).write();
 	}
 
-	private TinyV2Writer(BufferedWriter writer, TinyV2Mappings mappings) {
+	private int indents;
+
+	private TinyV2Writer(BufferedWriter writer, Mappings mappings) {
 		super(writer, mappings);
 	}
 
 	@Override
 	protected void writeHeader() throws Exception {
-		TinyV2Header header = mappings.getHeader();
-
-		writer.write(header.getFormat());
+		writer.write(TinyV2Format.FORMAT);
 		writer.write(TAB);
-		writer.write(header.getTinyVersion());
+		writer.write(TinyV2Format.VERSION);
 		writer.write(TAB);
-		writer.write(header.getMinorVersion());
+		writer.write(TinyV2Format.MINOR_VERSION);
 		writer.write(TAB);
-		writer.write(header.getSrcNamespace());
+		writer.write(mappings.getSrcNamespace().toString());
 		writer.write(TAB);
-		writer.write(header.getDstNamespace());
+		writer.write(mappings.getDstNamespace().toString());
 		writer.newLine();
 	}
 
@@ -51,13 +54,13 @@ public class TinyV2Writer extends TinyMappingsWriter<TinyV2Mappings> {
 	}
 
 	private void writeClass(ClassMapping c) throws Exception {
-		indent(TinyV2Mappings.CLASS_INDENTS);
+		indent(TinyV2Format.CLASS_INDENTS);
 
-		writer.write(TinyV2Mappings.CLASS);
+		writer.write(TinyV2Format.CLASS);
 		writer.write(TAB);
 		writer.write(c.src());
 		writer.write(TAB);
-		writer.write(c.getComplete());
+		writer.write(c.get().isEmpty() ? c.src() : c.getComplete());
 		writer.newLine();
 
 		writeJavadoc(c);
@@ -74,30 +77,30 @@ public class TinyV2Writer extends TinyMappingsWriter<TinyV2Mappings> {
 	}
 
 	private void writeField(FieldMapping f) throws Exception {
-		indent(TinyV2Mappings.FIELD_INDENTS);
+		indent(TinyV2Format.FIELD_INDENTS);
 
-		writer.write(TinyV2Mappings.FIELD);
+		writer.write(TinyV2Format.FIELD);
 		writer.write(TAB);
 		writer.write(f.getDesc());
 		writer.write(TAB);
 		writer.write(f.src());
 		writer.write(TAB);
-		writer.write(f.get());
+		writer.write(f.get().isEmpty() ? f.src() : f.get());
 		writer.newLine();
 
 		writeJavadoc(f);
 	}
 
 	private void writeMethod(MethodMapping m) throws Exception {
-		indent(TinyV2Mappings.METHOD_INDENTS);
+		indent(TinyV2Format.METHOD_INDENTS);
 
-		writer.write(TinyV2Mappings.METHOD);
+		writer.write(TinyV2Format.METHOD);
 		writer.write(TAB);
 		writer.write(m.getDesc());
 		writer.write(TAB);
 		writer.write(m.src());
 		writer.write(TAB);
-		writer.write(m.get());
+		writer.write(m.get().isEmpty() ? m.src() : m.get());
 		writer.newLine();
 
 		writeJavadoc(m);
@@ -108,9 +111,9 @@ public class TinyV2Writer extends TinyMappingsWriter<TinyV2Mappings> {
 	}
 
 	private void writeParameter(ParameterMapping p) throws Exception {
-		indent(TinyV2Mappings.PARAMETER_INDENTS);
+		indent(TinyV2Format.PARAMETER_INDENTS);
 
-		writer.write(TinyV2Mappings.PARAMETER);
+		writer.write(TinyV2Format.PARAMETER);
 		writer.write(TAB);
 		writer.write(Integer.toString(p.getIndex()));
 		writer.write(TAB);
@@ -129,7 +132,7 @@ public class TinyV2Writer extends TinyMappingsWriter<TinyV2Mappings> {
 			indents++;
 
 			indent();
-			writer.write(TinyV2Mappings.COMMENT);
+			writer.write(TinyV2Format.COMMENT);
 			writer.write(TAB);
 			writer.write(jav);
 			writer.newLine();
