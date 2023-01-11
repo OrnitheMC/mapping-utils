@@ -27,7 +27,8 @@ public class EnigmaDirWriter {
 
 	public void write() throws Exception {
 		for (ClassMapping cm : mappings.getTopLevelClasses()) {
-			Path cp = dir.resolve(cm.getComplete() + Format.ENIGMA_FILE.mappingsExtension());
+			String path = cm.get().isEmpty() ? cm.src() : cm.getComplete();
+			Path cp = dir.resolve(path + Format.ENIGMA_FILE.mappingsExtension());
 
 			FileUtils.delete(cp.toFile());
 			Files.createDirectories(cp);
