@@ -109,7 +109,7 @@ public class EnigmaFileReader {
 	}
 
 	private Mapping<?> parseLine(String line, int lineNumber, Mapping<?> parent) throws Exception {
-		String[] args = line.split(TAB);
+		String[] args = line.split("\\s");
 
 		String src;
 		String dst;

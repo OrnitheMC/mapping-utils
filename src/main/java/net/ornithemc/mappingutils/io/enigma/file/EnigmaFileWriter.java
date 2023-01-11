@@ -15,6 +15,7 @@ import net.ornithemc.mappingutils.io.Mappings.ParameterMapping;
 public class EnigmaFileWriter {
 
 	private static final String TAB = "\t";
+	private static final String SPACE = " ";
 
 	public static void write(Path path, Mappings mappings) throws Exception {
 		try (BufferedWriter writer = new BufferedWriter(new FileWriter(path.toFile()))) {
@@ -100,10 +101,10 @@ public class EnigmaFileWriter {
 
 	private void writeClass(ClassMapping c) throws Exception {
 		writer.write(EnigmaFileFormat.CLASS);
-		writer.write(TAB);
+		writer.write(SPACE);
 		writer.write(ClassMapping.getSimplified(c.src()));
 		if (!c.get().isEmpty()) {
-			writer.write(TAB);
+			writer.write(SPACE);
 			writer.write(c.get());
 		}
 		writer.newLine();
@@ -111,35 +112,35 @@ public class EnigmaFileWriter {
 
 	private void writeField(FieldMapping f) throws Exception {
 		writer.write(EnigmaFileFormat.FIELD);
-		writer.write(TAB);
+		writer.write(SPACE);
 		writer.write(f.src());
 		if (!f.get().isEmpty()) {
-			writer.write(TAB);
+			writer.write(SPACE);
 			writer.write(f.get());
 		}
-		writer.write(TAB);
+		writer.write(SPACE);
 		writer.write(f.getDesc());
 		writer.newLine();
 	}
 
 	private void writeMethod(MethodMapping m) throws Exception {
 		writer.write(EnigmaFileFormat.METHOD);
-		writer.write(TAB);
+		writer.write(SPACE);
 		writer.write(m.src());
 		if (!m.get().isEmpty()) {
-			writer.write(TAB);
+			writer.write(SPACE);
 			writer.write(m.get());
 		}
-		writer.write(TAB);
+		writer.write(SPACE);
 		writer.write(m.getDesc());
 		writer.newLine();
 	}
 
 	private void writeParameter(ParameterMapping p) throws Exception {
 		writer.write(EnigmaFileFormat.PARAMETER);
-		writer.write(TAB);
+		writer.write(SPACE);
 		writer.write(Integer.toString(p.getIndex()));
-		writer.write(TAB);
+		writer.write(SPACE);
 		writer.write(p.get());
 		writer.newLine();
 	}
@@ -152,7 +153,7 @@ public class EnigmaFileWriter {
 				indent();
 
 				writer.write(EnigmaFileFormat.COMMENT);
-				writer.write(TAB);
+				writer.write(SPACE);
 				writer.write(s);
 				writer.newLine();
 			}
