@@ -15,8 +15,18 @@ import net.ornithemc.mappingutils.io.diff.MappingsDiff;
 import net.ornithemc.mappingutils.io.diff.tree.MappingHistory;
 import net.ornithemc.mappingutils.io.diff.tree.MappingsDiffTree;
 import net.ornithemc.mappingutils.io.diff.tree.Version;
+import net.ornithemc.mappingutils.io.matcher.MatchSide;
+import net.ornithemc.mappingutils.io.matcher.MatchesReader;
+import net.ornithemc.mappingutils.io.matcher.MatchesWriter;
 
 public class MappingUtils {
+
+	public static void invertMatches(Path src, Path dst) throws Exception {
+		FileUtils.requireReadable(src);
+		FileUtils.requireWritable(dst);
+
+		MatchesWriter.write(dst, MatchesReader.read(src), MatchSide.B);
+	}
 
 	public static void diffMappings(Format format, Path pathA, Path pathB, Path diffPath) throws Exception {
 		FileUtils.requireReadable(pathA);

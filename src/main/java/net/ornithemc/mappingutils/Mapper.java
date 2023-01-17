@@ -38,21 +38,21 @@ public interface Mapper {
 			@Override
 			public String mapClass(String className) {
 				ClassMapping c = mappings.getClass(className);
-				return c == null ? className : c.getComplete();
+				return c == null || c.get().isEmpty() ? className : c.getComplete();
 			}
 
 			@Override
 			public String mapField(String className, String fieldName, String fieldDesc) {
 				ClassMapping c = mappings.getClass(className);
 				FieldMapping f = (c == null) ? null : c.getField(fieldName, fieldDesc);
-				return f == null ? fieldName : f.get();
+				return f == null || f.get().isEmpty() ? fieldName : f.get();
 			}
 
 			@Override
 			public String mapMethod(String className, String methodName, String methodDesc) {
 				ClassMapping c = mappings.getClass(className);
 				MethodMapping m = (c == null) ? null : c.getMethod(methodName, methodDesc);
-				return m == null ? methodName : m.get();
+				return m == null || m.get().isEmpty() ? methodName : m.get();
 			}
 
 			@Override
@@ -60,7 +60,7 @@ public interface Mapper {
 				ClassMapping c = mappings.getClass(className);
 				MethodMapping m = (c == null) ? null : c.getMethod(methodName, methodDesc);
 				ParameterMapping p = (m == null) ? null : m.getParameter(index);
-				return p == null ? parameterName : p.get();
+				return p == null || p.get().isEmpty() ? parameterName : p.get();
 			}
 		};
 	}

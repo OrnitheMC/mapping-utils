@@ -364,7 +364,7 @@ public class Mappings {
 
 		@Override
 		protected ClassMapping inverted() {
-			return new ClassMapping(root.inverted, this, getComplete(), getSimplified(src));
+			return new ClassMapping(root.inverted, this, dst.isEmpty() ? src : getComplete(), getSimplified(src));
 		}
 
 		@Override

@@ -3,11 +3,15 @@ package net.ornithemc.mappingutils.io.matcher;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.nio.file.Path;
+import java.util.Base64;
+import java.util.List;
 
+import net.ornithemc.mappingutils.io.matcher.InputFile.HashAlgorithm;
 import net.ornithemc.mappingutils.io.matcher.Matches.ClassMatch;
 import net.ornithemc.mappingutils.io.matcher.Matches.FieldMatch;
 import net.ornithemc.mappingutils.io.matcher.Matches.MethodMatch;
 import net.ornithemc.mappingutils.io.matcher.Matches.ParameterMatch;
+import net.ornithemc.mappingutils.io.matcher.Matches.VariableMatch;
 
 public class MatchesReader {
 
@@ -34,6 +38,7 @@ public class MatchesReader {
 	private FieldMatch f;
 	private MethodMatch m;
 	private ParameterMatch p;
+	private VariableMatch v;
 
 	private MatchesReader(BufferedReader reader) {
 		this.reader = reader;
@@ -63,38 +68,104 @@ public class MatchesReader {
 		String[] args = line.split(TAB);
 
 		if (stage == Stage.START) {
+			if (!line.startsWith("Matches saved")) {
+				throw new IllegalStateException("invalid header!");
+			}
+
+			matches.header = line;
+
 			return Stage.HEADER;
 		} else if (stage != Stage.MATCHES && line.startsWith(TAB)) {
 			if (line.startsWith(TAB + TAB)) {
+				List<InputFile> files;
+
 				switch (stage) {
-				case INPUT_SRC:
-				case INPUT_DST:
+				case INPUT_A:
+					files = matches.getInput(MatchSide.A);
+					break;
+				case INPUT_B:
+					files = matches.getInput(MatchSide.B);
+					break;
 				case SHARED_CLASSPATH:
-				case CLASSPATH_SRC:
-				case CLASSPATH_DST:
+					files = matches.getSharedClasspath();
+					break;
+				case CLASSPATH_A:
+					files = matches.getClasspath(MatchSide.A);
+					break;
+				case CLASSPATH_B:
+					files = matches.getClasspath(MatchSide.B);
 					break;
 				default:
 					throw new IllegalStateException("cannot parse file for stage " + stage.name());
 				}
+
+				// v1: \t\t<name>
+				// v2: \t\t<size>\t<sha256>\t<name>
+				// v3: \t\t<size>\t<alg>\t<hash>\t<name>
+
+				String name = null;
+				long size = -1;
+				HashAlgorithm alg = null;
+				byte[] hash = null;
+
+				if (args.length == 3) { // v1
+					name = args[2];
+				} else {
+					size = Long.parseLong(args[2]);
+
+					int hashIndex;
+
+					if (args.length == 5) { // v2
+						alg = HashAlgorithm.SHA256;
+						hashIndex = 3;
+					} else { // v3
+						for (HashAlgorithm a : HashAlgorithm.values()) {
+							if (args[3].equals(a.name())) {
+								alg = a;
+								break;
+							}
+						}
+						if (alg == null) {
+							throw new IllegalStateException("unknown hash algorithm " + args[3]);
+						}
+
+						hashIndex = 4;
+					}
+
+					hash = Base64.getDecoder().decode(args[hashIndex]);
+					name = args[hashIndex + 1];
+				}
+
+				files.add(new InputFile(name, size, alg, hash));
 			} else {
 				switch (args[1]) {
 				case Matches.INPUT_A:
-					return Stage.INPUT_SRC;
+					return Stage.INPUT_A;
 				case Matches.INPUT_B:
-					return Stage.INPUT_DST;
+					return Stage.INPUT_B;
 				case Matches.SHARED_CLASSPATH:
 					return Stage.SHARED_CLASSPATH;
 				case Matches.CLASSPATH_A:
-					return Stage.CLASSPATH_SRC;
+					return Stage.CLASSPATH_A;
 				case Matches.CLASSPATH_B:
-					return Stage.CLASSPATH_DST;
-				case Matches.NON_OBF_CLASS_A:
-				case Matches.NON_OBF_CLASS_B:
-				case Matches.NON_OBF_MEMBER_A:
-				case Matches.NON_OBF_MEMBER_B:
-					break;
+					return Stage.CLASSPATH_B;
 				default:
-					throw new IllegalStateException("illegal content in header: " + line);
+					switch (args[1]) {
+					case Matches.NON_OBF_CLASS_A:
+						matches.setNonObfClassPattern(MatchSide.A, args[2]);
+						break;
+					case Matches.NON_OBF_CLASS_B:
+						matches.setNonObfClassPattern(MatchSide.B, args[2]);
+						break;
+					case Matches.NON_OBF_MEMBER_A:
+						matches.setNonObfMemberPattern(MatchSide.A, args[2]);
+						break;
+					case Matches.NON_OBF_MEMBER_B:
+						matches.setNonObfMemberPattern(MatchSide.B, args[2]);
+						break;
+					default:
+						throw new IllegalStateException("illegal content in header: " + line);
+					}
 				}
 			}
 		} else {
@@ -112,97 +183,109 @@ public class MatchesReader {
 
 			int ac = args.length - indents;
 
+			if (ac != 3) {
+				throw new IllegalStateException("illegal number of arguments (" + ac + ") for match on line " + lineNumber + " - expected 3");
+			}
+
+			String target = args[indents];
+
 			String a;
 			String b;
 
-			switch (args[indents]) {
+			if (target.endsWith(Matches.UNMATCHABLE)) {
+				switch (args[1 + indents]) {
+				case "a":
+					a = args[2 + indents];
+					b = null;
+
+					break;
+				case "b":
+					a = null;
+					b = args[2 + indents];
+
+					break;
+				default:
+					throw new IllegalStateException("unknown match side " + args[1]);
+				}
+			} else {
+				a = args[1 + indents];
+				b = args[2 + indents];
+			}
+
+			switch (target) {
 			case Matches.CLASS:
+			case Matches.CLASS_UNMATCHABLE:
 				if (indents != Matches.CLASS_INDENTS) {
 					throw new IllegalStateException("illegal number of indents (" + indents + ") for class match on line " + lineNumber + " - expected " + Matches.CLASS_INDENTS);
 				}
-				if (ac != 3) {
-					throw new IllegalStateException("illegal number of arguments (" + ac + ") for class match on line " + lineNumber + " - expected 3");
-				}
-
-				a = args[1 + indents];
-				b = args[2 + indents];
 
 				c = matches.addClass(a, b);
 				f = null;
 				m = null;
 				p = null;
-			case Matches.CLASS_UNMATCHABLE:
+				v = null;
+
 				break;
 			case Matches.FIELD:
+			case Matches.FIELD_UNMATCHABLE:
 				if (indents != Matches.FIELD_INDENTS) {
 					throw new IllegalStateException("illegal number of indents (" + indents + ") for field match on line " + lineNumber + " - expected " + Matches.FIELD_INDENTS);
-				}
-				if (ac != 3) {
-					throw new IllegalStateException("illegal number of arguments (" + ac + ") for field match on line " + lineNumber + " - expected 3");
 				}
 				if (c == null) {
 					throw new IllegalStateException("cannot read field match on line " + lineNumber + " - not in a class?");
 				}
 
-				a = args[1 + indents];
-				b = args[2 + indents];
-
 				f = c.addField(a, b);
 				m = null;
 				p = null;
-			case Matches.FIELD_UNMATCHABLE:
+				v = null;
+
 				break;
 			case Matches.METHOD:
+			case Matches.METHOD_UNMATCHABLE:
 				if (indents != Matches.METHOD_INDENTS) {
 					throw new IllegalStateException("illegal number of indents (" + indents + ") for method match on line " + lineNumber + " - expected " + Matches.METHOD_INDENTS);
-				}
-				if (ac != 3) {
-					throw new IllegalStateException("illegal number of arguments (" + ac + ") for method match on line " + lineNumber + " - expected 3");
 				}
 				if (c == null) {
 					throw new IllegalStateException("cannot read method match on line " + lineNumber + " - not in a class?");
 				}
 
-				a = args[1 + indents];
-				b = args[2 + indents];
-
 				m = c.addMethod(a, b);
 				f = null;
 				p = null;
-			case Matches.METHOD_UNMATCHABLE:
+				v = null;
+
 				break;
 			case Matches.PARAMETER:
+			case Matches.PARAMETER_UNMATCHABLE:
 				if (indents != Matches.PARAMETER_INDENTS) {
 					throw new IllegalStateException("illegal number of indents (" + indents + ") for parameter match on line " + lineNumber + " - expected " + Matches.PARAMETER_INDENTS);
 				}
-				if (ac != 3) {
-					throw new IllegalStateException("illegal number of arguments (" + ac + ") for parameter match on line " + lineNumber + " - expected 3");
-				}
 				if (m == null) {
-					throw new IllegalStateException("cannot read paremter match on line " + lineNumber + " - not in a method?");
+					throw new IllegalStateException("cannot read paremeter match on line " + lineNumber + " - not in a method?");
 				}
 
-				String rawIndexA = args[1 + indents];
-				String rawIndexB = args[2 + indents];
-
-				int indexA = Integer.parseInt(rawIndexA);
-				int indexB = Integer.parseInt(rawIndexB);
-
-				if (indexA < 0) {
-					throw new IllegalStateException("illegal parameter index " + indexA + " on line " + lineNumber + " - cannot be negative!");
-				}
-				if (indexB < 0) {
-					throw new IllegalStateException("illegal parameter index " + indexB + " on line " + lineNumber + " - cannot be negative!");
-				}
-
-				p = m.addParameter(indexA, indexB);
 				f = null;
-			case Matches.PARAMETER_UNMATCHABLE:
+				p = m.addParameter(a, b);
+				v = null;
+
+				break;
 			case Matches.VARIABLE:
 			case Matches.VARIABLE_UNMATCHABLE:
+				if (indents != Matches.VARIABLE_INDENTS) {
+					throw new IllegalStateException("illegal number of indents (" + indents + ") for variable match on line " + lineNumber + " - expected " + Matches.VARIABLE_INDENTS);
+				}
+				if (m == null) {
+					throw new IllegalStateException("cannot read variable match on line " + lineNumber + " - not in a method?");
+				}
+
+				f = null;
+				p = null;
+				v = m.addVariable(a, b);
+
 				break;
 			default:
-				throw new IllegalStateException("unknown match target " + args[indents] + " on line " + lineNumber);
+				throw new IllegalStateException("unknown match target " + target + " on line " + lineNumber);
 			}
 		}
 
@@ -210,6 +293,6 @@ public class MatchesReader {
 	}
 
 	private enum Stage {
-		START, HEADER, INPUT_SRC, INPUT_DST, SHARED_CLASSPATH, CLASSPATH_SRC, CLASSPATH_DST, MATCHES
+		START, HEADER, INPUT_A, INPUT_B, SHARED_CLASSPATH, CLASSPATH_A, CLASSPATH_B, MATCHES
 	}
 }
