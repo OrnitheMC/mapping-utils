@@ -236,7 +236,7 @@ public class EnigmaFileReader {
 
 			for (int i = 1; i < args.length; i++) {
 				if (!javadoc.isEmpty()) {
-					javadoc += " ";
+					javadoc += "\n";
 				}
 
 				javadoc += args[i];
