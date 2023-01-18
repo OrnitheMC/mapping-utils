@@ -3,6 +3,7 @@ package net.ornithemc.mappingutils.io.enigma.file;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Stack;
 
 import net.ornithemc.mappingutils.io.MappingTarget;
@@ -234,13 +235,11 @@ public class EnigmaFileReader {
 
 			String javadoc = parent.getJavadoc();
 
-			for (int i = 1; i < args.length; i++) {
-				if (!javadoc.isEmpty()) {
-					javadoc += "\\n";
-				}
-
-				javadoc += args[i];
+			if (!javadoc.isEmpty()) {
+				javadoc += "\\n";
 			}
+
+			javadoc += String.join(" ", Arrays.copyOfRange(args, 1, args.length));
 
 			parent.setJavadoc(javadoc);
 
