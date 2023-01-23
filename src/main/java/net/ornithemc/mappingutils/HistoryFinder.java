@@ -43,7 +43,7 @@ class HistoryFinder {
 
 	private void find(Version v) throws Exception {
 		if (v.isRoot()) {
-			for (Mapping<?> m : v.getMappings().getTopLevelClasses()) {
+			for (Mapping m : v.getMappings().getTopLevelClasses()) {
 				m = find(m);
 
 				if (m != null) {
@@ -51,7 +51,7 @@ class HistoryFinder {
 				}
 			}
 		} else {
-			for (Diff<?> d : v.getDiff().getTopLevelClasses()) {
+			for (Diff d : v.getDiff().getTopLevelClasses()) {
 				d = find(d);
 
 				if (d != null && d.isDiff()) {
@@ -65,12 +65,12 @@ class HistoryFinder {
 		}
 	}
 
-	private Mapping<?> find(Mapping<?> m) {
+	private Mapping find(Mapping m) {
 		if (matches(m)) {
 			return m;
 		}
 
-		for (Mapping<?> cm : m.getChildren()) {
+		for (Mapping cm : m.getChildren()) {
 			m = find(cm);
 
 			if (m != null) {
@@ -81,12 +81,12 @@ class HistoryFinder {
 		return null;
 	}
 
-	private Diff<?> find(Diff<?> d) {
+	private Diff find(Diff d) {
 		if (matches(d)) {
 			return d;
 		}
 
-		for (Diff<?> cd : d.getChildren()) {
+		for (Diff cd : d.getChildren()) {
 			d = find(cd);
 
 			if (d != null) {
@@ -97,15 +97,15 @@ class HistoryFinder {
 		return null;
 	}
 
-	private boolean matches(Mapping<?> m) {
+	private boolean matches(Mapping m) {
 		return matches(history, m);
 	}
 
-	private boolean matches(Diff<?> d) {
+	private boolean matches(Diff d) {
 		return matches(history, d);
 	}
 
-	private static boolean matches(MappingHistory h, Mapping<?> m) {
+	private static boolean matches(MappingHistory h, Mapping m) {
 		if (h == null && m == null) {
 			return true; // both null: match
 		}
@@ -116,7 +116,7 @@ class HistoryFinder {
 		return matches(h, m.target(), m.key()) && matches(h.getParent(), m.getParent());
 	}
 
-	private static boolean matches(MappingHistory h, Diff<?> d) {
+	private static boolean matches(MappingHistory h, Diff d) {
 		if (h == null && d == null) {
 			return true; // both null: match
 		}

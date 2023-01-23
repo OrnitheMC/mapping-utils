@@ -49,7 +49,7 @@ public class EnigmaFileReader {
 	}
 
 	public Mappings read() throws Exception {
-		Stack<Mapping<?>> parents = new Stack<>();
+		Stack<Mapping> parents = new Stack<>();
 
 		for (int lineNumber = 1; parents != null; lineNumber++) {
 			parents = parseLine(reader.readLine(), lineNumber, parents);
@@ -58,7 +58,7 @@ public class EnigmaFileReader {
 		return mappings;
 	}
 
-	private Stack<Mapping<?>> parseLine(String line, int lineNumber, Stack<Mapping<?>> parents) throws Exception {
+	private Stack<Mapping> parseLine(String line, int lineNumber, Stack<Mapping> parents) throws Exception {
 		if (line == null) {
 			return null;
 		}
@@ -72,8 +72,8 @@ public class EnigmaFileReader {
 		line = line.substring(indents);
 		line = stripComment(line);
 
-		Mapping<?> parent = parents.isEmpty() ? null : parents.peek();
-		Mapping<?> mapping = parseLine(line, lineNumber, parent);
+		Mapping parent = parents.isEmpty() ? null : parents.peek();
+		Mapping mapping = parseLine(line, lineNumber, parent);
 
 		if (mapping != null) {
 			parents.push(mapping);
@@ -109,7 +109,7 @@ public class EnigmaFileReader {
 		return line.substring(0, i);
 	}
 
-	private Mapping<?> parseLine(String line, int lineNumber, Mapping<?> parent) throws Exception {
+	private Mapping parseLine(String line, int lineNumber, Mapping parent) throws Exception {
 		String[] args = line.split("\\s");
 
 		String src;

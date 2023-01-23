@@ -3,10 +3,12 @@ package net.ornithemc.mappingutils.io.diff;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import org.objectweb.asm.Type;
 
@@ -28,30 +30,48 @@ public class MappingsDiff {
 		this.validator = validator;
 	}
 
-	private ClassDiff findParent(String key, boolean orThrowException) {
-		int i = key.lastIndexOf('$');
+	private ClassDiff findParent(String name, boolean orThrowException) {
+		int i = name.lastIndexOf('$');
 
 		if (i < 0) {
 			return null;
 		}
 
-		String parentKey = key.substring(0, i);
-		ClassDiff parent = getClass(parentKey);
+		String parentName = name.substring(0, i);
+		ClassDiff parent = getClass(parentName);
 
 		if (parent == null && orThrowException) {
-			throw new IllegalStateException("unable to find parent class diff " + parentKey + " of class diff " + key);
+			throw new IllegalStateException("unable to find parent class mapping " + parentName + " of class mapping " + name);
 		}
 
 		return parent;
 	}
 
-	public ClassDiff getClass(String key) {
-		ClassDiff parent = findParent(key, false);
-		return parent == null ? getTopLevelClass(key) : parent.getClass(key);
+	public ClassDiff getClass(String name) {
+		ClassDiff parent = findParent(name, false);
+		return parent == null ? getTopLevelClass(name) : parent.getClass(name);
 	}
 
-	public ClassDiff getTopLevelClass(String key) {
-		return classDiffs.get(key);
+	public ClassDiff getTopLevelClass(String name) {
+		return classDiffs.get(ClassDiff.key(name));
+	}
+
+	public Collection<ClassDiff> getClasses() {
+		Collection<ClassDiff> classes = new LinkedHashSet<>();
+
+		for (ClassDiff c : getTopLevelClasses()) {
+			collectClasses(classes, c);
+		}
+
+		return classes;
+	}
+
+	private void collectClasses(Collection<ClassDiff> classes, ClassDiff c) {
+		classes.add(c);
+
+		for (ClassDiff cc : c.getClasses()) {
+			collectClasses(classes, cc);
+		}
 	}
 
 	public Collection<ClassDiff> getTopLevelClasses() {
@@ -59,33 +79,43 @@ public class MappingsDiff {
 	}
 
 	public ClassDiff addClass(String src, String dstA, String dstB) {
-		return addClass(new ClassDiff(this, src, dstA, dstB));
+		return addClass(new ClassDiff(src, dstA, dstB));
 	}
 
 	private ClassDiff addClass(ClassDiff c) {
-		ClassDiff parent = findParent(c.key(), true);
+		ClassDiff parent = findParent(c.src(), true);
 
 		if (parent == null) {
+			c.root = this;
+			c.parent = null;
+
 			return classDiffs.compute(c.key(), (key, value) -> {
 				return (ClassDiff)checkReplace(value, c);
 			});
 		}
 
-		return (ClassDiff)parent.addChild(c);
+		return parent.addClass(c);
 	}
 
-	public ClassDiff removeClass(String key) {
-		ClassDiff c = getClass(key);
+	public ClassDiff removeClass(String name) {
+		ClassDiff c = getClass(name);
+		return (c == null) ? null : removeClass(c);
+	}
 
-		if (c != null) {
+	public ClassDiff removeClass(ClassDiff c) {
+		if (c.root == this) {
 			if (c.parent == null) {
-				classDiffs.remove(key);
+				return classDiffs.remove(c.key());
 			} else {
-				c.parent.removeChild(key);
+				return c.parent.removeClass(c);
 			}
 		}
 
-		return c;
+		return null;
+	}
+
+	public void sort() {
+		sort(classDiffs);
 	}
 
 	public void validate() {
@@ -104,7 +134,7 @@ public class MappingsDiff {
 		MappingsDiff copy = new MappingsDiff();
 
 		for (ClassDiff c : classDiffs.values()) {
-			c.copy(copy.addClass(c.key(), c.dstA, c.dstB));
+			c.copy(copy.addClass(c.src(), c.dstA, c.dstB));
 		}
 
 		return copy;
@@ -118,23 +148,21 @@ public class MappingsDiff {
 		return (a == null || a.isEmpty()) ? !(b == null || b.isEmpty()) : !a.equals(b);
 	}
 
-	public static abstract class Diff<T extends Diff<T>> {
+	public static abstract class Diff {
 
-		protected final MappingsDiff root;
-		protected final JavadocDiff javadoc;
-		protected final Map<String, Diff<?>> children;
+		protected final Map<String, Diff> children;
+		protected final JavadocDiff jav;
 
-		protected Diff<?> parent;
+		protected MappingsDiff root;
+		protected Diff parent;
 
 		protected String src;
 		protected String dstA;
 		protected String dstB;
 
-		private Diff(MappingsDiff root, String src, String dstA, String dstB) {
-			this.root = Objects.requireNonNull(root);
-			this.javadoc = new JavadocDiff();
-
+		private Diff(String src, String dstA, String dstB) {
 			this.children = new LinkedHashMap<>();
+			this.jav = new JavadocDiff();
 
 			this.src = src;
 			this.dstA = dstA;
@@ -148,8 +176,10 @@ public class MappingsDiff {
 
 		public abstract MappingTarget target();
 
-		public String key() {
-			return src;
+		public abstract String key();
+
+		protected boolean isValidChild(MappingTarget target) {
+			return false;
 		}
 
 		public final String src() {
@@ -175,63 +205,127 @@ public class MappingsDiff {
 		}
 
 		public final JavadocDiff getJavadoc() {
-			return javadoc;
+			return jav;
 		}
 
 		public final boolean isDiff() {
 			return MappingsDiff.isDiff(dstA, dstB);
 		}
 
-		public Diff<?> getParent() {
+		public Diff getParent() {
 			return parent;
 		}
 
-		public Diff<?> getChild(MappingTarget target, String key) {
-			return getChild(key);
+		public final Diff getChild(MappingTarget target, String key) {
+			if (!isValidChild(target)) {
+				throw new IllegalStateException("invalid child target " + target);
+			}
+
+			Diff d = children.get(key);
+
+			if (d != null && d.target() != target) {
+				throw new IllegalStateException("child with key " + d.key() + " has target " + d.target() + " but target " + target + " was requested!");
+			}
+
+			return d;
 		}
 
-		@SuppressWarnings("unchecked")
-		protected <D extends Diff<D>> D getChild(String key) {
-			return (D)children.get(key);
+		public final ClassDiff getClass(String name) {
+			return getClassByKey(ClassDiff.key(name));
 		}
 
-		public Collection<Diff<?>> getChildren() {
+		private ClassDiff getClassByKey(String key) {
+			return (ClassDiff)getChild(MappingTarget.CLASS, key);
+		}
+
+		public final FieldDiff getField(String name, String desc) {
+			return getField(FieldDiff.key(name, desc));
+		}
+
+		private FieldDiff getField(String key) {
+			return (FieldDiff)getChild(MappingTarget.FIELD, key);
+		}
+
+		public final MethodDiff getMethod(String name, String desc) {
+			return getMethod(MethodDiff.key(name, desc));
+		}
+
+		private MethodDiff getMethod(String key) {
+			return (MethodDiff)getChild(MappingTarget.METHOD, key);
+		}
+
+		public final ParameterDiff getParameter(String name, int index) {
+			return getParameter(ParameterDiff.key(name, index));
+		}
+
+		private ParameterDiff getParameter(String key) {
+			return (ParameterDiff)getChild(MappingTarget.PARAMETER, key);
+		}
+
+		public final Collection<Diff> getChildren() {
 			return children.values();
 		}
 
-		@SuppressWarnings("unchecked")
-		protected <D extends Diff<D>> Collection<D> getChildren(MappingTarget target) {
-			List<D> c = new LinkedList<>();
+		public final boolean hasChildren() {
+			return !children.isEmpty();
+		}
 
-			for (Diff<?> d : children.values()) {
+		public final Collection<Diff> getChildren(MappingTarget target) {
+			if (!isValidChild(target))
+				throw new IllegalStateException("invalid child target " + target);
+
+			List<Diff> c = new LinkedList<>();
+
+			for (Diff d : children.values()) {
 				if (d.target() == target) {
-					c.add((D)d);
+					c.add(d);
 				}
 			}
 
 			return c;
 		}
 
-		public boolean hasChildren() {
-			return !children.isEmpty();
+		@SuppressWarnings("unchecked")
+		private <M extends Diff> Collection<M> castChildren(MappingTarget target) {
+			return (Collection<M>)getChildren(target);
 		}
 
-		public Diff<?> addChild(MappingTarget target, String key, String dstA, String dstB) {
+		public final Collection<ClassDiff> getClasses() {
+			return castChildren(MappingTarget.CLASS);
+		}
+
+		public final Collection<FieldDiff> getFields() {
+			return castChildren(MappingTarget.FIELD);
+		}
+
+		public final Collection<MethodDiff> getMethods() {
+			return castChildren(MappingTarget.METHOD);
+		}
+
+		public final Collection<ParameterDiff> getParameters() {
+			return castChildren(MappingTarget.PARAMETER);
+		}
+
+		public final Diff addChild(MappingTarget target, String key, String dstA, String dstB) {
 			switch (target) {
 			case CLASS:
-				return addChild(new ClassDiff(root, key, dstA, dstB));
+				return addClassByKey(key, dstA, dstB);
 			case FIELD:
-				return addChild(new FieldDiff(root, key, dstA, dstB));
+				return addField(key, dstA, dstB);
 			case METHOD:
-				return addChild(new MethodDiff(root, key, dstA, dstB));
+				return addMethod(key, dstA, dstB);
 			case PARAMETER:
-				return addChild(new ParameterDiff(root, key, dstA, dstB));
-			default:
-				throw new IllegalStateException("cannot add child diff of target " + target);
+				return addParameter(key, dstA, dstB);
 			}
+
+			throw new IllegalStateException("invalid child target " + target);
 		}
 
-		protected Diff<?> addChild(Diff<?> d) {
+		public final Diff addChild(Diff d) {
+			if (!isValidChild(d.target()))
+				throw new IllegalStateException("invalid child target " + d.target());
+
+			d.root = root;
 			d.parent = this;
 
 			return children.compute(d.key(), (key, value) -> {
@@ -239,17 +333,115 @@ public class MappingsDiff {
 			});
 		}
 
-		public Diff<?> removeChild(MappingTarget target, String key) {
-			return removeChild(key);
+		public final ClassDiff addClass(String src, String dstA, String dstB) {
+			return addClassByKey(ClassDiff.key(src), dstA, dstB);
 		}
 
-		@SuppressWarnings("unchecked")
-		protected <D extends Diff<D>> D removeChild(String key) {
-			return (D)children.remove(key);
+		private ClassDiff addClassByKey(String key, String dstA, String dstB) {
+			return addClass(new ClassDiff(key, dstA, dstB));
 		}
 
-		protected boolean validate() {
-			javadoc.validate();
+		public ClassDiff addClass(ClassDiff c) {
+			return (ClassDiff)addChild(c);
+		}
+
+		public final FieldDiff addField(String src, String dstA, String dstB, String desc) {
+			return addField(FieldDiff.key(src, desc), dstA, dstB);
+		}
+
+		private FieldDiff addField(String key, String dstA, String dstB) {
+			return addField(new FieldDiff(key, dstA, dstB));
+		}
+
+		public FieldDiff addField(FieldDiff f) {
+			return (FieldDiff)addChild(f);
+		}
+
+		public final MethodDiff addMethod(String src, String dstA, String dstB, String desc) {
+			return addMethod(MethodDiff.key(src, desc), dstA, dstB);
+		}
+
+		private MethodDiff addMethod(String key, String dstA, String dstB) {
+			return addMethod(new MethodDiff(key, dstA, dstB));
+		}
+
+		public MethodDiff addMethod(MethodDiff m) {
+			return (MethodDiff)addChild(m);
+		}
+
+		public final ParameterDiff addParameter(String src, String dstA, String dstB, int index) {
+			return addParameter(ParameterDiff.key(src, index), dstA, dstB);
+		}
+
+		private ParameterDiff addParameter(String key, String dstA, String dstB) {
+			return addParameter(new ParameterDiff(key, dstA, dstB));
+		}
+
+		public ParameterDiff addParameter(ParameterDiff m) {
+			return (ParameterDiff)addChild(m);
+		}
+
+		public final Diff removeChild(MappingTarget target, String key) {
+			Diff d = getChild(target, key);
+			return d == null ? null : removeChild(d);
+		}
+
+		public final Diff removeChild(Diff d) {
+			if (!isValidChild(d.target()))
+				throw new IllegalStateException("invalid child target " + d.target());
+			return (d.parent == this) ? children.remove(d.key()) : null;
+		}
+
+		public final ClassDiff removeClass(String name) {
+			return removeClassByKey(ClassDiff.key(name));
+		}
+
+		private ClassDiff removeClassByKey(String key) {
+			return removeClass(getClassByKey(key));
+		}
+
+		public ClassDiff removeClass(ClassDiff c) {
+			return (ClassDiff)removeChild(c);
+		}
+
+		public final FieldDiff removeField(String name, String desc) {
+			return removeField(FieldDiff.key(name, desc));
+		}
+
+		private FieldDiff removeField(String key) {
+			return removeField(getField(key));
+		}
+
+		public FieldDiff removeField(FieldDiff f) {
+			return (FieldDiff)removeChild(f);
+		}
+
+		public final MethodDiff removeMethod(String name, String desc) {
+			return removeMethod(MethodDiff.key(name, desc));
+		}
+
+		private MethodDiff removeMethod(String key) {
+			return removeMethod(getMethod(key));
+		}
+
+		public MethodDiff removeMethod(MethodDiff m) {
+			return (MethodDiff)removeChild(m);
+		}
+
+		public final ParameterDiff removeParameter(String name, int index) {
+			return removeParameter(ParameterDiff.key(name, index));
+		}
+
+		private ParameterDiff removeParameter(String key) {
+			return removeParameter(getParameter(key));
+		}
+
+		public ParameterDiff removeParameter(ParameterDiff p) {
+			return (ParameterDiff)removeChild(p);
+		}
+
+		protected final boolean validate() {
+			jav.validate();
 
 			dstA = validateDst(dstA);
 			dstB = validateDst(dstB);
@@ -258,24 +450,24 @@ public class MappingsDiff {
 				clear();
 			}
 
-			Iterator<Diff<?>> it = children.values().iterator();
+			Iterator<Diff> it = children.values().iterator();
 
 			while (it.hasNext()) {
-				Diff<?> d = it.next();
+				Diff d = it.next();
 
 				if (!d.validate()) {
 					it.remove();
 				}
 			}
 
-			return (root.validator.validate(this) && (isDiff() || javadoc.isDiff())) || hasChildren();
+			return (root.validator.validate(this) && (isDiff() || jav.isDiff())) || hasChildren();
 		}
 
-		protected Diff<?> copy(Diff<?> copy) {
-			copy.javadoc.javadocA = javadoc.javadocA;
-			copy.javadoc.javadocB = javadoc.javadocB;
+		protected Diff copy(Diff copy) {
+			copy.jav.javA = jav.javA;
+			copy.jav.javB = jav.javB;
 
-			for (Diff<?> d : children.values()) {
+			for (Diff d : children.values()) {
 				d.copy(copy.addChild(d.target(), d.key(), d.dstA, d.dstB));
 			}
 
@@ -283,10 +475,14 @@ public class MappingsDiff {
 		}
 	}
 
-	public static class ClassDiff extends Diff<ClassDiff> {
+	public static class ClassDiff extends Diff {
 
-		private ClassDiff(MappingsDiff root, String src, String dstA, String dstB) {
-			super(root, src, dstA, dstB);
+		private ClassDiff(String src, String dstA, String dstB) {
+			super(src, dstA, dstB);
+		}
+
+		private static String key(String name) {
+			return name;
 		}
 
 		@Override
@@ -295,93 +491,31 @@ public class MappingsDiff {
 		}
 
 		@Override
+		public String key() {
+			return key(src);
+		}
+
+		@Override
+		protected boolean isValidChild(MappingTarget target) {
+			return target == MappingTarget.CLASS || target == MappingTarget.FIELD || target == MappingTarget.METHOD;
+		}
+
+		@Override
 		public ClassDiff getParent() {
 			return (ClassDiff)parent;
 		}
-
-		public ClassDiff getClass(String key) {
-			return getChild(key);
-		}
-
-		public FieldDiff getField(String name, String desc) {
-			return getField(FieldDiff.key(name, desc));
-		}
-
-		public FieldDiff getField(String key) {
-			return getChild(key);
-		}
-
-		public MethodDiff getMethod(String name, String desc) {
-			return getMethod(MethodDiff.key(name, desc));
-		}
-
-		public MethodDiff getMethod(String key) {
-			return getChild(key);
-		}
-
-		public Collection<ClassDiff> getClasses() {
-			return getChildren(MappingTarget.CLASS);
-		}
-
-		public Collection<FieldDiff> getFields() {
-			return getChildren(MappingTarget.FIELD);
-		}
-
-		public Collection<MethodDiff> getMethods() {
-			return getChildren(MappingTarget.METHOD);
-		}
-
-		public ClassDiff addClass(String src, String dstA, String dstB) {
-			return (ClassDiff)addChild(new ClassDiff(root, src, dstA, dstB));
-		}
-
-		public FieldDiff addField(String name, String dstA, String dstB, String desc) {
-			return addField(FieldDiff.key(name, desc), dstA, dstB);
-		}
-
-		public FieldDiff addField(String key, String dstA, String dstB) {
-			return (FieldDiff)addChild(new FieldDiff(root, key, dstA, dstB));
-		}
-
-		public MethodDiff addMethod(String name, String dstA, String dstB, String desc) {
-			return addMethod(MethodDiff.key(name, desc), dstA, dstB);
-		}
-
-		public MethodDiff addMethod(String key, String dstA, String dstB) {
-			return (MethodDiff)addChild(new MethodDiff(root, key, dstA, dstB));
-		}
-
-		public ClassDiff removeClass(String key) {
-			return removeChild(key);
-		}
-
-		public FieldDiff removeField(String name, String desc) {
-			return removeField(FieldDiff.key(name, desc));
-		}
-
-		public FieldDiff removeField(String key) {
-			return removeChild(key);
-		}
-
-		public MethodDiff removeMethod(String name, String desc) {
-			return removeMethod(FieldDiff.key(name, desc));
-		}
-
-		public MethodDiff removeMethod(String key) {
-			return removeChild(key);
-		}
 	}
 
-	public static class FieldDiff extends Diff<FieldDiff> {
+	public static class FieldDiff extends Diff {
 
 		private String desc;
 
-		private FieldDiff(MappingsDiff root, String key, String dstA, String dstB) {
-			this(root, key.split("[:]")[0], dstA, dstB, key.split("[:]")[1]);
+		private FieldDiff(String key, String dstA, String dstB) {
+			this(key.split("[:]")[0], dstA, dstB, key.split("[:]")[1]);
 		}
 
-		private FieldDiff(MappingsDiff root, String src, String dstA, String dstB, String desc) {
-			super(root, src, dstA, dstB);
+		private FieldDiff(String src, String dstA, String dstB, String desc) {
+			super(src, dstA, dstB);
 
 			this.desc = desc;
 		}
@@ -410,18 +544,18 @@ public class MappingsDiff {
 		}
 	}
 
-	public static class MethodDiff extends Diff<MethodDiff> {
+	public static class MethodDiff extends Diff {
 
 		private final ParameterDiff[] parameters;
 
 		private String desc;
 
-		private MethodDiff(MappingsDiff root, String key, String dstA, String dstB) {
-			this(root, key.split("[:]")[0], dstA, dstB, key.split("[:]")[1]);
+		private MethodDiff(String key, String dstA, String dstB) {
+			this(key.split("[:]")[0], dstA, dstB, key.split("[:]")[1]);
 		}
 
-		private MethodDiff(MappingsDiff root, String src, String dstA, String dstB, String desc) {
-			super(root, src, dstA, dstB);
+		private MethodDiff(String src, String dstA, String dstB, String desc) {
+			super(src, dstA, dstB);
 
 			this.parameters = new ParameterDiff[parameterCount(desc)];
 
@@ -450,8 +584,39 @@ public class MappingsDiff {
 		}
 
 		@Override
+		protected boolean isValidChild(MappingTarget target) {
+			return target == MappingTarget.PARAMETER;
+		}
+
+		@Override
 		public ClassDiff getParent() {
 			return (ClassDiff)parent;
+		}
+
+		@Override
+		public ParameterDiff addParameter(ParameterDiff p) {
+			p = super.addParameter(p);
+
+			if (p != null) {
+				if (p.index < 0 || p.index >= parameters.length) {
+					throw new IndexOutOfBoundsException(p.index + " given but 0-" + parameters.length + " expected");
+				}
+
+				parameters[p.index] = p;
+			}
+
+			return p;
+		}
+
+		@Override
+		public ParameterDiff removeParameter(ParameterDiff p) {
+			p = super.removeParameter(p);
+
+			if (p != null) {
+				parameters[p.index] = null;
+			}
+
+			return p;
 		}
 
 		public String getDesc() {
@@ -466,47 +631,21 @@ public class MappingsDiff {
 			return parameters[index];
 		}
 
-		public ParameterDiff getParameter(String key) {
-			return getChild(key);
-		}
-
-		public Collection<ParameterDiff> getParameters() {
-			return getChildren(MappingTarget.PARAMETER);
-		}
-
-		public ParameterDiff addParameter(String name, String dstA, String dstB, int index) {
-			return addParameter(ParameterDiff.key(index, name), dstA, dstB);
-		}
-
-		public ParameterDiff addParameter(String key, String dstA, String dstB) {
-			return (ParameterDiff)addChild(new ParameterDiff(root, key, dstA, dstB));
-		}
-
 		public ParameterDiff removeParameter(int index) {
-			ParameterDiff p = getParameter(index);
-
-			if (p != null) {
-				removeChild(p.key());
-			}
-
-			return p;
-		}
-
-		public ParameterDiff removeParameter(String key) {
-			return removeChild(key);
+			return removeParameter(getParameter(index));
 		}
 	}
 
-	public static class ParameterDiff extends Diff<ParameterDiff> {
+	public static class ParameterDiff extends Diff {
 
 		private final int index;
 
-		private ParameterDiff(MappingsDiff root, String key, String dstA, String dstB) {
-			this(root, key.substring(key.indexOf(':') + 1), dstA, dstB, Integer.parseInt(key.substring(0, key.indexOf(':'))));
+		private ParameterDiff(String key, String dstA, String dstB) {
+			this(key.substring(key.indexOf(':') + 1), dstA, dstB, Integer.parseInt(key.substring(0, key.indexOf(':'))));
 		}
 
-		private ParameterDiff(MappingsDiff root, String src, String dstA, String dstB, int index) {
-			super(root, src, dstA, dstB);
+		private ParameterDiff(String src, String dstA, String dstB, int index) {
+			super(src, dstA, dstB);
 
 			if (index < 0) {
 				throw new IllegalArgumentException("parameter index cannot be negative!");
@@ -515,7 +654,7 @@ public class MappingsDiff {
 			this.index = index;
 		}
 
-		private static String key(int index, String name) {
+		private static String key(String name, int index) {
 			return Integer.toString(index) + ":" + name;
 		}
 
@@ -526,7 +665,7 @@ public class MappingsDiff {
 
 		@Override
 		public String key() {
-			return key(index, src);
+			return key(src, index);
 		}
 
 		@Override
@@ -541,64 +680,64 @@ public class MappingsDiff {
 
 	public static class JavadocDiff {
 
-		private String javadocA;
-		private String javadocB;
+		private String javA;
+		private String javB;
 
-		private Diff<?> parent;
+		private Diff parent;
 
 		private JavadocDiff() {
 			this("", "");
 		}
 
-		private JavadocDiff(String javadocA, String javadocB) {
-			this.javadocA = javadocA;
-			this.javadocB = javadocB;
+		private JavadocDiff(String javA, String javB) {
+			this.javA = javA;
+			this.javB = javB;
 		}
 
 		@Override
 		public String toString() {
-			return getClass().getSimpleName() + "[--" + javadocA + " ++" + javadocB + "]";
+			return getClass().getSimpleName() + "[--" + javA + " ++" + javB + "]";
 		}
 
 		public String get(DiffSide side) {
-			return side == DiffSide.A ? javadocA : javadocB;
+			return side == DiffSide.A ? javA : javB;
 		}
 
-		public void set(DiffSide side, String javadoc) {
-			javadoc = validateDst(javadoc);
+		public void set(DiffSide side, String jav) {
+			jav = validateDst(jav);
 
 			if (side == DiffSide.A) {
-				this.javadocA = javadoc;
+				this.javA = jav;
 			} else {
-				this.javadocB = javadoc;
+				this.javB = jav;
 			}
 		}
 
 		public void clear() {
-			this.javadocA = this.javadocB = "";
+			this.javA = this.javB = "";
 		}
 
 		public boolean isDiff() {
-			return MappingsDiff.isDiff(javadocA, javadocB);
+			return MappingsDiff.isDiff(javA, javB);
 		}
 
-		public Diff<?> getParent() {
+		public Diff getParent() {
 			return parent;
 		}
 
 		protected void validate() {
-			javadocA = validateDst(javadocA);
-			javadocB = validateDst(javadocB);
+			javA = validateDst(javA);
+			javB = validateDst(javB);
 		}
 
 		protected JavadocDiff copy() {
-			return new JavadocDiff(javadocA, javadocB);
+			return new JavadocDiff(javA, javB);
 		}
 	}
 
-	private static Diff<?> checkReplace(Diff<?> o, Diff<?> n) {
+	private static Diff checkReplace(Diff o, Diff n) {
 		if (o != null && n != null) {
-			System.err.println("replacing diff " + o + " with " + n);
+			System.err.println("replacing mapping " + o + " with " + n);
 		}
 
 		return n;
@@ -606,5 +745,31 @@ public class MappingsDiff {
 
 	private static String validateDst(String dst) {
 		return dst == null ? "" : dst;
+	}
+
+	private static <T> void sort(Map<String, T> mappings) {
+		Map<String, T> sorted = new TreeMap<>((k1, k2) -> {
+			// attempt to sort by name only
+			// if name matches, sort by name + desc
+			int l1 = k1.indexOf(':');
+			int l2 = k2.indexOf(':');
+
+			if (l1 < 0) l1 = k1.length();
+			if (l2 < 0) l2 = k2.length();
+
+			return l1 == l2 ? k1.compareTo(k2) : l1 - l2;
+		});
+
+		for (Entry<String, T> entry : mappings.entrySet()) {
+			String key = entry.getKey();
+			T mapping = entry.getValue();
+
+			sorted.put(key, mapping);
+
+			sort(((Diff)mapping).children);
+		}
+
+		mappings.clear();
+		mappings.putAll(sorted);
 	}
 }

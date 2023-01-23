@@ -53,7 +53,7 @@ public interface MappingsDiffValidator {
 		}
 	};
 
-	default boolean validate(Diff<?> mapping) {
+	default boolean validate(Diff mapping) {
 		switch (mapping.target()) {
 		case CLASS:
 			return validate((ClassDiff)mapping);

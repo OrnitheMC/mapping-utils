@@ -90,6 +90,7 @@ public class Matches {
 
 	public ClassMatch addClass(ClassMatch c) {
 		classMatches.add(c);
+
 		for (MatchSide side : MatchSide.values()) {
 			if (c.get(side) != null) {
 				getMatches(side).compute(c.get(side), (key, value) -> {

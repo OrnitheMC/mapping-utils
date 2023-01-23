@@ -125,7 +125,7 @@ public class TinyV2Writer extends TinyMappingsWriter {
 		writeJavadoc(p);
 	}
 
-	private void writeJavadoc(Mapping<?> mapping) throws Exception {
+	private void writeJavadoc(Mapping mapping) throws Exception {
 		String jav = mapping.getJavadoc();
 
 		if (!jav.isEmpty()) {

@@ -139,7 +139,7 @@ public class TinyV2DiffWriter extends TinyDiffWriter {
 		writeJavadoc(p);
 	}
 
-	private void writeJavadoc(Diff<?> d) throws Exception {
+	private void writeJavadoc(Diff d) throws Exception {
 		JavadocDiff javadoc = d.getJavadoc();
 
 		if (javadoc.isDiff()) {

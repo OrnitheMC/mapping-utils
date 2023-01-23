@@ -48,11 +48,11 @@ class DiffGenerator {
 	}
 
 	private void collectMappingPairs() {
-		for (Mapping<?> ma : a.getTopLevelClasses()) {
+		for (Mapping ma : a.getTopLevelClasses()) {
 			addMappingPair(null, ma, null);
 		}
-		for (Mapping<?> mb : b.getTopLevelClasses()) {
-			Mapping<?> ma = a.getClass(mb.src());
+		for (Mapping mb : b.getTopLevelClasses()) {
+			Mapping ma = a.getClass(mb.src());
 
 			if (ma == null) {
 				addMappingPair(null, null, mb);
@@ -60,7 +60,7 @@ class DiffGenerator {
 		}
 	}
 
-	private void addMappingPair(MappingPair parent, Mapping<?> a, Mapping<?> b) {
+	private void addMappingPair(MappingPair parent, Mapping a, Mapping b) {
 		if (a == null) {
 			a = findMapping(DiffSide.A, parent, b.target(), b.key());
 		}
@@ -72,12 +72,12 @@ class DiffGenerator {
 		mappingPairs.add(pair);
 
 		if (a != null) {
-			for (Mapping<?> ca : a.getChildren()) {
+			for (Mapping ca : a.getChildren()) {
 				addMappingPair(pair, ca, null);
 			}
 		}
 		if (b != null) {
-			for (Mapping<?> cb : b.getChildren()) {
+			for (Mapping cb : b.getChildren()) {
 				if (a == null || a.getChild(cb.target(), cb.key()) == null) {
 					addMappingPair(pair, null, cb);
 				}
@@ -87,8 +87,8 @@ class DiffGenerator {
 
 	private void createMappingDiffs() {
 		for (MappingPair pair : mappingPairs) {
-			Mapping<?> a = pair.get(DiffSide.A);
-			Mapping<?> b = pair.get(DiffSide.B);
+			Mapping a = pair.get(DiffSide.A);
+			Mapping b = pair.get(DiffSide.B);
 
 			if (b == null) {
 				diff(a, b, DiffMode.A);
@@ -105,12 +105,12 @@ class DiffGenerator {
 		}
 	}
 
-	private void diff(Mapping<?> a, Mapping<?> b, DiffMode mode) {
+	private void diff(Mapping a, Mapping b, DiffMode mode) {
 		mode.run(a, b, addDiff(a == null ? b : a));
 	}
 
-	public Mapping<?> findMapping(DiffSide side, MappingPair parent, MappingTarget target, String key) {
-		Mapping<?> m = null;
+	public Mapping findMapping(DiffSide side, MappingPair parent, MappingTarget target, String key) {
+		Mapping m = null;
 
 		if (parent == null) {
 			if (target != MappingTarget.CLASS) {
@@ -119,7 +119,7 @@ class DiffGenerator {
 
 			m = (side == DiffSide.A) ? a.getClass(key) : b.getClass(key);
 		} else {
-			Mapping<?> parentMapping = parent.get(side);
+			Mapping parentMapping = parent.get(side);
 
 			if (parentMapping != null) {
 				m = parentMapping.getChild(target, key);
@@ -129,12 +129,12 @@ class DiffGenerator {
 		return m;
 	}
 
-	private Diff<?> addDiff(Mapping<?> mapping) {
+	private Diff addDiff(Mapping mapping) {
 		MappingTarget target = mapping.target();
 		String key = mapping.key();
-		Diff<?> d = null;
+		Diff d = null;
 
-		Mapping<?> parentMapping = mapping.getParent();
+		Mapping parentMapping = mapping.getParent();
 
 		if (parentMapping == null) {
 			if (target != MappingTarget.CLASS) {
@@ -147,7 +147,7 @@ class DiffGenerator {
 				d = diff.addClass(key, "", "");
 			}
 		} else {
-			Diff<?> parent = addDiff(parentMapping);
+			Diff parent = addDiff(parentMapping);
 
 			if (parent == null) {
 				throw new IllegalStateException("unable to get diff for " + parentMapping);
@@ -165,10 +165,10 @@ class DiffGenerator {
 
 	private class MappingPair {
 
-		private final Mapping<?> a;
-		private final Mapping<?> b;
+		private final Mapping a;
+		private final Mapping b;
 
-		protected MappingPair(Mapping<?> a, Mapping<?> b) {
+		protected MappingPair(Mapping a, Mapping b) {
 			this.a = a;
 			this.b = b;
 		}
@@ -178,7 +178,7 @@ class DiffGenerator {
 			return a + " == " + b;
 		}
 
-		public Mapping<?> get(DiffSide side) {
+		public Mapping get(DiffSide side) {
 			return side == DiffSide.A ? a : b;
 		}
 	}
@@ -188,7 +188,7 @@ class DiffGenerator {
 		A() {
 
 			@Override
-			public void run(Mapping<?> a, Mapping<?> b, Diff<?> d) {
+			public void run(Mapping a, Mapping b, Diff d) {
 				d.set(DiffSide.A, a.get());
 				d.set(DiffSide.B, "");
 				d.getJavadoc().set(DiffSide.A, a.getJavadoc());
@@ -198,7 +198,7 @@ class DiffGenerator {
 		B() {
 
 			@Override
-			public void run(Mapping<?> a, Mapping<?> b, Diff<?> d) {
+			public void run(Mapping a, Mapping b, Diff d) {
 				d.set(DiffSide.A, "");
 				d.set(DiffSide.B, b.get());
 				d.getJavadoc().set(DiffSide.A, "");
@@ -208,7 +208,7 @@ class DiffGenerator {
 		AB() {
 
 			@Override
-			public void run(Mapping<?> a, Mapping<?> b, Diff<?> d) {
+			public void run(Mapping a, Mapping b, Diff d) {
 				d.set(DiffSide.A, a.get());
 				d.set(DiffSide.B, b.get());
 			}
@@ -216,13 +216,13 @@ class DiffGenerator {
 		JAVADOC() {
 
 			@Override
-			public void run(Mapping<?> a, Mapping<?> b, Diff<?> d) {
+			public void run(Mapping a, Mapping b, Diff d) {
 				d.getJavadoc().set(DiffSide.A, a.getJavadoc());
 				d.getJavadoc().set(DiffSide.B, b.getJavadoc());
 			}
 		};
 
-		public abstract void run(Mapping<?> a, Mapping<?> b, Diff<?> d);
+		public abstract void run(Mapping a, Mapping b, Diff d);
 
 	}
 }

@@ -78,29 +78,29 @@ class ChangePropagator {
 	}
 
 	private void propagateChanges(Version v, MappingsDiff changes) throws Exception {
-		for (Diff<?> change : changes.getTopLevelClasses()) {
+		for (Diff change : changes.getTopLevelClasses()) {
 			propagateChange(v, change);
 		}
 	}
 
-	private void propagateChange(Version v, Diff<?> change) throws Exception {
+	private void propagateChange(Version v, Diff change) throws Exception {
 		DiffMode mode = DiffMode.of(change);
 		Operation op = Operation.of(change, mode);
 
 		propagateChange(v, change, mode, op);
 	}
 
-	private void propagateChange(Version v, Diff<?> change, DiffMode mode, Operation op) throws Exception {
+	private void propagateChange(Version v, Diff change, DiffMode mode, Operation op) throws Exception {
 		// we first propagate up to find the source of the mapping,
 		// then propagate the change down from there
 		propagateChange(v, change, PropagationDirection.UP, mode, op);
 
-		for (Diff<?> childChange : change.getChildren()) {
+		for (Diff childChange : change.getChildren()) {
 			propagateChange(v, childChange);
 		}
 	}
 
-	private void propagateChange(Version v, Diff<?> change, PropagationDirection dir, DiffMode mode, Operation op) throws Exception {
+	private void propagateChange(Version v, Diff change, PropagationDirection dir, DiffMode mode, Operation op) throws Exception {
 		if (mode == DiffMode.NONE) {
 			return;
 		}
@@ -108,7 +108,7 @@ class ChangePropagator {
 		Result<?> result;
 
 		if (v.isRoot()) {
-			result = applyChange(v, v.getMappings(), change, mode, Operation.of(change, mode));
+			result = applyChange(v, v.getMappings(), change, mode, op);
 		} else {
 			DiffSide side = (dir == PropagationDirection.UP) ? DiffSide.B : DiffSide.A;
 			boolean insert = barriers.contains(v);
@@ -116,7 +116,7 @@ class ChangePropagator {
 			result = applyChange(v, v.getDiff(), change, side, mode, Operation.of(change, mode), insert);
 
 			if (result.success() && options.lenient) {
-				queueSiblingChange(v, (Diff<?>)result.subject(), change, dir, mode, op);
+				queueSiblingChange(v, (Diff)result.subject(), change, dir, mode, op);
 			}
 		}
 
@@ -146,15 +146,15 @@ class ChangePropagator {
 		}
 	}
 
-	private Result<Mapping<?>> applyChange(Version v, Mappings mappings, Diff<?> change, DiffMode mode, Operation op) {
+	private Result<Mapping> applyChange(Version v, Mappings mappings, Diff change, DiffMode mode, Operation op) {
 		MappingTarget target = change.target();
 		String key = change.key();
-		Mapping<?> m = null;
+		Mapping m = null;
 
 		String o = change.get(DiffSide.A);
 		String n = change.get(DiffSide.B);
 
-		Diff<?> parentChange = change.getParent();
+		Diff parentChange = change.getParent();
 
 		if (parentChange == null) {
 			if (target != MappingTarget.CLASS) {
@@ -184,8 +184,8 @@ class ChangePropagator {
 				}
 			}
 		} else {
-			Result<Mapping<?>> parentResult = applyChange(v, mappings, parentChange, DiffMode.NONE, Operation.NONE);
-			Mapping<?> parent = parentResult.subject();
+			Result<Mapping> parentResult = applyChange(v, mappings, parentChange, DiffMode.NONE, Operation.NONE);
+			Mapping parent = parentResult.subject();
 
 			if (parent == null) {
 				if (op != Operation.NONE) {
@@ -247,15 +247,15 @@ class ChangePropagator {
 		return new Result<>(m, mode, op);
 	}
 
-	private Result<Diff<?>> applyChange(Version v, MappingsDiff diff, Diff<?> change, DiffSide side, DiffMode mode, Operation op, boolean insert) {
+	private Result<Diff> applyChange(Version v, MappingsDiff diff, Diff change, DiffSide side, DiffMode mode, Operation op, boolean insert) {
 		MappingTarget target = change.target();
 		String key = change.key();
-		Diff<?> d = null;
+		Diff d = null;
 
 		String o = change.get(DiffSide.A);
 		String n = change.get(DiffSide.B);
 
-		Diff<?> parentChange = change.getParent();
+		Diff parentChange = change.getParent();
 
 		if (parentChange == null) {
 			if (target != MappingTarget.CLASS) {
@@ -268,8 +268,8 @@ class ChangePropagator {
 				d = diff.addClass(key, o, o);
 			}
 		} else {
-			Result<Diff<?>> parentResult = applyChange(v, diff, parentChange, side, DiffMode.NONE, Operation.NONE, insert);
-			Diff<?> parent = parentResult.subject();
+			Result<Diff> parentResult = applyChange(v, diff, parentChange, side, DiffMode.NONE, Operation.NONE, insert);
+			Diff parent = parentResult.subject();
 
 			if (parent == null) {
 				if (op != Operation.NONE && insert) {
@@ -335,7 +335,7 @@ class ChangePropagator {
 		return new Result<>(d, mode, op);
 	}
 
-	private void queueSiblingChange(Version v, Diff<?> d, Diff<?> change, PropagationDirection dir, DiffMode mode, Operation op) throws Exception {
+	private void queueSiblingChange(Version v, Diff d, Diff change, PropagationDirection dir, DiffMode mode, Operation op) throws Exception {
 		MappingTarget target = d.target();
 		String name = d.src();
 
@@ -343,10 +343,10 @@ class ChangePropagator {
 			return;
 		}
 
-		Diff<?> parent = d.getParent();
-		Diff<?> sibling = null;
+		Diff parent = d.getParent();
+		Diff sibling = null;
 
-		for (Diff<?> child : parent.getChildren()) {
+		for (Diff child : parent.getChildren()) {
 			if (child == d) {
 				continue;
 			}
@@ -384,17 +384,17 @@ class ChangePropagator {
 		}
 	}
 
-	private Diff<?> queueSiblingChange(Version v, Diff<?> sibling, Diff<?> change, DiffMode mode, Operation op) throws Exception {
+	private Diff queueSiblingChange(Version v, Diff sibling, Diff change, DiffMode mode, Operation op) throws Exception {
 		MappingsDiff changes = queuedChanges.computeIfAbsent(v, key -> new MappingsDiff());
 		return queueSiblingChange(v, changes, sibling, change, mode, op);
 	}
 
-	private Diff<?> queueSiblingChange(Version v, MappingsDiff changes, Diff<?> sibling, Diff<?> change, DiffMode mode, Operation op) throws Exception {
+	private Diff queueSiblingChange(Version v, MappingsDiff changes, Diff sibling, Diff change, DiffMode mode, Operation op) throws Exception {
 		MappingTarget target = change.target();
 		String name = change.src();
-		Diff<?> siblingChange = null;
+		Diff siblingChange = null;
 
-		Diff<?> parentChange = change.getParent();
+		Diff parentChange = change.getParent();
 
 		if (parentChange == null) {
 			if (target != MappingTarget.CLASS) {
@@ -407,7 +407,7 @@ class ChangePropagator {
 				siblingChange = changes.addClass(name, "", "");
 			}
 		} else {
-			Diff<?> siblingParentChange = queueSiblingChange(v, changes, sibling.getParent(), parentChange, mode, Operation.NONE);
+			Diff siblingParentChange = queueSiblingChange(v, changes, sibling.getParent(), parentChange, mode, Operation.NONE);
 			siblingChange = siblingParentChange.getChild(sibling.target(), sibling.key());
 
 			if (siblingChange == null) {
@@ -468,7 +468,7 @@ class ChangePropagator {
 			return ALL[flags & (~mode.flags)];
 		}
 
-		public static DiffMode of(Diff<?> diff) {
+		public static DiffMode of(Diff diff) {
 			DiffMode mode = NONE;
 
 			if (diff.isDiff()) {
@@ -486,7 +486,7 @@ class ChangePropagator {
 
 		NONE, CHANGE, ADD, REMOVE;
 
-		public static Operation of(Diff<?> diff, DiffMode mode) {
+		public static Operation of(Diff diff, DiffMode mode) {
 			if (diff.isDiff() && mode.is(DiffMode.MAPPINGS)) {
 				if (diff.get(DiffSide.A).isEmpty()) {
 					return ADD;

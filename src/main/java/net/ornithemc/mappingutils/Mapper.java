@@ -70,13 +70,13 @@ public interface Mapper {
 	}
 
 	public static void apply(Mapper mapper, Mappings mappings) {
-		for (Mapping<?> mapping : mappings.getTopLevelClasses()) {
+		for (Mapping mapping : mappings.getTopLevelClasses()) {
 			apply(mapper, mapping);
 		}
 	}
 
-	public static void apply(Mapper mapper, Mapping<?> mapping) {
-		for (Mapping<?> child : mapping.getChildren()) {
+	public static void apply(Mapper mapper, Mapping mapping) {
+		for (Mapping child : mapping.getChildren()) {
 			apply(mapper, child);
 		}
 

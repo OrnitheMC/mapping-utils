@@ -44,7 +44,7 @@ class DiffApplier {
 		}
 	}
 
-	private void applyDiff(Diff<?> diff) {
+	private void applyDiff(Diff diff) {
 		Result result = applyDiff(diff, Operation.of(diff));
 
 		// If a mapping is removed, its children also no longer exist.
@@ -53,21 +53,21 @@ class DiffApplier {
 		// need to explicitly remove them, as removing the parent diff
 		// already took care of that for us.
 		if (result.operation() != Operation.REMOVE) {
-			for (Diff<?> c : diff.getChildren()) {
+			for (Diff c : diff.getChildren()) {
 				applyDiff(c);
 			}
 		}
 	}
 
-	private Result applyDiff(Diff<?> diff, Operation op) {
+	private Result applyDiff(Diff diff, Operation op) {
 		MappingTarget target = diff.target();
 		String key = diff.key();
-		Mapping<?> m = null;
+		Mapping m = null;
 
 		String o = diff.get(DiffSide.A);
 		String n = diff.get(DiffSide.B);
 
-		Diff<?> parentDiff = diff.getParent();
+		Diff parentDiff = diff.getParent();
 
 		if (parentDiff == null) {
 			if (target != MappingTarget.CLASS) {
@@ -94,7 +94,7 @@ class DiffApplier {
 			}
 		} else {
 			Result parentResult = applyDiff(parentDiff, Operation.NONE);
-			Mapping<?> parent = parentResult.mapping();
+			Mapping parent = parentResult.mapping();
 
 			if (parent == null) {
 				if (op != Operation.NONE) {
@@ -149,15 +149,15 @@ class DiffApplier {
 
 	private class Result {
 
-		private final Mapping<?> mapping;
+		private final Mapping mapping;
 		private final Operation op;
 
-		public Result(Mapping<?> mapping, Operation op) {
+		public Result(Mapping mapping, Operation op) {
 			this.mapping = mapping;
 			this.op = op;
 		}
 
-		public Mapping<?> mapping() {
+		public Mapping mapping() {
 			return mapping;
 		}
 
@@ -170,7 +170,7 @@ class DiffApplier {
 
 		NONE, CHANGE, ADD, REMOVE;
 
-		public static Operation of(Diff<?> d) {
+		public static Operation of(Diff d) {
 			if (d.isDiff()) {
 				String o = d.get(DiffSide.A);
 				String n = d.get(DiffSide.B);

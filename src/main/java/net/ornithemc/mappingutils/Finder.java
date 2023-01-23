@@ -42,11 +42,11 @@ class Finder {
 
 	private void find(Version v) throws Exception {
 		if (v.isRoot()) {
-			for (Mapping<?> m : v.getMappings().getTopLevelClasses()) {
+			for (Mapping m : v.getMappings().getTopLevelClasses()) {
 				check(m);
 			}
 		} else {
-			for (Diff<?> d : v.getDiff().getTopLevelClasses()) {
+			for (Diff d : v.getDiff().getTopLevelClasses()) {
 				check(d);
 			}
 		}
@@ -56,27 +56,27 @@ class Finder {
 		}
 	}
 
-	private void check(Mapping<?> m) {
+	private void check(Mapping m) {
 		if (matches(m)) {
 			mappings.add(MappingHistory.of(m));
 		}
 
-		for (Mapping<?> cm : m.getChildren()) {
+		for (Mapping cm : m.getChildren()) {
 			check(cm);
 		}
 	}
 
-	private void check(Diff<?> d) {
+	private void check(Diff d) {
 		if (matches(d)) {
 			mappings.add(MappingHistory.of(d));
 		}
 
-		for (Diff<?> cd : d.getChildren()) {
+		for (Diff cd : d.getChildren()) {
 			check(cd);
 		}
 	}
 
-	private boolean matches(Mapping<?> m) {
+	private boolean matches(Mapping m) {
 		if (target != null && target != m.target()) {
 			return false;
 		}
@@ -113,7 +113,7 @@ class Finder {
 		}
 	}
 
-	private boolean matches(Diff<?> d) {
+	private boolean matches(Diff d) {
 		if (target != null && target != d.target()) {
 			return false;
 		}

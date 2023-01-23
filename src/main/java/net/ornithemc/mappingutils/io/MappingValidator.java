@@ -53,7 +53,7 @@ public interface MappingValidator {
 		}
 	};
 
-	default boolean validate(Mapping<?> mapping) {
+	default boolean validate(Mapping mapping) {
 		switch (mapping.target()) {
 		case CLASS:
 			return validate((ClassMapping)mapping);

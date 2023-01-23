@@ -59,7 +59,7 @@ public class EnigmaFileWriter {
 		writeMapping(root);
 	}
 
-	private void writeMapping(Mapping<?> m) throws Exception {
+	private void writeMapping(Mapping m) throws Exception {
 		indent();
 
 		switch (m.target()) {
@@ -83,16 +83,16 @@ public class EnigmaFileWriter {
 
 		writeJavadoc(m);
 
-		for (Mapping<?> mm : m.getChildren(MappingTarget.FIELD)) {
+		for (Mapping mm : m.getChildren(MappingTarget.FIELD)) {
 			writeMapping(mm);
 		}
-		for (Mapping<?> mm : m.getChildren(MappingTarget.METHOD)) {
+		for (Mapping mm : m.getChildren(MappingTarget.METHOD)) {
 			writeMapping(mm);
 		}
-		for (Mapping<?> mm : m.getChildren(MappingTarget.PARAMETER)) {
+		for (Mapping mm : m.getChildren(MappingTarget.PARAMETER)) {
 			writeMapping(mm);
 		}
-		for (Mapping<?> mm : m.getChildren(MappingTarget.CLASS)) {
+		for (Mapping mm : m.getChildren(MappingTarget.CLASS)) {
 			writeMapping(mm);
 		}
 
@@ -145,7 +145,7 @@ public class EnigmaFileWriter {
 		writer.newLine();
 	}
 
-	private void writeJavadoc(Mapping<?> m) throws Exception {
+	private void writeJavadoc(Mapping m) throws Exception {
 		String jav = m.getJavadoc();
 
 		if (!jav.isEmpty()) {
