@@ -186,6 +186,7 @@ public class MappingUtils {
 
 		return type;
 	}
+
 	public static void main(String[] args) {
 
 	}
