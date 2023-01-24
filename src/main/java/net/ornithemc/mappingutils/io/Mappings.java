@@ -302,14 +302,13 @@ public class Mappings {
 		}
 
 		public final Collection<Mapping> getChildren(MappingTarget target) {
-			if (!isValidChild(target))
-				throw new IllegalStateException("invalid child target " + target);
-
 			List<Mapping> c = new LinkedList<>();
 
-			for (Mapping m : children.values()) {
-				if (m.target() == target) {
-					c.add(m);
+			if (isValidChild(target)) {
+				for (Mapping m : children.values()) {
+					if (m.target() == target) {
+						c.add(m);
+					}
 				}
 			}
 

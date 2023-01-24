@@ -271,14 +271,13 @@ public class MappingsDiff {
 		}
 
 		public final Collection<Diff> getChildren(MappingTarget target) {
-			if (!isValidChild(target))
-				throw new IllegalStateException("invalid child target " + target);
-
 			List<Diff> c = new LinkedList<>();
 
-			for (Diff d : children.values()) {
-				if (d.target() == target) {
-					c.add(d);
+			if (isValidChild(target)) {
+				for (Diff d : children.values()) {
+					if (d.target() == target) {
+						c.add(d);
+					}
 				}
 			}
 
