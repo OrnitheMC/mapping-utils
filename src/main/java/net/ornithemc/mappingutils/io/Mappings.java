@@ -248,10 +248,6 @@ public class Mappings {
 		}
 
 		public final Mapping getChild(MappingTarget target, String key) {
-			if (!isValidChild(target)) {
-				throw new IllegalStateException("invalid child target " + target);
-			}
-
 			Mapping m = children.get(key);
 
 			if (m != null && m.target() != target) {
@@ -417,8 +413,6 @@ public class Mappings {
 		}
 
 		public final Mapping removeChild(Mapping m) {
-			if (!isValidChild(m.target()))
-				throw new IllegalStateException("invalid child target " + m.target());
 			return (m.parent == this) ? children.remove(m.key()) : null;
 		}
 

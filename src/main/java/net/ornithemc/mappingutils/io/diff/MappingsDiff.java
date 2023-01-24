@@ -217,10 +217,6 @@ public class MappingsDiff {
 		}
 
 		public final Diff getChild(MappingTarget target, String key) {
-			if (!isValidChild(target)) {
-				throw new IllegalStateException("invalid child target " + target);
-			}
-
 			Diff d = children.get(key);
 
 			if (d != null && d.target() != target) {
@@ -386,8 +382,6 @@ public class MappingsDiff {
 		}
 
 		public final Diff removeChild(Diff d) {
-			if (!isValidChild(d.target()))
-				throw new IllegalStateException("invalid child target " + d.target());
 			return (d.parent == this) ? children.remove(d.key()) : null;
 		}
 
