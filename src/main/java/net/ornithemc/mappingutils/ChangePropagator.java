@@ -3,6 +3,7 @@ package net.ornithemc.mappingutils;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -13,38 +14,38 @@ import net.ornithemc.mappingutils.io.diff.DiffSide;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.Diff;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.JavadocDiff;
-import net.ornithemc.mappingutils.io.diff.tree.MappingsDiffTree;
-import net.ornithemc.mappingutils.io.diff.tree.Version;
+import net.ornithemc.mappingutils.io.diff.graph.Version;
+import net.ornithemc.mappingutils.io.diff.graph.VersionGraph;
 
 class ChangePropagator {
 
-	static void run(PropagationOptions options, MappingsDiffTree tree, MappingsDiff changes, String version) throws Exception {
-		new ChangePropagator(options, tree, changes, version).run();
+	static void run(PropagationOptions options, VersionGraph graph, MappingsDiff changes, String version) throws Exception {
+		new ChangePropagator(options, graph, changes, version).run();
 	}
 
 	private final PropagationOptions options;
-	private final MappingsDiffTree tree;
+	private final VersionGraph graph;
 
 	private final Collection<Version> barriers;
 
 	private Map<Version, MappingsDiff> queuedChanges;
 	private Map<Version, MappingsDiff> workingChanges;
 
-	private ChangePropagator(PropagationOptions options, MappingsDiffTree tree, MappingsDiff changes, String version) {
+	private ChangePropagator(PropagationOptions options, VersionGraph graph, MappingsDiff changes, String version) {
 		changes.validate();
 
 		this.options = options;
-		this.tree = tree;
+		this.graph = graph;
 
 		this.barriers = new HashSet<>();
 
 		this.queuedChanges = new HashMap<>();
 		this.workingChanges = new HashMap<>();
 
-		Version v = tree.getVersion(version);
+		Version v = graph.getVersion(version);
 
 		if (v == null) {
-			throw new IllegalStateException("mappings for version " + version + " do not exist!");
+			throw new IllegalStateException("version " + version + " does not appear in the graph!");
 		}
 
 		if (!options.dir.up()) {
@@ -66,7 +67,7 @@ class ChangePropagator {
 			}
 		}
 
-		tree.write();
+		graph.write();
 	}
 
 	private void prepareQueuedChanges() {
@@ -91,7 +92,7 @@ class ChangePropagator {
 	}
 
 	private void propagateChange(Version v, Diff change, DiffMode mode, Operation op) throws Exception {
-		// we first propagate up to find the source of the mapping,
+		// we first propagate up to find sources of the mapping,
 		// then propagate the change down from there
 		propagateChange(v, change, PropagationDirection.UP, mode, op);
 
@@ -105,43 +106,52 @@ class ChangePropagator {
 			return;
 		}
 
-		Result<?> result;
+		Collection<Pair<Version, Result<?>>> results = new LinkedList<>();
 
 		if (v.isRoot()) {
-			result = applyChange(v, v.getMappings(), change, mode, op);
+			Result<?> result = applyChange(v, v.getMappings(), change, mode, op);
+			results.add(new Pair<>(null, result));
 		} else {
 			DiffSide side = (dir == PropagationDirection.UP) ? DiffSide.B : DiffSide.A;
 			boolean insert = barriers.contains(v);
 
-			result = applyChange(v, v.getDiff(), change, side, mode, Operation.of(change, mode), insert);
+			for (Version parent : v.getParents()) {
+				Result<?> result = applyChange(v, v.getDiff(parent), change, side, mode, op, insert);
+				results.add(new Pair<>(parent, result));
 
-			if (result.success() && options.lenient) {
-				queueSiblingChange(v, (Diff)result.subject(), change, dir, mode, op);
-			}
-		}
-
-		if (result.success()) {
-			v.markDirty();
-
-			if (dir == PropagationDirection.UP) {
-				// found the source of the mapping, now propagate down
-				for (Version c : v.getChildren()) {
-					propagateChange(c, change, PropagationDirection.DOWN, result.mode(), result.operation());
+				if (result.success() && options.lenient) {
+					queueSiblingChange(v, (Diff)result.subject(), change, dir, mode, op);
 				}
 			}
 		}
 
-		// the part of the change that was not yet applied
-		mode = mode.without(result.mode());
+		for (Pair<Version, Result<?>> pair : results) {
+			Version parent = pair.left;
+			Result<?> result = pair.right;
 
-		// keep propagating that part in the same direction
-		if (dir == PropagationDirection.UP) {
-			if (!v.isRoot()) {
-				propagateChange(v.getParent(), change, dir, mode, op);
+			if (result.success()) {
+				v.markDirty();
+
+				if (dir == PropagationDirection.UP) {
+					// found the source of the mapping, now propagate down
+					for (Version c : v.getChildren()) {
+						propagateChange(c, change, PropagationDirection.DOWN, result.mode(), result.operation());
+					}
+				}
 			}
-		} else {
-			for (Version c : v.getChildren()) {
-				propagateChange(c, change, dir, mode, op);
+
+			// the part of the change that was not yet applied
+			mode = mode.without(result.mode());
+
+			// keep propagating that part in the same direction
+			if (dir == PropagationDirection.UP) {
+				if (parent != null) {
+					propagateChange(parent, change, dir, mode, op);
+				}
+			} else {
+				for (Version c : v.getChildren()) {
+					propagateChange(c, change, dir, mode, op);
+				}
 			}
 		}
 	}
@@ -377,7 +387,9 @@ class ChangePropagator {
 
 		if (dir == PropagationDirection.UP) {
 			if (!barriers.contains(v)) {
-				queueSiblingChange(v.getParent(), sibling, change, mode, op);
+				for (Version p : v.getParents()) {
+					queueSiblingChange(p, sibling, change, mode, op);
+				}
 			}
 		} else {
 			queueSiblingChange(v, sibling, change, mode, op);

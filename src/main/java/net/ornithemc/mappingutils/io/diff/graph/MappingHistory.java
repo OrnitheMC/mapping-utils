@@ -1,10 +1,11 @@
-package net.ornithemc.mappingutils.io.diff.tree;
+package net.ornithemc.mappingutils.io.diff.graph;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import net.ornithemc.mappingutils.Pair;
 import net.ornithemc.mappingutils.io.MappingTarget;
 import net.ornithemc.mappingutils.io.Mappings.Mapping;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.Diff;
@@ -24,7 +25,7 @@ public class MappingHistory {
 	private final String key;
 
 	private final Map<Version, Mapping> mappings;
-	private final Map<Version, Diff> diffs;
+	private final Map<Pair<Version, Version>, Diff> diffs;
 
 	public MappingHistory(MappingTarget target, String key) {
 		this(null, target, key);
@@ -73,7 +74,7 @@ public class MappingHistory {
 		return Collections.unmodifiableMap(mappings);
 	}
 
-	public Map<Version, Diff> getDiffs() {
+	public Map<Pair<Version, Version>, Diff> getDiffs() {
 		return Collections.unmodifiableMap(diffs);
 	}
 
@@ -83,9 +84,9 @@ public class MappingHistory {
 		}
 	}
 
-	public void setDiff(Version v, Diff d) {
+	public void setDiff(Version p, Version v, Diff d) {
 		if (checkValid(d)) {
-			diffs.put(v, d);
+			diffs.put(new Pair<>(p, v), d);
 		}
 	}
 

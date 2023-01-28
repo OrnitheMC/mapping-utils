@@ -7,28 +7,28 @@ import net.ornithemc.mappingutils.io.MappingTarget;
 import net.ornithemc.mappingutils.io.Mappings.Mapping;
 import net.ornithemc.mappingutils.io.diff.DiffSide;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.Diff;
-import net.ornithemc.mappingutils.io.diff.tree.MappingHistory;
-import net.ornithemc.mappingutils.io.diff.tree.MappingsDiffTree;
-import net.ornithemc.mappingutils.io.diff.tree.Version;
+import net.ornithemc.mappingutils.io.diff.graph.MappingHistory;
+import net.ornithemc.mappingutils.io.diff.graph.Version;
+import net.ornithemc.mappingutils.io.diff.graph.VersionGraph;
 
 class Finder {
 
-	static Collection<MappingHistory> run(MappingsDiffTree tree, String s) throws Exception {
+	static Collection<MappingHistory> run(VersionGraph tree, String s) throws Exception {
 		return run(tree, null, s);
 	}
 
-	static Collection<MappingHistory> run(MappingsDiffTree tree, MappingTarget target, String key) throws Exception {
+	static Collection<MappingHistory> run(VersionGraph tree, MappingTarget target, String key) throws Exception {
 		return new Finder(tree, target, key).run();
 	}
 
-	private final MappingsDiffTree tree;
+	private final VersionGraph graph;
 	private final MappingTarget target;
 	private final String key;
 
 	private final Collection<MappingHistory> mappings;
 
-	private Finder(MappingsDiffTree tree, MappingTarget target, String key) {
-		this.tree = tree;
+	private Finder(VersionGraph graph, MappingTarget target, String key) {
+		this.graph = graph;
 		this.target = target;
 		this.key = key;
 
@@ -36,7 +36,7 @@ class Finder {
 	}
 
 	private Collection<MappingHistory> run() throws Exception {
-		find(tree.root());
+		graph.walk(v -> find(v), p -> { });
 		return mappings;
 	}
 
@@ -46,13 +46,11 @@ class Finder {
 				check(m);
 			}
 		} else {
-			for (Diff d : v.getDiff().getTopLevelClasses()) {
-				check(d);
+			for (Version p : v.getParents()) {
+				for (Diff d : v.getDiff(p).getTopLevelClasses()) {
+					check(d);
+				}
 			}
-		}
-
-		for (Version cv : v.getChildren()) {
-			find(cv);
 		}
 	}
 

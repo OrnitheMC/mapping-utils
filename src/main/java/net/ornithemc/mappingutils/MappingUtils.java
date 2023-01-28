@@ -12,9 +12,9 @@ import net.ornithemc.mappingutils.io.MappingNamespace;
 import net.ornithemc.mappingutils.io.MappingTarget;
 import net.ornithemc.mappingutils.io.Mappings;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff;
-import net.ornithemc.mappingutils.io.diff.tree.MappingHistory;
-import net.ornithemc.mappingutils.io.diff.tree.MappingsDiffTree;
-import net.ornithemc.mappingutils.io.diff.tree.Version;
+import net.ornithemc.mappingutils.io.diff.graph.MappingHistory;
+import net.ornithemc.mappingutils.io.diff.graph.Version;
+import net.ornithemc.mappingutils.io.diff.graph.VersionGraph;
 import net.ornithemc.mappingutils.io.matcher.MatchSide;
 import net.ornithemc.mappingutils.io.matcher.MatchesReader;
 import net.ornithemc.mappingutils.io.matcher.MatchesWriter;
@@ -74,16 +74,16 @@ public class MappingUtils {
 		FileUtils.requireReadable(dir);
 		FileUtils.requireWritable(dstPath);
 
-		MappingsDiffTree tree = MappingsDiffTree.of(format, dir);
+		VersionGraph graph = VersionGraph.of(format, dir);
 
-		format.writeMappings(dstPath, separateMappings(tree, version));
+		format.writeMappings(dstPath, separateMappings(graph, version));
 	}
 
-	public static Mappings separateMappings(MappingsDiffTree tree, String version) throws Exception {
-		Version root = tree.root();
+	public static Mappings separateMappings(VersionGraph graph, String version) throws Exception {
+		Version root = graph.root();
 
 		Mappings mappings = root.getMappings().copy();
-		List<MappingsDiff> diffs = tree.getDiffsFromRoot(version);
+		Collection<MappingsDiff> diffs = graph.getDiffsFromRoot(version);
 
 		DiffApplier.run(mappings, diffs);
 
@@ -94,14 +94,14 @@ public class MappingUtils {
 		FileUtils.requireReadable(dirPath);
 		FileUtils.requireReadable(changesPath);
 
-		MappingsDiffTree tree = MappingsDiffTree.of(format, dirPath);
+		VersionGraph graph = VersionGraph.of(format, dirPath);
 		MappingsDiff changes = format.readDiff(changesPath);
 
-		insertMappings(options, tree, changes, version);
+		insertMappings(options, graph, changes, version);
 	}
 
-	public static void insertMappings(PropagationOptions options, MappingsDiffTree tree, MappingsDiff diff, String version) throws Exception {
-		ChangePropagator.run(options, tree, diff, version);
+	public static void insertMappings(PropagationOptions options, VersionGraph graph, MappingsDiff diff, String version) throws Exception {
+		ChangePropagator.run(options, graph, diff, version);
 	}
 
 	public static void generateDummyMappings(Format format, MappingNamespace srcNamespace, MappingNamespace dstNamespace, String classNamePattern, Path jarPath, Path mappingsPath) throws Exception {
@@ -115,25 +115,25 @@ public class MappingUtils {
 	public static Collection<MappingHistory> findMappings(Format format, Path dir, MappingTarget target, String key) throws Exception {
 		FileUtils.requireReadable(dir);
 
-		MappingsDiffTree tree = MappingsDiffTree.of(format, dir);
+		VersionGraph graph = VersionGraph.of(format, dir);
 
-		return findMappings(tree, target, key);
+		return findMappings(graph, target, key);
 	}
 
-	public static Collection<MappingHistory> findMappings(MappingsDiffTree tree, MappingTarget target, String key) throws Exception {
-		return Finder.run(tree, target, key);
+	public static Collection<MappingHistory> findMappings(VersionGraph graph, MappingTarget target, String key) throws Exception {
+		return Finder.run(graph, target, key);
 	}
 
 	public static Collection<MappingHistory> findMappingHistories(Format format, Path dir, MappingTarget target, String key) throws Exception {
 		FileUtils.requireReadable(dir);
 
-		MappingsDiffTree tree = MappingsDiffTree.of(format, dir);
+		VersionGraph graph = VersionGraph.of(format, dir);
 
-		return findMappingHistories(tree, target, key);
+		return findMappingHistories(graph, target, key);
 	}
 
-	public static Collection<MappingHistory> findMappingHistories(MappingsDiffTree tree, MappingTarget target, String key) throws Exception {
-		return HistoryFinder.run(tree, target, key);
+	public static Collection<MappingHistory> findMappingHistories(VersionGraph graph, MappingTarget target, String key) throws Exception {
+		return HistoryFinder.run(graph, target, key);
 	}
 
 	public static String translateFieldDescriptor(String desc, Mapper mapper) {

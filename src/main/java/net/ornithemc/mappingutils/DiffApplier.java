@@ -1,7 +1,7 @@
 package net.ornithemc.mappingutils;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 
 import net.ornithemc.mappingutils.io.MappingTarget;
 import net.ornithemc.mappingutils.io.Mappings;
@@ -18,14 +18,14 @@ class DiffApplier {
 		run(mappings, Arrays.asList(diffs));
 	}
 
-	static void run(Mappings mappings, List<MappingsDiff> diffs) throws Exception {
+	static void run(Mappings mappings, Collection<MappingsDiff> diffs) throws Exception {
 		new DiffApplier(mappings, diffs).run();
 	}
 
 	private final Mappings mappings;
-	private final List<MappingsDiff> diffs;
+	private final Collection<MappingsDiff> diffs;
 
-	private DiffApplier(Mappings mappings, List<MappingsDiff> diffs) {
+	private DiffApplier(Mappings mappings, Collection<MappingsDiff> diffs) {
 		mappings.validate();
 
 		for (MappingsDiff diff : diffs) {

@@ -5,17 +5,17 @@ import java.util.Collection;
 import net.ornithemc.mappingutils.io.MappingTarget;
 import net.ornithemc.mappingutils.io.Mappings.Mapping;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.Diff;
-import net.ornithemc.mappingutils.io.diff.tree.MappingHistory;
-import net.ornithemc.mappingutils.io.diff.tree.MappingsDiffTree;
-import net.ornithemc.mappingutils.io.diff.tree.Version;
+import net.ornithemc.mappingutils.io.diff.graph.MappingHistory;
+import net.ornithemc.mappingutils.io.diff.graph.Version;
+import net.ornithemc.mappingutils.io.diff.graph.VersionGraph;
 
 class HistoryFinder {
 
-	static Collection<MappingHistory> run(MappingsDiffTree tree, String key) throws Exception {
+	static Collection<MappingHistory> run(VersionGraph tree, String key) throws Exception {
 		return run(tree, null, key);
 	}
 
-	static Collection<MappingHistory> run(MappingsDiffTree tree, MappingTarget target, String key) throws Exception {
+	static Collection<MappingHistory> run(VersionGraph tree, MappingTarget target, String key) throws Exception {
 		Collection<MappingHistory> histories = Finder.run(tree, target, key);
 
 		for (MappingHistory history : histories) {
@@ -25,20 +25,20 @@ class HistoryFinder {
 		return histories;
 	}
 
-	static void run(MappingsDiffTree tree, MappingHistory history) throws Exception {
+	static void run(VersionGraph tree, MappingHistory history) throws Exception {
 		new HistoryFinder(tree, history).run();
 	}
 
-	private final MappingsDiffTree tree;
+	private final VersionGraph graph;
 	private final MappingHistory history;
 
-	private HistoryFinder(MappingsDiffTree tree, MappingHistory history) {
-		this.tree = tree;
+	private HistoryFinder(VersionGraph graph, MappingHistory history) {
+		this.graph = graph;
 		this.history = history;
 	}
 
 	private void run() throws Exception {
-		find(tree.root());
+		graph.walk(v -> find(v), p -> { });
 	}
 
 	private void find(Version v) throws Exception {
@@ -51,17 +51,15 @@ class HistoryFinder {
 				}
 			}
 		} else {
-			for (Diff d : v.getDiff().getTopLevelClasses()) {
-				d = find(d);
+			for (Version p : v.getParents()) {
+				for (Diff d : v.getDiff(p).getTopLevelClasses()) {
+					d = find(d);
 
-				if (d != null && d.isDiff()) {
-					history.setDiff(v, d);
+					if (d != null && d.isDiff()) {
+						history.setDiff(p, v, d);
+					}
 				}
 			}
-		}
-
-		for (Version cv : v.getChildren()) {
-			find(cv);
 		}
 	}
 

@@ -23,7 +23,7 @@ public class MatchesWriter {
 		try (BufferedWriter writer = new BufferedWriter(new FileWriter(path.toFile()))) {
 			write(writer, matches, srcSide);
 		} catch (Exception e) {
-			throw new IllegalStateException("error reading " + path.toString(), e);
+			throw new IllegalStateException("error writing " + path.toString(), e);
 		}
 	}
 
