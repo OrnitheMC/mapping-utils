@@ -2,6 +2,7 @@ package net.ornithemc.mappingutils.io.tiny.v1;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.IOException;
 import java.nio.file.Path;
 
 import net.ornithemc.mappingutils.io.Mappings;
@@ -10,15 +11,15 @@ import net.ornithemc.mappingutils.io.tiny.TinyMappingsReader;
 
 public class TinyV1Reader extends TinyMappingsReader {
 
-	public static Mappings read(Path path) throws Exception {
+	public static Mappings read(Path path) throws IOException {
 		try (BufferedReader reader = new BufferedReader(new FileReader(path.toFile()))) {
 			return read(reader);
 		} catch (Exception e) {
-			throw new IllegalStateException("error reading " + path.toString(), e);
+			throw new IOException("error reading " + path.toString(), e);
 		}
 	}
 
-	public static Mappings read(BufferedReader reader) throws Exception {
+	public static Mappings read(BufferedReader reader) throws IOException {
 		return new TinyV1Reader(reader).read();
 	}
 
@@ -27,7 +28,7 @@ public class TinyV1Reader extends TinyMappingsReader {
 	}
 
 	@Override
-	protected Stage parseHeader(String line, int lineNumber) throws Exception {
+	protected Stage parseHeader(String line, int lineNumber) {
 		String[] args = line.split(TAB);
 
 		if (args.length != 3) {
@@ -49,7 +50,7 @@ public class TinyV1Reader extends TinyMappingsReader {
 	}
 
 	@Override
-	protected Stage parseMappings(String line, int lineNumber) throws Exception {
+	protected Stage parseMappings(String line, int lineNumber) {
 		String[] args = line.split(TAB);
 
 		String cls;

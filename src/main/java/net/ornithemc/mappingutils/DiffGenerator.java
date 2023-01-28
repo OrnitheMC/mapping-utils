@@ -12,7 +12,7 @@ import net.ornithemc.mappingutils.io.diff.MappingsDiff.Diff;
 
 class DiffGenerator {
 
-	static MappingsDiff run(Mappings a, Mappings b) throws Exception {
+	static MappingsDiff run(Mappings a, Mappings b) {
 		return new DiffGenerator(a, b).run();
 	}
 
@@ -40,7 +40,7 @@ class DiffGenerator {
 		this.mappingPairs = new LinkedList<>();
 	}
 
-	private MappingsDiff run() throws Exception {
+	private MappingsDiff run() {
 		collectMappingPairs();
 		createMappingDiffs();
 

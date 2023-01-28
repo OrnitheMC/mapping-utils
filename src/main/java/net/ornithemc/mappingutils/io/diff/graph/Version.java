@@ -1,5 +1,6 @@
 package net.ornithemc.mappingutils.io.diff.graph;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
@@ -75,7 +76,7 @@ public class Version {
 		return parents.isEmpty();
 	}
 
-	public Mappings getMappings() throws Exception {
+	public Mappings getMappings() throws IOException {
 		if (!isRoot()) {
 			throw new UnsupportedOperationException("only a root has mappings!");
 		}
@@ -86,7 +87,7 @@ public class Version {
 		return mappings;
 	}
 
-	public MappingsDiff getDiff(Version parent) throws Exception {
+	public MappingsDiff getDiff(Version parent) throws IOException {
 		if (isRoot()) {
 			throw new UnsupportedOperationException("a root does not have any diffs!");
 		}
@@ -100,7 +101,7 @@ public class Version {
 		return diff;
 	}
 
-	public void writeMappings() throws Exception {
+	public void writeMappings() throws IOException {
 		if (!isRoot()) {
 			throw new UnsupportedOperationException("only a root has mappings!");
 		}
@@ -109,7 +110,7 @@ public class Version {
 		}
 	}
 
-	public void writeDiffs() throws Exception {
+	public void writeDiffs() throws IOException {
 		if (isRoot()) {
 			throw new UnsupportedOperationException("a root does not have any diffs!");
 		}

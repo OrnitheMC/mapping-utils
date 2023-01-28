@@ -1,6 +1,7 @@
 package net.ornithemc.mappingutils.io.tiny;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 
 import net.ornithemc.mappingutils.io.Mappings;
 
@@ -18,7 +19,7 @@ public abstract class TinyMappingsReader {
 		this.mappings = mappings;
 	}
 
-	public Mappings read() throws Exception {
+	public Mappings read() throws IOException {
 		stage = Stage.HEADER;
 
 		for (int lineNumber = 1; stage != null; lineNumber++) {
@@ -28,7 +29,7 @@ public abstract class TinyMappingsReader {
 		return mappings;
 	}
 
-	private Stage parseLine(String line, int lineNumber) throws Exception {
+	private Stage parseLine(String line, int lineNumber) {
 		if (line == null) {
 			return null;
 		}
@@ -43,9 +44,9 @@ public abstract class TinyMappingsReader {
 		}
 	}
 
-	protected abstract Stage parseHeader(String line, int lineNumber) throws Exception;
+	protected abstract Stage parseHeader(String line, int lineNumber);
 
-	protected abstract Stage parseMappings(String line, int lineNumber) throws Exception;
+	protected abstract Stage parseMappings(String line, int lineNumber);
 
 	protected enum Stage {
 		HEADER, MAPPINGS

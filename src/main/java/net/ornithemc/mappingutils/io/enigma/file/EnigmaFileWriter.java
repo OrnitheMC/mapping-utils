@@ -2,6 +2,7 @@ package net.ornithemc.mappingutils.io.enigma.file;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Path;
 
 import net.ornithemc.mappingutils.io.MappingTarget;
@@ -17,31 +18,31 @@ public class EnigmaFileWriter {
 	private static final String TAB = "\t";
 	private static final String SPACE = " ";
 
-	public static void write(Path path, Mappings mappings) throws Exception {
+	public static void write(Path path, Mappings mappings) throws IOException {
 		try (BufferedWriter writer = new BufferedWriter(new FileWriter(path.toFile()))) {
 			mappings.validate();
 
 			write(writer, mappings);
 		} catch (Exception e) {
-			throw new IllegalStateException("error writing " + path.toString(), e);
+			throw new IOException("error writing " + path.toString(), e);
 		}
 	}
 
-	public static void write(BufferedWriter writer, Mappings mappings) throws Exception {
+	public static void write(BufferedWriter writer, Mappings mappings) throws IOException {
 		for (ClassMapping cm : mappings.getTopLevelClasses()) {
 			write(writer, cm);
 		}
 	}
 
-	public static void write(Path path, ClassMapping cm) throws Exception {
+	public static void write(Path path, ClassMapping cm) throws IOException {
 		try (BufferedWriter writer = new BufferedWriter(new FileWriter(path.toFile()))) {
 			write(writer, cm);
 		} catch (Exception e) {
-			throw new IllegalStateException("error writing " + path.toString(), e);
+			throw new IOException("error writing " + path.toString(), e);
 		}
 	}
 
-	public static void write(BufferedWriter writer, ClassMapping cm) throws Exception {
+	public static void write(BufferedWriter writer, ClassMapping cm) throws IOException {
 		new EnigmaFileWriter(writer, cm).write();
 	}
 
@@ -55,11 +56,11 @@ public class EnigmaFileWriter {
 		this.root = root;
 	}
 
-	public void write() throws Exception {
+	public void write() throws IOException {
 		writeMapping(root);
 	}
 
-	private void writeMapping(Mapping m) throws Exception {
+	private void writeMapping(Mapping m) throws IOException {
 		indent();
 
 		switch (m.target()) {
@@ -99,7 +100,7 @@ public class EnigmaFileWriter {
 		indents--;
 	}
 
-	private void writeClass(ClassMapping c) throws Exception {
+	private void writeClass(ClassMapping c) throws IOException {
 		writer.write(EnigmaFileFormat.CLASS);
 		writer.write(SPACE);
 		writer.write(ClassMapping.getSimplified(c.src()));
@@ -110,7 +111,7 @@ public class EnigmaFileWriter {
 		writer.newLine();
 	}
 
-	private void writeField(FieldMapping f) throws Exception {
+	private void writeField(FieldMapping f) throws IOException {
 		writer.write(EnigmaFileFormat.FIELD);
 		writer.write(SPACE);
 		writer.write(f.src());
@@ -123,7 +124,7 @@ public class EnigmaFileWriter {
 		writer.newLine();
 	}
 
-	private void writeMethod(MethodMapping m) throws Exception {
+	private void writeMethod(MethodMapping m) throws IOException {
 		writer.write(EnigmaFileFormat.METHOD);
 		writer.write(SPACE);
 		writer.write(m.src());
@@ -136,7 +137,7 @@ public class EnigmaFileWriter {
 		writer.newLine();
 	}
 
-	private void writeParameter(ParameterMapping p) throws Exception {
+	private void writeParameter(ParameterMapping p) throws IOException {
 		writer.write(EnigmaFileFormat.PARAMETER);
 		writer.write(SPACE);
 		writer.write(Integer.toString(p.getIndex()));
@@ -145,7 +146,7 @@ public class EnigmaFileWriter {
 		writer.newLine();
 	}
 
-	private void writeJavadoc(Mapping m) throws Exception {
+	private void writeJavadoc(Mapping m) throws IOException {
 		String jav = m.getJavadoc();
 
 		if (!jav.isEmpty()) {
@@ -160,7 +161,7 @@ public class EnigmaFileWriter {
 		}
 	}
 
-	private void indent() throws Exception {
+	private void indent() throws IOException {
 		for (int i = 0; i < indents; i++) {
 			writer.write(TAB);
 		}

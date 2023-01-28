@@ -1,6 +1,8 @@
 package net.ornithemc.mappingutils;
 
+import java.io.IOException;
 import java.util.Collection;
+import java.util.LinkedList;
 
 import net.ornithemc.mappingutils.io.MappingTarget;
 import net.ornithemc.mappingutils.io.Mappings.Mapping;
@@ -11,11 +13,11 @@ import net.ornithemc.mappingutils.io.diff.graph.VersionGraph;
 
 class HistoryFinder {
 
-	static Collection<MappingHistory> run(VersionGraph tree, String key) throws Exception {
+	static Collection<MappingHistory> run(VersionGraph tree, String key) throws IOException {
 		return run(tree, null, key);
 	}
 
-	static Collection<MappingHistory> run(VersionGraph tree, MappingTarget target, String key) throws Exception {
+	static Collection<MappingHistory> run(VersionGraph tree, MappingTarget target, String key) throws IOException {
 		Collection<MappingHistory> histories = Finder.run(tree, target, key);
 
 		for (MappingHistory history : histories) {
@@ -25,7 +27,7 @@ class HistoryFinder {
 		return histories;
 	}
 
-	static void run(VersionGraph tree, MappingHistory history) throws Exception {
+	static void run(VersionGraph tree, MappingHistory history) throws IOException {
 		new HistoryFinder(tree, history).run();
 	}
 
@@ -37,11 +39,16 @@ class HistoryFinder {
 		this.history = history;
 	}
 
-	private void run() throws Exception {
-		graph.walk(v -> find(v), p -> { });
+	private void run() throws IOException {
+		Collection<Version> versions = new LinkedList<>();
+		graph.walk(v -> versions.add(v), p -> { });
+
+		for (Version v : versions) {
+			find(v);
+		}
 	}
 
-	private void find(Version v) throws Exception {
+	private void find(Version v) throws IOException {
 		if (v.isRoot()) {
 			for (Mapping m : v.getMappings().getTopLevelClasses()) {
 				m = find(m);

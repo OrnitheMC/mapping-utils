@@ -2,6 +2,7 @@ package net.ornithemc.mappingutils.io.diff.tiny.v2;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Path;
 
 import net.ornithemc.mappingutils.io.diff.DiffSide;
@@ -16,15 +17,15 @@ import net.ornithemc.mappingutils.io.diff.tiny.TinyDiffWriter;
 
 public class TinyV2DiffWriter extends TinyDiffWriter {
 
-	public static void write(Path path, MappingsDiff diff) throws Exception {
+	public static void write(Path path, MappingsDiff diff) throws IOException {
 		try (BufferedWriter writer = new BufferedWriter(new FileWriter(path.toFile()))) {
 			write(writer, diff);
 		} catch (Exception e) {
-			throw new IllegalStateException("error writing " + path.toString(), e);
+			throw new IOException("error writing " + path.toString(), e);
 		}
 	}
 
-	public static void write(BufferedWriter writer, MappingsDiff diff) throws Exception {
+	public static void write(BufferedWriter writer, MappingsDiff diff) throws IOException {
 		new TinyV2DiffWriter(writer, diff).write();
 	}
 
@@ -35,7 +36,7 @@ public class TinyV2DiffWriter extends TinyDiffWriter {
 	}
 
 	@Override
-	protected void writeHeader() throws Exception {
+	protected void writeHeader() throws IOException {
 		writer.write(TinyV2Format.FORMAT);
 		writer.write(TAB);
 		writer.write(TinyV2Format.VERSION);
@@ -45,13 +46,13 @@ public class TinyV2DiffWriter extends TinyDiffWriter {
 	}
 
 	@Override
-	protected void writeDiffs() throws Exception {
+	protected void writeDiffs() throws IOException {
 		for (ClassDiff c : diff.getTopLevelClasses()) {
 			writeClass(c);
 		}
 	}
 
-	private void writeClass(ClassDiff c) throws Exception {
+	private void writeClass(ClassDiff c) throws IOException {
 		indent(TinyV2Format.CLASS_INDENTS);
 
 		writer.write(TinyV2Format.CLASS);
@@ -78,7 +79,7 @@ public class TinyV2DiffWriter extends TinyDiffWriter {
 		}
 	}
 
-	private void writeField(FieldDiff f) throws Exception {
+	private void writeField(FieldDiff f) throws IOException {
 		indent(TinyV2Format.FIELD_INDENTS);
 
 		writer.write(TinyV2Format.FIELD);
@@ -97,7 +98,7 @@ public class TinyV2DiffWriter extends TinyDiffWriter {
 		writeJavadoc(f);
 	}
 
-	private void writeMethod(MethodDiff m) throws Exception {
+	private void writeMethod(MethodDiff m) throws IOException {
 		indent(TinyV2Format.METHOD_INDENTS);
 
 		writer.write(TinyV2Format.METHOD);
@@ -120,7 +121,7 @@ public class TinyV2DiffWriter extends TinyDiffWriter {
 		}
 	}
 
-	private void writeParameter(ParameterDiff p) throws Exception {
+	private void writeParameter(ParameterDiff p) throws IOException {
 		indent(TinyV2Format.PARAMETER_INDENTS);
 
 		writer.write(TinyV2Format.PARAMETER);
@@ -139,7 +140,7 @@ public class TinyV2DiffWriter extends TinyDiffWriter {
 		writeJavadoc(p);
 	}
 
-	private void writeJavadoc(Diff d) throws Exception {
+	private void writeJavadoc(Diff d) throws IOException {
 		JavadocDiff javadoc = d.getJavadoc();
 
 		if (javadoc.isDiff()) {
@@ -157,12 +158,12 @@ public class TinyV2DiffWriter extends TinyDiffWriter {
 		}
 	}
 
-	private void indent(int indents) throws Exception {
+	private void indent(int indents) throws IOException {
 		this.indents = indents;
 		indent();
 	}
 
-	private void indent() throws Exception {
+	private void indent() throws IOException {
 		for (int i = 0; i < indents; i++) {
 			writer.write(TAB);
 		}

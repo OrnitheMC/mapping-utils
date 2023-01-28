@@ -15,8 +15,8 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
+import java.util.function.Consumer;
 
-import net.ornithemc.mappingutils.CheckedConsumer;
 import net.ornithemc.mappingutils.FileUtils;
 import net.ornithemc.mappingutils.io.Format;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff;
@@ -49,19 +49,19 @@ public class VersionGraph {
 		return versions.containsKey(version);
 	}
 
-	public void walk(CheckedConsumer<Version> versionVisitor, CheckedConsumer<Collection<Version>> pathVisitor) throws Exception {
+	public void walk(Consumer<Version> versionVisitor, Consumer<Collection<Version>> pathVisitor) {
 		walk(root, false, versionVisitor, pathVisitor);
 	}
 
-	public void walk(String startVersion, CheckedConsumer<Version> versionVisitor, CheckedConsumer<Collection<Version>> pathVisitor) throws Exception {
+	public void walk(String startVersion, Consumer<Version> versionVisitor, Consumer<Collection<Version>> pathVisitor) {
 		walk(startVersion, false, versionVisitor, pathVisitor);
 	}
 
-	public void walkToRoot(String startVersion, CheckedConsumer<Version> versionVisitor, CheckedConsumer<Collection<Version>> pathVisitor) throws Exception {
+	public void walkToRoot(String startVersion, Consumer<Version> versionVisitor, Consumer<Collection<Version>> pathVisitor) {
 		walk(startVersion, true, versionVisitor, pathVisitor);
 	}
 
-	private void walk(String startVersion, boolean towardsRoot, CheckedConsumer<Version> versionVisitor, CheckedConsumer<Collection<Version>> pathVisitor) throws Exception {
+	private void walk(String startVersion, boolean towardsRoot, Consumer<Version> versionVisitor, Consumer<Collection<Version>> pathVisitor) {
 		Version version = versions.get(startVersion);
 
 		if (version == null) {
@@ -71,7 +71,7 @@ public class VersionGraph {
 		}
 	}
 
-	private void walk(Version start, boolean towardsRoot, CheckedConsumer<Version> versionVisitor, CheckedConsumer<Collection<Version>> pathVisitor) throws Exception {
+	private void walk(Version start, boolean towardsRoot, Consumer<Version> versionVisitor, Consumer<Collection<Version>> pathVisitor) {
 		Deque<GraphWalker> walkers = new LinkedList<>();
 		Set<Version> visited = new HashSet<>();
 
@@ -99,7 +99,7 @@ public class VersionGraph {
 		}
 	}
 
-	public Collection<Version> getPathFromRoot(String version) throws Exception {
+	public Collection<Version> getPathFromRoot(String version) {
 		Queue<Collection<Version>> paths = new PriorityQueue<>((p1, p2) -> {
 			return p1.size() - p2.size();
 		});
@@ -113,7 +113,7 @@ public class VersionGraph {
 		return paths.poll();
 	}
 
-	public Collection<MappingsDiff> getDiffsFromRoot(String version) throws Exception {
+	public Collection<MappingsDiff> getDiffsFromRoot(String version) throws IOException {
 		Collection<Version> path = getPathFromRoot(version);
 		Collection<MappingsDiff> diffs = new LinkedList<>();
 
@@ -134,7 +134,7 @@ public class VersionGraph {
 		return diffs;
 	}
 
-	public void write() throws Exception {
+	public void write() throws IOException {
 		for (Version v : versions.values()) {
 			if (v.isRoot()) {
 				v.writeMappings();
@@ -144,7 +144,7 @@ public class VersionGraph {
 		}
 	}
 
-	private VersionGraph resolve(Path dir) throws Exception {
+	private VersionGraph resolve(Path dir) throws IOException {
 		iterateVersions(dir, (parent, version, path) -> {
 			if (parent == null) {
 				if (root != null) {
@@ -207,7 +207,7 @@ public class VersionGraph {
 		return versions.computeIfAbsent(version, key -> new Version(version, format));
 	}
 
-	public static VersionGraph of(Format format, Path path) throws Exception {
+	public static VersionGraph of(Format format, Path path) throws IOException {
 		return new VersionGraph(format).resolve(path);
 	}
 

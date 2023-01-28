@@ -1,5 +1,6 @@
 package net.ornithemc.mappingutils;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,7 +20,7 @@ import net.ornithemc.mappingutils.io.diff.graph.VersionGraph;
 
 class ChangePropagator {
 
-	static void run(PropagationOptions options, VersionGraph graph, MappingsDiff changes, String version) throws Exception {
+	static void run(PropagationOptions options, VersionGraph graph, MappingsDiff changes, String version) throws IOException {
 		new ChangePropagator(options, graph, changes, version).run();
 	}
 
@@ -58,7 +59,7 @@ class ChangePropagator {
 		queuedChanges.put(v, changes);
 	}
 
-	private void run() throws Exception {
+	private void run() throws IOException {
 		while (!queuedChanges.isEmpty()) {
 			prepareQueuedChanges();
 
@@ -78,20 +79,20 @@ class ChangePropagator {
 		queuedChanges.clear();
 	}
 
-	private void propagateChanges(Version v, MappingsDiff changes) throws Exception {
+	private void propagateChanges(Version v, MappingsDiff changes) throws IOException {
 		for (Diff change : changes.getTopLevelClasses()) {
 			propagateChange(v, change);
 		}
 	}
 
-	private void propagateChange(Version v, Diff change) throws Exception {
+	private void propagateChange(Version v, Diff change) throws IOException {
 		DiffMode mode = DiffMode.of(change);
 		Operation op = Operation.of(change, mode);
 
 		propagateChange(v, change, mode, op);
 	}
 
-	private void propagateChange(Version v, Diff change, DiffMode mode, Operation op) throws Exception {
+	private void propagateChange(Version v, Diff change, DiffMode mode, Operation op) throws IOException {
 		// we first propagate up to find sources of the mapping,
 		// then propagate the change down from there
 		propagateChange(v, change, PropagationDirection.UP, mode, op);
@@ -101,7 +102,7 @@ class ChangePropagator {
 		}
 	}
 
-	private void propagateChange(Version v, Diff change, PropagationDirection dir, DiffMode mode, Operation op) throws Exception {
+	private void propagateChange(Version v, Diff change, PropagationDirection dir, DiffMode mode, Operation op) throws IOException {
 		if (mode == DiffMode.NONE) {
 			return;
 		}
@@ -345,7 +346,7 @@ class ChangePropagator {
 		return new Result<>(d, mode, op);
 	}
 
-	private void queueSiblingChange(Version v, Diff d, Diff change, PropagationDirection dir, DiffMode mode, Operation op) throws Exception {
+	private void queueSiblingChange(Version v, Diff d, Diff change, PropagationDirection dir, DiffMode mode, Operation op) {
 		MappingTarget target = d.target();
 		String name = d.src();
 
@@ -396,12 +397,12 @@ class ChangePropagator {
 		}
 	}
 
-	private Diff queueSiblingChange(Version v, Diff sibling, Diff change, DiffMode mode, Operation op) throws Exception {
+	private Diff queueSiblingChange(Version v, Diff sibling, Diff change, DiffMode mode, Operation op) {
 		MappingsDiff changes = queuedChanges.computeIfAbsent(v, key -> new MappingsDiff());
 		return queueSiblingChange(v, changes, sibling, change, mode, op);
 	}
 
-	private Diff queueSiblingChange(Version v, MappingsDiff changes, Diff sibling, Diff change, DiffMode mode, Operation op) throws Exception {
+	private Diff queueSiblingChange(Version v, MappingsDiff changes, Diff sibling, Diff change, DiffMode mode, Operation op) {
 		MappingTarget target = change.target();
 		String name = change.src();
 		Diff siblingChange = null;

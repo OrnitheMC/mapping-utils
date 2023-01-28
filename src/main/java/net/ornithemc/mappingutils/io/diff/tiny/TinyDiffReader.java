@@ -1,6 +1,7 @@
 package net.ornithemc.mappingutils.io.diff.tiny;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 
 import net.ornithemc.mappingutils.io.diff.MappingsDiff;
 
@@ -18,7 +19,7 @@ public abstract class TinyDiffReader {
 		this.diff = diff;
 	}
 
-	public MappingsDiff read() throws Exception {
+	public MappingsDiff read() throws IOException {
 		stage = Stage.HEADER;
 
 		for (int lineNumber = 1; stage != null; lineNumber++) {
@@ -28,7 +29,7 @@ public abstract class TinyDiffReader {
 		return diff;
 	}
 
-	private Stage parseLine(String line, int lineNumber) throws Exception {
+	private Stage parseLine(String line, int lineNumber) {
 		if (line == null) {
 			return null;
 		}
@@ -43,9 +44,9 @@ public abstract class TinyDiffReader {
 		}
 	}
 
-	protected abstract Stage parseHeader(String line, int lineNumber) throws Exception;
+	protected abstract Stage parseHeader(String line, int lineNumber);
 
-	protected abstract Stage parseDiffs(String line, int lineNumber) throws Exception;
+	protected abstract Stage parseDiffs(String line, int lineNumber);
 
 	protected enum Stage {
 		HEADER, DIFFS

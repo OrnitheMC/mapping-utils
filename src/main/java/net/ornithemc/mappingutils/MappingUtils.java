@@ -1,5 +1,6 @@
 package net.ornithemc.mappingutils;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
@@ -21,14 +22,14 @@ import net.ornithemc.mappingutils.io.matcher.MatchesWriter;
 
 public class MappingUtils {
 
-	public static void invertMatches(Path src, Path dst) throws Exception {
+	public static void invertMatches(Path src, Path dst) throws IOException {
 		FileUtils.requireReadable(src);
 		FileUtils.requireWritable(dst);
 
 		MatchesWriter.write(dst, MatchesReader.read(src), MatchSide.B);
 	}
 
-	public static void diffMappings(Format format, Path pathA, Path pathB, Path diffPath) throws Exception {
+	public static void diffMappings(Format format, Path pathA, Path pathB, Path diffPath) throws IOException {
 		FileUtils.requireReadable(pathA);
 		FileUtils.requireReadable(pathB);
 		FileUtils.requireWritable(diffPath);
@@ -39,15 +40,15 @@ public class MappingUtils {
 		format.writeDiff(diffPath, diffMappings(a, b));
 	}
 
-	public static MappingsDiff diffMappings(Mappings a, Mappings b) throws Exception {
+	public static MappingsDiff diffMappings(Mappings a, Mappings b) {
 		return DiffGenerator.run(a, b);
 	}
 
-	public static void applyDiffs(Format format, Path srcPath, Path dstPath, Path... diffPaths) throws Exception {
+	public static void applyDiffs(Format format, Path srcPath, Path dstPath, Path... diffPaths) throws IOException {
 		applyDiffs(format, srcPath, dstPath, Arrays.asList(diffPaths));
 	}
 
-	public static void applyDiffs(Format format, Path srcPath, Path dstPath, List<Path> diffPaths) throws Exception {
+	public static void applyDiffs(Format format, Path srcPath, Path dstPath, List<Path> diffPaths) throws IOException {
 		FileUtils.requireReadable(srcPath);
 		FileUtils.requireWritable(dstPath);
 		FileUtils.requireReadable(diffPaths);
@@ -62,15 +63,15 @@ public class MappingUtils {
 		format.writeMappings(dstPath, mappings);
 	}
 
-	public static void applyDiffs(Mappings mappings, MappingsDiff... diffs) throws Exception {
+	public static void applyDiffs(Mappings mappings, MappingsDiff... diffs) {
 		DiffApplier.run(mappings, diffs);
 	}
 
-	public static void applyDiffs(Mappings mappings, List<MappingsDiff> diffs) throws Exception {
+	public static void applyDiffs(Mappings mappings, List<MappingsDiff> diffs) {
 		DiffApplier.run(mappings, diffs);
 	}
 
-	public static void separateMappings(Format format, Path dir, Path dstPath, String version) throws Exception {
+	public static void separateMappings(Format format, Path dir, Path dstPath, String version) throws IOException {
 		FileUtils.requireReadable(dir);
 		FileUtils.requireWritable(dstPath);
 
@@ -79,7 +80,7 @@ public class MappingUtils {
 		format.writeMappings(dstPath, separateMappings(graph, version));
 	}
 
-	public static Mappings separateMappings(VersionGraph graph, String version) throws Exception {
+	public static Mappings separateMappings(VersionGraph graph, String version) throws IOException {
 		Version root = graph.root();
 
 		Mappings mappings = root.getMappings().copy();
@@ -90,7 +91,7 @@ public class MappingUtils {
 		return mappings;
 	}
 
-	public static void insertMappings(Format format, PropagationOptions options, Path dirPath, Path changesPath, String version) throws Exception {
+	public static void insertMappings(Format format, PropagationOptions options, Path dirPath, Path changesPath, String version) throws IOException {
 		FileUtils.requireReadable(dirPath);
 		FileUtils.requireReadable(changesPath);
 
@@ -100,19 +101,19 @@ public class MappingUtils {
 		insertMappings(options, graph, changes, version);
 	}
 
-	public static void insertMappings(PropagationOptions options, VersionGraph graph, MappingsDiff diff, String version) throws Exception {
+	public static void insertMappings(PropagationOptions options, VersionGraph graph, MappingsDiff diff, String version) throws IOException {
 		ChangePropagator.run(options, graph, diff, version);
 	}
 
-	public static void generateDummyMappings(Format format, MappingNamespace srcNamespace, MappingNamespace dstNamespace, String classNamePattern, Path jarPath, Path mappingsPath) throws Exception {
+	public static void generateDummyMappings(Format format, MappingNamespace srcNamespace, MappingNamespace dstNamespace, String classNamePattern, Path jarPath, Path mappingsPath) throws IOException {
 		format.writeMappings(mappingsPath, generateDummyMappings(srcNamespace, dstNamespace, classNamePattern, jarPath));
 	}
 
-	public static Mappings generateDummyMappings(MappingNamespace srcNamespace, MappingNamespace dstNamespace, String classNamePattern, Path jarPath) throws Exception {
+	public static Mappings generateDummyMappings(MappingNamespace srcNamespace, MappingNamespace dstNamespace, String classNamePattern, Path jarPath) throws IOException {
 		return DummyGenerator.run(srcNamespace, dstNamespace, classNamePattern, jarPath);
 	}
 
-	public static Collection<MappingHistory> findMappings(Format format, Path dir, MappingTarget target, String key) throws Exception {
+	public static Collection<MappingHistory> findMappings(Format format, Path dir, MappingTarget target, String key) throws IOException {
 		FileUtils.requireReadable(dir);
 
 		VersionGraph graph = VersionGraph.of(format, dir);
@@ -120,11 +121,11 @@ public class MappingUtils {
 		return findMappings(graph, target, key);
 	}
 
-	public static Collection<MappingHistory> findMappings(VersionGraph graph, MappingTarget target, String key) throws Exception {
+	public static Collection<MappingHistory> findMappings(VersionGraph graph, MappingTarget target, String key) throws IOException {
 		return Finder.run(graph, target, key);
 	}
 
-	public static Collection<MappingHistory> findMappingHistories(Format format, Path dir, MappingTarget target, String key) throws Exception {
+	public static Collection<MappingHistory> findMappingHistories(Format format, Path dir, MappingTarget target, String key) throws IOException {
 		FileUtils.requireReadable(dir);
 
 		VersionGraph graph = VersionGraph.of(format, dir);
@@ -132,7 +133,7 @@ public class MappingUtils {
 		return findMappingHistories(graph, target, key);
 	}
 
-	public static Collection<MappingHistory> findMappingHistories(VersionGraph graph, MappingTarget target, String key) throws Exception {
+	public static Collection<MappingHistory> findMappingHistories(VersionGraph graph, MappingTarget target, String key) throws IOException {
 		return HistoryFinder.run(graph, target, key);
 	}
 

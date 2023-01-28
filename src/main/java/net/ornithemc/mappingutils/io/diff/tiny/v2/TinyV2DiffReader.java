@@ -2,6 +2,7 @@ package net.ornithemc.mappingutils.io.diff.tiny.v2;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 
@@ -16,15 +17,15 @@ import net.ornithemc.mappingutils.io.diff.tiny.TinyDiffReader;
 
 public class TinyV2DiffReader extends TinyDiffReader {
 
-	public static MappingsDiff read(Path path) throws Exception {
+	public static MappingsDiff read(Path path) throws IOException {
 		try (BufferedReader reader = new BufferedReader(new FileReader(path.toFile()))) {
 			return read(reader);
 		} catch (Exception e) {
-			throw new IllegalStateException("error reading " + path.toString(), e);
+			throw new IOException("error reading " + path.toString(), e);
 		}
 	}
 
-	public static MappingsDiff read(BufferedReader reader) throws Exception {
+	public static MappingsDiff read(BufferedReader reader) throws IOException {
 		return new TinyV2DiffReader(reader).read();
 	}
 
@@ -41,7 +42,7 @@ public class TinyV2DiffReader extends TinyDiffReader {
 	}
 
 	@Override
-	protected Stage parseHeader(String line, int lineNumber) throws Exception {
+	protected Stage parseHeader(String line, int lineNumber) {
 		String[] args = line.split(TAB);
 
 		if (args.length != 3) {
@@ -66,7 +67,7 @@ public class TinyV2DiffReader extends TinyDiffReader {
 	}
 
 	@Override
-	protected Stage parseDiffs(String line, int lineNumber) throws Exception {
+	protected Stage parseDiffs(String line, int lineNumber) {
 		String[] args = line.split(TAB);
 
 		for (indents = 0; indents < args.length; indents++) {

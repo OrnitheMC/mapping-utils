@@ -2,6 +2,7 @@ package net.ornithemc.mappingutils.io.matcher;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.List;
@@ -15,7 +16,7 @@ import net.ornithemc.mappingutils.io.matcher.Matches.VariableMatch;
 
 public class MatchesReader {
 
-	public static Matches read(Path path) throws Exception {
+	public static Matches read(Path path) throws IOException {
 		try (BufferedReader reader = new BufferedReader(new FileReader(path.toFile()))) {
 			return read(reader);
 		} catch (Exception e) {
@@ -23,7 +24,7 @@ public class MatchesReader {
 		}
 	}
 
-	public static Matches read(BufferedReader reader) throws Exception {
+	public static Matches read(BufferedReader reader) throws IOException {
 		return new MatchesReader(reader).read();
 	}
 
@@ -45,7 +46,7 @@ public class MatchesReader {
 		this.matches = new Matches();
 	}
 
-	public Matches read() throws Exception {
+	public Matches read() throws IOException {
 		stage = Stage.START;
 
 		for (int lineNumber = 1; stage != null; lineNumber++) {

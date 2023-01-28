@@ -2,6 +2,7 @@ package net.ornithemc.mappingutils.io.enigma.file;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Stack;
@@ -14,29 +15,27 @@ import net.ornithemc.mappingutils.io.Mappings.MethodMapping;
 
 public class EnigmaFileReader {
 
-	private static final String TAB = "\t";
-
-	public static Mappings read(Path path) throws Exception {
+	public static Mappings read(Path path) throws IOException {
 		try (BufferedReader reader = new BufferedReader(new FileReader(path.toFile()))) {
 			return read(reader);
 		} catch (Exception e) {
-			throw new IllegalStateException("error reading " + path.toString(), e);
+			throw new IOException("error reading " + path.toString(), e);
 		}
 	}
 
-	public static Mappings read(BufferedReader reader) throws Exception {
+	public static Mappings read(BufferedReader reader) throws IOException {
 		return read(reader, new Mappings());
 	}
 
-	public static Mappings read(Path path, Mappings mappings) throws Exception {
+	public static Mappings read(Path path, Mappings mappings) throws IOException {
 		try (BufferedReader reader = new BufferedReader(new FileReader(path.toFile()))) {
 			return read(reader, mappings);
 		} catch (Exception e) {
-			throw new IllegalStateException("error reading " + path.toString(), e);
+			throw new IOException("error reading " + path.toString(), e);
 		}
 	}
 
-	public static Mappings read(BufferedReader reader, Mappings mappings) throws Exception {
+	public static Mappings read(BufferedReader reader, Mappings mappings) throws IOException {
 		return new EnigmaFileReader(reader, mappings).read();
 	}
 
@@ -48,7 +47,7 @@ public class EnigmaFileReader {
 		this.mappings = mappings;
 	}
 
-	public Mappings read() throws Exception {
+	public Mappings read() throws IOException {
 		Stack<Mapping> parents = new Stack<>();
 
 		for (int lineNumber = 1; parents != null; lineNumber++) {
@@ -58,7 +57,7 @@ public class EnigmaFileReader {
 		return mappings;
 	}
 
-	private Stack<Mapping> parseLine(String line, int lineNumber, Stack<Mapping> parents) throws Exception {
+	private Stack<Mapping> parseLine(String line, int lineNumber, Stack<Mapping> parents) {
 		if (line == null) {
 			return null;
 		}
@@ -109,7 +108,7 @@ public class EnigmaFileReader {
 		return line.substring(0, i);
 	}
 
-	private Mapping parseLine(String line, int lineNumber, Mapping parent) throws Exception {
+	private Mapping parseLine(String line, int lineNumber, Mapping parent) {
 		String[] args = line.split("\\s");
 
 		String src;

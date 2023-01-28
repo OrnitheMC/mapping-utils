@@ -1,6 +1,7 @@
 package net.ornithemc.mappingutils.io.diff.tiny;
 
 import java.io.BufferedWriter;
+import java.io.IOException;
 
 import net.ornithemc.mappingutils.io.diff.MappingsDiff;
 
@@ -18,13 +19,13 @@ public abstract class TinyDiffWriter {
 		this.diff = diff;
 	}
 
-	public void write() throws Exception {
+	public void write() throws IOException {
 		writeHeader();
 		writeDiffs();
 	}
 
-	protected abstract void writeHeader() throws Exception;
+	protected abstract void writeHeader() throws IOException;
 
-	protected abstract void writeDiffs() throws Exception;
+	protected abstract void writeDiffs() throws IOException;
 
 }

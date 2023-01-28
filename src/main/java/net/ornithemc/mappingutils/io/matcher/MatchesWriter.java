@@ -2,6 +2,7 @@ package net.ornithemc.mappingutils.io.matcher;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.List;
@@ -15,23 +16,23 @@ import net.ornithemc.mappingutils.io.matcher.Matches.VariableMatch;
 
 public class MatchesWriter {
 
-	public static void write(Path path, Matches matches) throws Exception {
+	public static void write(Path path, Matches matches) throws IOException {
 		write(path, matches, MatchSide.A);
 	}
 
-	public static void write(Path path, Matches matches, MatchSide srcSide) throws Exception {
+	public static void write(Path path, Matches matches, MatchSide srcSide) throws IOException {
 		try (BufferedWriter writer = new BufferedWriter(new FileWriter(path.toFile()))) {
 			write(writer, matches, srcSide);
 		} catch (Exception e) {
-			throw new IllegalStateException("error writing " + path.toString(), e);
+			throw new IOException("error writing " + path.toString(), e);
 		}
 	}
 
-	public static void write(BufferedWriter writer, Matches matches) throws Exception {
+	public static void write(BufferedWriter writer, Matches matches) throws IOException {
 		write(writer, matches, MatchSide.A);
 	}
 
-	public static void write(BufferedWriter writer, Matches matches, MatchSide srcSide) throws Exception {
+	public static void write(BufferedWriter writer, Matches matches, MatchSide srcSide) throws IOException {
 		new MatchesWriter(writer, matches, srcSide).write();
 	}
 
@@ -47,12 +48,12 @@ public class MatchesWriter {
 		this.srcSide = srcSide;
 	}
 
-	public void write() throws Exception {
+	public void write() throws IOException {
 		writeHeader();
 		writeMatches();
 	}
 
-	private void writeHeader() throws Exception {
+	private void writeHeader() throws IOException {
 		writer.write(matches.header);
 		writer.newLine();
 
@@ -68,7 +69,7 @@ public class MatchesWriter {
 		writeObfuscationPattern(Matches.NON_OBF_MEMBER_B, matches.getNonObfMemberPattern(srcSide.opposite()));
 	}
 
-	private void writeInputFiles(String type, List<InputFile> files) throws Exception {
+	private void writeInputFiles(String type, List<InputFile> files) throws IOException {
 		writer.write(TAB);
 		writer.write(type);
 		writer.newLine();
@@ -98,7 +99,7 @@ public class MatchesWriter {
 		}
 	}
 
-	private void writeObfuscationPattern(String type, String pattern) throws Exception {
+	private void writeObfuscationPattern(String type, String pattern) throws IOException {
 		if (pattern != null && !pattern.isEmpty()) {
 			writer.write(TAB);
 			writer.write(type);
@@ -108,13 +109,13 @@ public class MatchesWriter {
 		}
 	}
 
-	private void writeMatches() throws Exception {
+	private void writeMatches() throws IOException {
 		for (ClassMatch c : matches.getClasses()) {
 			writeClass(c);
 		}
 	}
 
-	private void writeMatch(String type, Match<?> match) throws Exception {
+	private void writeMatch(String type, Match<?> match) throws IOException {
 		if (match.matched()) {
 			writer.write(type);
 			writer.write(TAB);
@@ -136,7 +137,7 @@ public class MatchesWriter {
 		}
 	}
 
-	private void writeClass(ClassMatch c) throws Exception {
+	private void writeClass(ClassMatch c) throws IOException {
 		indent(Matches.CLASS_INDENTS);
 		writeMatch(Matches.CLASS, c);
 
@@ -148,7 +149,7 @@ public class MatchesWriter {
 		}
 	}
 
-	private void writeMethod(MethodMatch m) throws Exception {
+	private void writeMethod(MethodMatch m) throws IOException {
 		indent(Matches.METHOD_INDENTS);
 		writeMatch(Matches.METHOD, m);
 
@@ -160,22 +161,22 @@ public class MatchesWriter {
 		}
 	}
 
-	private void writeField(FieldMatch f) throws Exception {
+	private void writeField(FieldMatch f) throws IOException {
 		indent(Matches.FIELD_INDENTS);
 		writeMatch(Matches.FIELD, f);
 	}
 
-	private void writeParameter(ParameterMatch p) throws Exception {
+	private void writeParameter(ParameterMatch p) throws IOException {
 		indent(Matches.PARAMETER_INDENTS);
 		writeMatch(Matches.PARAMETER, p);
 	}
 
-	private void writeVariable(VariableMatch v) throws Exception {
+	private void writeVariable(VariableMatch v) throws IOException {
 		indent(Matches.VARIABLE_INDENTS);
 		writeMatch(Matches.VARIABLE, v);
 	}
 
-	private void indent(int indents) throws Exception {
+	private void indent(int indents) throws IOException {
 		for (int i = 0; i < indents; i++) {
 			writer.write(TAB);
 		}

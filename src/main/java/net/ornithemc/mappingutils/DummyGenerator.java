@@ -1,6 +1,7 @@
 package net.ornithemc.mappingutils;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.PriorityQueue;
 import java.util.Queue;
@@ -22,7 +23,7 @@ import net.ornithemc.mappingutils.io.Mappings.MethodMapping;
 
 class DummyGenerator {
 
-	static Mappings run(MappingNamespace srcNamespace, MappingNamespace dstNamespace, String classNamePattern, Path jarPath) throws Exception {
+	static Mappings run(MappingNamespace srcNamespace, MappingNamespace dstNamespace, String classNamePattern, Path jarPath) throws IOException {
 		return new DummyGenerator(srcNamespace, dstNamespace, classNamePattern, jarPath).run();
 	}
 
@@ -31,14 +32,14 @@ class DummyGenerator {
 	private final Pattern classNamePattern;
 	private final Path jarPath;
 
-	private DummyGenerator(MappingNamespace srcNamespace, MappingNamespace dstNamespace, String classNamePattern, Path jarPath) throws Exception {
+	private DummyGenerator(MappingNamespace srcNamespace, MappingNamespace dstNamespace, String classNamePattern, Path jarPath) throws IOException {
 		this.srcNamespace = srcNamespace;
 		this.dstNamespace = dstNamespace;
 		this.classNamePattern = Pattern.compile(classNamePattern);
 		this.jarPath = jarPath;
 	}
 
-	private Mappings run() throws Exception {
+	private Mappings run() throws IOException {
 		Mappings mappings = new Mappings();
 
 		mappings.setSrcNamespace(srcNamespace);

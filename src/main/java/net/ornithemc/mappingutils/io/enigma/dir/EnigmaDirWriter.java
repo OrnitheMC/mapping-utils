@@ -1,5 +1,6 @@
 package net.ornithemc.mappingutils.io.enigma.dir;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -11,7 +12,7 @@ import net.ornithemc.mappingutils.io.enigma.file.EnigmaFileWriter;
 
 public class EnigmaDirWriter {
 
-	public static void write(Path dir, Mappings mappings) throws Exception {
+	public static void write(Path dir, Mappings mappings) throws IOException {
 		new EnigmaDirWriter(dir, mappings).write();
 	}
 
@@ -25,7 +26,7 @@ public class EnigmaDirWriter {
 		this.mappings = mappings;
 	}
 
-	public void write() throws Exception {
+	public void write() throws IOException {
 		for (ClassMapping cm : mappings.getTopLevelClasses()) {
 			String path = cm.get().isEmpty() ? cm.src() : cm.getComplete();
 			Path cp = dir.resolve(path + Format.ENIGMA_FILE.mappingsExtension());

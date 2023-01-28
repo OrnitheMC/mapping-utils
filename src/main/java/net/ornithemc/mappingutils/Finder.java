@@ -1,7 +1,9 @@
 package net.ornithemc.mappingutils;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 
 import net.ornithemc.mappingutils.io.MappingTarget;
 import net.ornithemc.mappingutils.io.Mappings.Mapping;
@@ -13,11 +15,11 @@ import net.ornithemc.mappingutils.io.diff.graph.VersionGraph;
 
 class Finder {
 
-	static Collection<MappingHistory> run(VersionGraph tree, String s) throws Exception {
+	static Collection<MappingHistory> run(VersionGraph tree, String s) throws IOException {
 		return run(tree, null, s);
 	}
 
-	static Collection<MappingHistory> run(VersionGraph tree, MappingTarget target, String key) throws Exception {
+	static Collection<MappingHistory> run(VersionGraph tree, MappingTarget target, String key) throws IOException {
 		return new Finder(tree, target, key).run();
 	}
 
@@ -35,12 +37,18 @@ class Finder {
 		this.mappings = new LinkedHashSet<>();
 	}
 
-	private Collection<MappingHistory> run() throws Exception {
-		graph.walk(v -> find(v), p -> { });
+	private Collection<MappingHistory> run() throws IOException {
+		Collection<Version> versions = new LinkedList<>();
+		graph.walk(v -> versions.add(v), p -> { });
+
+		for (Version v : versions) {
+			find(v);
+		}
+
 		return mappings;
 	}
 
-	private void find(Version v) throws Exception {
+	private void find(Version v) throws IOException {
 		if (v.isRoot()) {
 			for (Mapping m : v.getMappings().getTopLevelClasses()) {
 				check(m);

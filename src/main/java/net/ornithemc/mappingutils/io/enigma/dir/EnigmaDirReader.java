@@ -1,5 +1,6 @@
 package net.ornithemc.mappingutils.io.enigma.dir;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Iterator;
@@ -10,7 +11,7 @@ import net.ornithemc.mappingutils.io.enigma.file.EnigmaFileReader;
 
 public class EnigmaDirReader {
 
-	public static Mappings read(Path dir) throws Exception {
+	public static Mappings read(Path dir) throws IOException {
 		return new EnigmaDirReader(dir, new Mappings()).read();
 	}
 
@@ -22,7 +23,7 @@ public class EnigmaDirReader {
 		this.mappings = mappings;
 	}
 
-	public Mappings read() throws Exception {
+	public Mappings read() throws IOException {
 		Iterator<Path> it = Files.walk(dir).
 			filter(p -> Files.isRegularFile(p)).
 			filter(p -> p.toString().endsWith(Format.ENIGMA_FILE.mappingsExtension())).

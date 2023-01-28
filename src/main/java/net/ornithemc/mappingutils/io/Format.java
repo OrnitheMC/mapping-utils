@@ -2,6 +2,7 @@ package net.ornithemc.mappingutils.io;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.nio.file.Path;
 
 import net.ornithemc.mappingutils.io.diff.MappingsDiff;
@@ -23,118 +24,118 @@ public enum Format {
 	TINY_V1(".tiny", ".tinydiff") {
 
 		@Override
-		public Mappings readMappings(Path path) throws Exception {
+		public Mappings readMappings(Path path) throws IOException {
 			return TinyV1Reader.read(path);
 		}
 
 		@Override
-		public Mappings readMappings(BufferedReader br) throws Exception {
+		public Mappings readMappings(BufferedReader br) throws IOException {
 			return TinyV1Reader.read(br);
 		}
 
 		@Override
-		public void writeMappings(Path path, Mappings mappings) throws Exception {
+		public void writeMappings(Path path, Mappings mappings) throws IOException {
 			TinyV1Writer.write(path, mappings);
 		}
 
 		@Override
-		public void writeMappings(BufferedWriter bw, Mappings mappings) throws Exception {
+		public void writeMappings(BufferedWriter bw, Mappings mappings) throws IOException {
 			TinyV1Writer.write(bw, mappings);
 		}
 
 		@Override
-		public MappingsDiff readDiff(Path path) throws Exception {
+		public MappingsDiff readDiff(Path path) throws IOException {
 			return TinyV1DiffReader.read(path);
 		}
 
 		@Override
-		public MappingsDiff readDiff(BufferedReader br) throws Exception {
+		public MappingsDiff readDiff(BufferedReader br) throws IOException {
 			return TinyV1DiffReader.read(br);
 		}
 
 		@Override
-		public void writeDiff(Path path, MappingsDiff diff) throws Exception {
+		public void writeDiff(Path path, MappingsDiff diff) throws IOException {
 			TinyV1DiffWriter.write(path, diff);
 		}
 
 		@Override
-		public void writeDiff(BufferedWriter bw, MappingsDiff diff) throws Exception {
+		public void writeDiff(BufferedWriter bw, MappingsDiff diff) throws IOException {
 			TinyV1DiffWriter.write(bw, diff);
 		}
 	},
 	TINY_V2(".tiny", ".tinydiff") {
 
 		@Override
-		public Mappings readMappings(Path path) throws Exception {
+		public Mappings readMappings(Path path) throws IOException {
 			return TinyV2Reader.read(path);
 		}
 
 		@Override
-		public Mappings readMappings(BufferedReader br) throws Exception {
+		public Mappings readMappings(BufferedReader br) throws IOException {
 			return TinyV2Reader.read(br);
 		}
 
 		@Override
-		public void writeMappings(Path path, Mappings mappings) throws Exception {
+		public void writeMappings(Path path, Mappings mappings) throws IOException {
 			TinyV2Writer.write(path, mappings);
 		}
 
 		@Override
-		public void writeMappings(BufferedWriter bw, Mappings mappings) throws Exception {
+		public void writeMappings(BufferedWriter bw, Mappings mappings) throws IOException {
 			TinyV2Writer.write(bw, mappings);
 		}
 
 		@Override
-		public MappingsDiff readDiff(Path path) throws Exception {
+		public MappingsDiff readDiff(Path path) throws IOException {
 			return TinyV2DiffReader.read(path);
 		}
 
 		@Override
-		public MappingsDiff readDiff(BufferedReader br) throws Exception {
+		public MappingsDiff readDiff(BufferedReader br) throws IOException {
 			return TinyV2DiffReader.read(br);
 		}
 
 		@Override
-		public void writeDiff(Path path, MappingsDiff diff) throws Exception {
+		public void writeDiff(Path path, MappingsDiff diff) throws IOException {
 			TinyV2DiffWriter.write(path, diff);
 		}
 
 		@Override
-		public void writeDiff(BufferedWriter bw, MappingsDiff diff) throws Exception {
+		public void writeDiff(BufferedWriter bw, MappingsDiff diff) throws IOException {
 			TinyV2DiffWriter.write(bw, diff);
 		}
 	},
 	ENIGMA_FILE(".mapping", null) {
 
 		@Override
-		public Mappings readMappings(Path path) throws Exception {
+		public Mappings readMappings(Path path) throws IOException {
 			return EnigmaFileReader.read(path);
 		}
 
 		@Override
-		public Mappings readMappings(BufferedReader br) throws Exception {
+		public Mappings readMappings(BufferedReader br) throws IOException {
 			return EnigmaFileReader.read(br);
 		}
 
 		@Override
-		public void writeMappings(Path path, Mappings mappings) throws Exception {
+		public void writeMappings(Path path, Mappings mappings) throws IOException {
 			EnigmaFileWriter.write(path, mappings);
 		}
 
 		@Override
-		public void writeMappings(BufferedWriter bw, Mappings mappings) throws Exception {
+		public void writeMappings(BufferedWriter bw, Mappings mappings) throws IOException {
 			EnigmaFileWriter.write(bw, mappings);
 		}
 	},
 	ENIGMA_DIR(null, null) {
 
 		@Override
-		public Mappings readMappings(Path path) throws Exception {
+		public Mappings readMappings(Path path) throws IOException {
 			return EnigmaDirReader.read(path);
 		}
 
 		@Override
-		public void writeMappings(Path path, Mappings mappings) throws Exception {
+		public void writeMappings(Path path, Mappings mappings) throws IOException {
 			EnigmaDirWriter.write(path, mappings);
 		}
 	};
@@ -155,35 +156,35 @@ public enum Format {
 		return diffExtension;
 	}
 
-	public Mappings readMappings(Path path) throws Exception {
+	public Mappings readMappings(Path path) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
-	public Mappings readMappings(BufferedReader br) throws Exception {
+	public Mappings readMappings(BufferedReader br) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
-	public void writeMappings(Path path, Mappings mappings) throws Exception {
+	public void writeMappings(Path path, Mappings mappings) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
-	public void writeMappings(BufferedWriter bw, Mappings mappings) throws Exception {
+	public void writeMappings(BufferedWriter bw, Mappings mappings) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
-	public MappingsDiff readDiff(Path path) throws Exception {
+	public MappingsDiff readDiff(Path path) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
-	public MappingsDiff readDiff(BufferedReader br) throws Exception {
+	public MappingsDiff readDiff(BufferedReader br) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
-	public void writeDiff(Path path, MappingsDiff diff) throws Exception {
+	public void writeDiff(Path path, MappingsDiff diff) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
-	public void writeDiff(BufferedWriter bw, MappingsDiff diff) throws Exception {
+	public void writeDiff(BufferedWriter bw, MappingsDiff diff) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 }

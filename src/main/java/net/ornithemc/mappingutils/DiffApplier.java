@@ -14,11 +14,11 @@ import net.ornithemc.mappingutils.io.diff.MappingsDiff.JavadocDiff;
 
 class DiffApplier {
 
-	static void run(Mappings mappings, MappingsDiff... diffs) throws Exception {
+	static void run(Mappings mappings, MappingsDiff... diffs) {
 		run(mappings, Arrays.asList(diffs));
 	}
 
-	static void run(Mappings mappings, Collection<MappingsDiff> diffs) throws Exception {
+	static void run(Mappings mappings, Collection<MappingsDiff> diffs) {
 		new DiffApplier(mappings, diffs).run();
 	}
 
@@ -36,7 +36,7 @@ class DiffApplier {
 		this.diffs = diffs;
 	}
 
-	private void run() throws Exception {
+	private void run() {
 		for (MappingsDiff diff : diffs) {
 			for (ClassDiff cd : diff.getTopLevelClasses()) {
 				applyDiff(cd);

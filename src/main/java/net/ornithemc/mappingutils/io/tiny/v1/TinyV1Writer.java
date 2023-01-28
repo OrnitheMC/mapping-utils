@@ -2,6 +2,7 @@ package net.ornithemc.mappingutils.io.tiny.v1;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Path;
 
 import net.ornithemc.mappingutils.io.Mappings;
@@ -12,15 +13,15 @@ import net.ornithemc.mappingutils.io.tiny.TinyMappingsWriter;
 
 public class TinyV1Writer extends TinyMappingsWriter {
 
-	public static void write(Path path, Mappings mappings) throws Exception {
+	public static void write(Path path, Mappings mappings) throws IOException {
 		try (BufferedWriter writer = new BufferedWriter(new FileWriter(path.toFile()))) {
 			write(writer, mappings);
 		} catch (Exception e) {
-			throw new IllegalStateException("error writing " + path.toString(), e);
+			throw new IOException("error writing " + path.toString(), e);
 		}
 	}
 
-	public static void write(BufferedWriter writer, Mappings mappings) throws Exception {
+	public static void write(BufferedWriter writer, Mappings mappings) throws IOException {
 		new TinyV1Writer(writer, mappings).write();
 	}
 
@@ -29,7 +30,7 @@ public class TinyV1Writer extends TinyMappingsWriter {
 	}
 
 	@Override
-	protected void writeHeader() throws Exception {
+	protected void writeHeader() throws IOException {
 		writer.write(TinyV1Format.VERSION);
 		writer.write(TAB);
 		writer.write(mappings.getSrcNamespace().toString());
@@ -39,13 +40,13 @@ public class TinyV1Writer extends TinyMappingsWriter {
 	}
 
 	@Override
-	protected void writeMappings() throws Exception {
+	protected void writeMappings() throws IOException {
 		for (ClassMapping c : mappings.getTopLevelClasses()) {
 			writeClass(c);
 		}
 	}
 
-	private void writeClass(ClassMapping c) throws Exception {
+	private void writeClass(ClassMapping c) throws IOException {
 		writer.write(TinyV1Format.CLASS);
 		writer.write(TAB);
 		writer.write(c.src());
@@ -64,7 +65,7 @@ public class TinyV1Writer extends TinyMappingsWriter {
 		}
 	}
 
-	private void writeField(FieldMapping f) throws Exception {
+	private void writeField(FieldMapping f) throws IOException {
 		writer.write(TinyV1Format.FIELD);
 		writer.write(TAB);
 		writer.write(f.getParent().src());
@@ -77,7 +78,7 @@ public class TinyV1Writer extends TinyMappingsWriter {
 		writer.newLine();
 	}
 
-	private void writeMethod(MethodMapping m) throws Exception {
+	private void writeMethod(MethodMapping m) throws IOException {
 		writer.write(TinyV1Format.METHOD);
 		writer.write(TAB);
 		writer.write(m.getParent().src());
