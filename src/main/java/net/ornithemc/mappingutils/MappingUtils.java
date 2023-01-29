@@ -101,8 +101,8 @@ public class MappingUtils {
 		insertMappings(options, graph, changes, version);
 	}
 
-	public static void insertMappings(PropagationOptions options, VersionGraph graph, MappingsDiff diff, String version) throws IOException {
-		ChangePropagator.run(options, graph, diff, version);
+	public static void insertMappings(PropagationOptions options, VersionGraph graph, MappingsDiff changes, String version) throws IOException {
+		ChangePropagator.run(options, graph, changes, version);
 	}
 
 	public static void generateDummyMappings(Format format, MappingNamespace srcNamespace, MappingNamespace dstNamespace, String classNamePattern, Path jarPath, Path mappingsPath) throws IOException {
