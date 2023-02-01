@@ -21,6 +21,8 @@ public class Version {
 	final Set<Version> parents;
 	final Set<Version> children;
 
+	int depth = -1;
+
 	private Mappings mappings;
 	private final Map<Version, MappingsDiff> diffs;
 	final Map<Version, Path> paths;
@@ -74,6 +76,10 @@ public class Version {
 
 	public boolean isRoot() {
 		return parents.isEmpty();
+	}
+
+	public int getDepth() {
+		return depth;
 	}
 
 	public Mappings getMappings() throws IOException {

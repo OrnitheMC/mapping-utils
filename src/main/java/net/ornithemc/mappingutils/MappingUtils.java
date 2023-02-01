@@ -102,7 +102,7 @@ public class MappingUtils {
 	}
 
 	public static void insertMappings(PropagationOptions options, VersionGraph graph, MappingsDiff changes, String version) throws IOException {
-		ChangePropagator.run(options, graph, changes, version);
+		Propagator.run(options, graph, changes, version);
 	}
 
 	public static void generateDummyMappings(Format format, MappingNamespace srcNamespace, MappingNamespace dstNamespace, String classNamePattern, Path jarPath, Path mappingsPath) throws IOException {

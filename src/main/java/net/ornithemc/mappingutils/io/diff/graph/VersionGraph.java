@@ -65,9 +65,9 @@ public class VersionGraph {
 		Version version = versions.get(startVersion);
 
 		if (version == null) {
-			walk(version, towardsRoot, versionVisitor, pathVisitor);
-		} else {
 			throw new IllegalArgumentException("no version " + startVersion + " is present in this graph!");
+		} else {
+			walk(version, towardsRoot, versionVisitor, pathVisitor);
 		}
 	}
 
@@ -83,14 +83,18 @@ public class VersionGraph {
 		while (!walkers.isEmpty()) {
 			walker = walkers.poll();
 
-			if (visited.add(walker.head)) {
-				versionVisitor.accept(walker.head);
+			Version head = walker.head;
+			Collection<Version> path = walker.path;
+			Collection<Version> next = towardsRoot ? head.parents : head.children;
+
+			if (visited.add(head)) {
+				versionVisitor.accept(head);
 			}
-			if (walker.head.children.isEmpty()) {
-				pathVisitor.accept(walker.path);
+			if (next.isEmpty()) {
+				pathVisitor.accept(path);
 			}
 
-			for (Version v : (towardsRoot ? walker.head.parents : walker.head.children)) {
+			for (Version v : next) {
 				walker = new GraphWalker(walker);
 				walker.walk(v);
 
@@ -100,11 +104,20 @@ public class VersionGraph {
 	}
 
 	public Collection<Version> getPathFromRoot(String version) {
+		// there might be multiple paths, but we want the shortest one
 		Queue<Collection<Version>> paths = new PriorityQueue<>((p1, p2) -> {
 			return p1.size() - p2.size();
 		});
+		walkToRoot(version, v -> { }, p -> {
+			// path is towards root, so we need to invert it
+			Deque<Version> path = new LinkedList<>();
 
-		walkToRoot(version, v -> { }, p -> paths.add(p));
+			for (Version v : p) {
+				path.addFirst(v);
+			}
+
+			paths.add(path);
+		});
 
 		if (paths.isEmpty()) {
 			return Collections.emptyList();
@@ -168,7 +181,18 @@ public class VersionGraph {
 			throw new IllegalStateException("version graph does not have a root!");
 		}
 
-		walk(v -> { }, p -> { }); // validate graph
+		// validate graph, populate depth
+		walk(v -> { }, p -> {
+			int depth = 0;
+
+			for (Version v : p) {
+				if (v.depth < 0 || depth < v.depth) {
+					v.depth = depth;
+				}
+
+				depth++;
+			}
+		});
 
 		return this;
 	}
