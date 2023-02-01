@@ -497,6 +497,10 @@ public class MappingsDiff {
 		public ClassDiff getParent() {
 			return (ClassDiff)parent;
 		}
+
+		public String getComplete(DiffSide side) {
+			return parent == null || get(side).isEmpty() ? get(side) : getParent().getComplete(side) + "$" + get(side);
+		}
 	}
 
 	public static class FieldDiff extends Diff {
