@@ -49,9 +49,9 @@ public class TinyV1DiffWriter extends TinyDiffWriter {
 		writer.write(c.src());
 		if (c.isDiff()) {
 			writer.write(TAB);
-			writer.write(c.get(DiffSide.A).isEmpty() ? c.src() : c.getComplete(DiffSide.A));
+			writer.write(c.getComplete(DiffSide.A));
 			writer.write(TAB);
-			writer.write(c.get(DiffSide.B).isEmpty() ? c.src() : c.getComplete(DiffSide.B));
+			writer.write(c.getComplete(DiffSide.B));
 		}
 		writer.newLine();
 
