@@ -380,6 +380,12 @@ class Propagator {
 	}
 
 	private void queueSiblingChange(Version v, Diff d, Diff change, DiffSide side, PropagationDirection dir, Mode mode, Operation op) {
+		if (change.get(DiffSide.A).isEmpty() == d.get(side.opposite()).isEmpty()) {
+			// mapping (does not) exists on both sides
+			// so do not try to propagate to siblings
+			return;
+		}
+
 		MappingTarget target = d.target();
 		String name = d.src();
 
