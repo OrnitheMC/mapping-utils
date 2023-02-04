@@ -201,8 +201,7 @@ class Propagator {
 			}
 		}
 
-		// now apply the change
-		if (mode == Mode.JAVADOCS || op == Operation.NONE) {
+		if (op == Operation.NONE) {
 			if (m == null) {
 				// add dummy mapping
 				if (parent == null) {
@@ -211,14 +210,16 @@ class Propagator {
 					m = parent.addChild(target, key, "");
 				}
 			}
+
+			return m;
 		}
+
+		// now apply the change
 		if (mode == Mode.MAPPINGS) {
 			String o = change.get(DiffSide.A);
 			String n = change.get(DiffSide.B);
 
 			switch (op) {
-			case NONE:
-				break;
 			case ADD:
 				if (m == null) {
 					if (parent == null) {
@@ -316,8 +317,7 @@ class Propagator {
 			}
 		}
 
-		// now apply the change
-		if (mode == Mode.JAVADOCS || op == Operation.NONE) {
+		if (op == Operation.NONE) {
 			if (d == null) {
 				// add dummy diff
 				if (parent == null) {
@@ -326,11 +326,12 @@ class Propagator {
 					d = parent.addChild(target, key, "", "");
 				}
 			}
+
+			return d;
 		}
+
+		// now apply the change
 		if (mode == Mode.MAPPINGS) {
-			if (op == Operation.NONE) {
-				return d;
-			}
 			if (d == null || (!d.isDiff() && !insert)) {
 				return null;
 			}
@@ -353,9 +354,6 @@ class Propagator {
 			JavadocDiff jchange = change.getJavadoc();
 			JavadocDiff jd = (d == null) ? null : d.getJavadoc();
 
-			if (op == Operation.NONE) {
-				return d;
-			}
 			if (jd == null || (!jd.isDiff() && !insert)) {
 				return null;
 			}
