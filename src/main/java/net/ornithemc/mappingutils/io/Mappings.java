@@ -123,8 +123,7 @@ public class Mappings {
 		ClassMapping parent = findParent(c.src(), true);
 
 		if (parent == null) {
-			c.root = this;
-			c.parent = null;
+			c.setRoot(this);
 
 			return classMappings.compute(c.key(), (key, value) -> {
 				return (ClassMapping)checkReplace(value, c);
@@ -243,6 +242,14 @@ public class Mappings {
 			this.jav = validateDst(jav);
 		}
 
+		protected final void setRoot(Mappings mappings) {
+			this.root = mappings;
+
+			for (Mapping m : children.values()) {
+				m.setRoot(mappings);
+			}
+		}
+
 		public Mapping getParent() {
 			return parent;
 		}
@@ -351,7 +358,7 @@ public class Mappings {
 			if (!isValidChild(m.target()))
 				throw new IllegalStateException("invalid child target " + m.target());
 
-			m.root = root;
+			m.setRoot(root);
 			m.parent = this;
 
 			return children.compute(m.key(), (key, value) -> {
