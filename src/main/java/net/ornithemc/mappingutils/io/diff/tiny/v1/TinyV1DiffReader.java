@@ -5,7 +5,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import net.ornithemc.mappingutils.io.Mappings.ClassMapping;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff;
 import net.ornithemc.mappingutils.io.diff.MappingsDiff.ClassDiff;
 import net.ornithemc.mappingutils.io.diff.tiny.TinyDiffReader;
@@ -64,8 +63,8 @@ public class TinyV1DiffReader extends TinyDiffReader {
 			}
 
 			src = args[1];
-			dstA = (args.length < 3) ? "" : ClassMapping.getSimplified(args[2]);
-			dstB = (args.length < 4) ? "" : ClassMapping.getSimplified(args[3]);
+			dstA = (args.length < 3) ? "" : args[2];
+			dstB = (args.length < 4) ? "" : args[3];
 
 			diff.addClass(src, dstA, dstB);
 

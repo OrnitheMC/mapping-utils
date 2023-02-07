@@ -60,9 +60,9 @@ public class TinyV2DiffWriter extends TinyDiffWriter {
 		writer.write(c.src());
 		if (c.isDiff()) {
 			writer.write(TAB);
-			writer.write(c.getComplete(DiffSide.A));
+			writer.write(c.get(DiffSide.A));
 			writer.write(TAB);
-			writer.write(c.getComplete(DiffSide.B));
+			writer.write(c.get(DiffSide.B));
 		}
 		writer.newLine();
 

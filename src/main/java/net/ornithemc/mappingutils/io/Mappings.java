@@ -595,7 +595,14 @@ public class Mappings {
 		}
 
 		public String getComplete() {
-			return parent == null || dst.isEmpty() ? dst : getParent().getComplete() + "$" + dst;
+			// empty dst == map to src
+			String name = dst.isEmpty() ? getSimplified(src) : dst;
+
+			if (parent != null) {
+				name = getParent().getComplete() + "$" + name;
+			}
+
+			return name;
 		}
 
 		public static String getSimplified(String name) {
