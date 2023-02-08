@@ -420,7 +420,7 @@ class Propagator {
 			if (dst.isEmpty() == siblingDst.isEmpty()) {
 				throw new IllegalStateException("two targets with the same name (" + d + ", " + sibling + ") exist in " + v + "!");
 			}
-			if (s != side && !dst.equals(change.get(DiffSide.A))) {
+			if (s != side && !change.get(DiffSide.A).equals(siblingDst)) {
 				// diff does not match, do not propagate to this sibling
 				return;
 			}
