@@ -20,6 +20,9 @@ import net.ornithemc.mappingutils.io.matcher.MatchSide;
 import net.ornithemc.mappingutils.io.matcher.MatchesReader;
 import net.ornithemc.mappingutils.io.matcher.MatchesWriter;
 
+import net.ornithemc.nester.nest.NesterIo;
+import net.ornithemc.nester.nest.Nests;
+
 public class MappingUtils {
 
 	public static void invertMatches(Path src, Path dst) throws IOException {
@@ -111,6 +114,51 @@ public class MappingUtils {
 
 	public static Mappings generateDummyMappings(MappingNamespace srcNamespace, MappingNamespace dstNamespace, String classNamePattern, Path jarPath) throws IOException {
 		return DummyGenerator.run(srcNamespace, dstNamespace, classNamePattern, jarPath);
+	}
+
+	public static void applyNests(Format format, Path srcPath, Path dstPath, Path nestsPath) throws IOException {
+		runNester(format, srcPath, dstPath, nestsPath, true);
+	}
+
+	public static void undoNests(Format format, Path srcPath, Path dstPath, Path nestsPath) throws IOException {
+		runNester(format, srcPath, dstPath, nestsPath, false);
+	}
+
+	private static void runNester(Format format, Path srcPath, Path dstPath, Path nestsPath, boolean apply) throws IOException {
+		Mappings mappings = format.readMappings(srcPath);
+		Nests nests = Nests.of(nestsPath);
+
+		Mappings nestedMappings = runNester(mappings, nests, apply);
+		format.writeMappings(dstPath, nestedMappings);
+	}
+
+	public static Mappings applyNests(Mappings mappings, Nests nests) {
+		return runNester(mappings, nests, true);
+	}
+
+	public static Mappings undoNests(Mappings mappings, Nests nests)  {
+		return runNester(mappings, nests, false);
+	}
+
+	private static Mappings runNester(Mappings mappings, Nests nests, boolean apply) {
+		return Nester.run(mappings, nests, apply);
+	}
+
+	public static void mapNests(Path srcPath, Path dstPath, Format format, Path mappingsPath) throws IOException {
+		Nests src = Nests.empty();
+		NesterIo.read(src, srcPath);
+		Mappings mappings = format.readMappings(mappingsPath);
+
+		Nests dst = mapNests(src, mappings);
+		NesterIo.write(dst, dstPath);
+	}
+
+	public static Nests mapNests(Nests nests, Mappings mappings) {
+		return mapNests(nests, Mapper.of(mappings));
+	}
+
+	public static Nests mapNests(Nests nests, Mapper mapper) {
+		return NestsMapper.run(nests, mapper);
 	}
 
 	public static Collection<MappingHistory> findMappings(Format format, Path dir, MappingTarget target, String key) throws IOException {
