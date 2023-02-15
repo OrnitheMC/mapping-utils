@@ -240,6 +240,8 @@ class Nester {
 			throw new IllegalStateException("unknown mapping target " + m.target());
 		}
 
+		tm.setJavadoc(m.getJavadoc());
+
 		for (Mapping c : m.getChildren()) {
 			translate(m, tm, c);
 		}
