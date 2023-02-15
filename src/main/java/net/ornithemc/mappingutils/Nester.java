@@ -152,7 +152,14 @@ class Nester {
 						tp = dst.getClass(translatedEnclName);
 
 						if (tp == null) {
-							tp = dst.addClass(translatedEnclName, mappedTranslatedEnclName);
+							p = src.getClass(enclName);
+
+							if (p == null) {
+								tp = dst.addClass(translatedEnclName, mappedTranslatedEnclName);
+							} else {
+								// make sure the entire hierarchy is added
+								translate(null, null, p);
+							}
 						}
 					}
 				} else {
