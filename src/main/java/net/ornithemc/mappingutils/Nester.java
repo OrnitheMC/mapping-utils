@@ -129,36 +129,40 @@ class Nester {
 			name = cm.src();
 			mapping = cm.getComplete();
 
-			if (p == null && apply) {
-				// enclosing class may not have been translated yet
-				// since that depends on the order in which the mappings
-				// are read
-				// it could also be that the enclosing class does not exist
-				// (since nester is able to generate those) in which case
-				// we need to create a dummy mapping
-				Nest nest = nests.get(name);
-				Nest mappedNest = mappedNests.get(mapping);
-				
-				if (nest != null) {
-					String enclName = nest.enclClassName;
-					String mappedEnclName = mappedNest.enclClassName;
-					String translatedEnclName = translator.mapClass(enclName);
-					String mappedTranslatedEnclName = mappedTranslator.mapClass(mappedEnclName);
-
-					p = src.getClass(enclName);
-					tp = dst.getClass(translatedEnclName);
-
-					if (p == null) {
-						p = src.addClass(enclName, mappedEnclName);
-					}
-					if (tp == null) {
-						tp = dst.addClass(translatedEnclName, mappedTranslatedEnclName);
-					}
-				}
-			}
+			Nest nest = nests.get(name);
+			Nest mappedNest = mappedNests.get(mapping);
 
 			name = translator.mapClass(name);
 			mapping = mappedTranslator.mapClass(mapping);
+
+			if (nest != null) {
+				if (apply) {
+					if (p == null) {
+						// enclosing class may not have been translated yet
+						// since that depends on the order in which the mappings
+						// are read
+						// it could also be that the enclosing class does not exist
+						// (since nester is able to generate those) in which case
+						// we need to create a dummy mapping
+						String enclName = nest.enclClassName;
+						String mappedEnclName = mappedNest.enclClassName;
+						String translatedEnclName = translator.mapClass(enclName);
+						String mappedTranslatedEnclName = mappedTranslator.mapClass(mappedEnclName);
+
+						p = src.getClass(enclName);
+						tp = dst.getClass(translatedEnclName);
+
+						if (p == null) {
+							p = src.addClass(enclName, mappedEnclName);
+						}
+						if (tp == null) {
+							tp = dst.addClass(translatedEnclName, mappedTranslatedEnclName);
+						}
+					}
+				} else {
+					mapping = mapping.replace("$", "__");
+				}
+			}
 
 			tm = dst.getClass(name);
 
@@ -166,7 +170,7 @@ class Nester {
 				tm = dst.addClass(name, name);
 			}
 
-			tm.set(apply ? ClassMapping.getSimplified(mapping) : mapping.replace("$", "__"));
+			tm.set(ClassMapping.getSimplified(mapping));
 
 			break;
 		case FIELD:
