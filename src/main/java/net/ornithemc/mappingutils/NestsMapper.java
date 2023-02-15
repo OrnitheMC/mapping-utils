@@ -88,7 +88,7 @@ class NestsMapper {
 			if (name.endsWith(simpleName)) {
 				// inner name is full name with package stripped
 				// so translate that
-				innerName = prefix + mappedName.substring(mappedName.lastIndexOf('/'));
+				innerName = prefix + mappedName.substring(mappedName.lastIndexOf('/') + 1);
 			}
 		} else {
 			// anonymous class, keep given inner name
