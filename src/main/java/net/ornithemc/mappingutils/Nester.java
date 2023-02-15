@@ -149,12 +149,8 @@ class Nester {
 						String translatedEnclName = translator.mapClass(enclName);
 						String mappedTranslatedEnclName = mappedTranslator.mapClass(mappedEnclName);
 
-						p = src.getClass(enclName);
 						tp = dst.getClass(translatedEnclName);
 
-						if (p == null) {
-							p = src.addClass(enclName, mappedEnclName);
-						}
 						if (tp == null) {
 							tp = dst.addClass(translatedEnclName, mappedTranslatedEnclName);
 						}
