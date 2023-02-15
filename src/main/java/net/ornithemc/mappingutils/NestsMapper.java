@@ -76,7 +76,7 @@ class NestsMapper {
 		}
 
 		int i = 0;
-		while (Character.isDigit(innerName.charAt(i))) {
+		while (i < innerName.length() && Character.isDigit(innerName.charAt(i))) {
 			i++;
 		}
 		if (i < innerName.length()) {
