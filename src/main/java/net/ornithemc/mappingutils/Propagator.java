@@ -162,7 +162,7 @@ class Propagator {
 					if (dir == PropagationDirection.UP) {
 						propagation.get(PropagationDirection.DOWN).addAll(v.getChildren());
 					}
-					if (mode == Mode.MAPPINGS && options.lenient) {
+					if (mode == Mode.MAPPINGS && options.lenient && !insert) {
 						queueSiblingChange(v, d, change, side, dir, mode, op);
 					}
 
@@ -427,10 +427,8 @@ class Propagator {
 		}
 
 		if (dir == PropagationDirection.UP) {
-			if (!barriers.contains(v)) {
-				for (Version p : v.getParents()) {
-					queueSiblingChange(p, sibling, change, mode, op);
-				}
+			for (Version p : v.getParents()) {
+				queueSiblingChange(p, sibling, change, mode, op);
 			}
 		} else {
 			queueSiblingChange(v, sibling, change, mode, op);
