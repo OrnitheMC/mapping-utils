@@ -129,11 +129,12 @@ class Nester {
 			name = cm.src();
 			mapping = cm.getComplete();
 
-			Nest nest = nests.get(name);
-			Nest mappedNest = mappedNests.get(mapping);
+			String translatedName = translator.mapClass(name);
+			String translatedMapping = mappedTranslator.mapClass(mapping);
 
-			name = translator.mapClass(name);
-			mapping = mappedTranslator.mapClass(mapping);
+			// we get the nests by a class' un-nested names
+			Nest nest = nests.get(apply ? name : translatedName);
+			Nest mappedNest = mappedNests.get(apply ? mapping : translatedMapping);
 
 			if (nest != null) {
 				if (apply) {
@@ -163,17 +164,17 @@ class Nester {
 						}
 					}
 				} else {
-					mapping = mapping.replace("$", "__");
+					translatedMapping = translatedMapping.replace("$", "__");
 				}
 			}
 
-			tm = dst.getClass(name);
+			tm = dst.getClass(translatedName);
 
 			if (tm == null) {
-				tm = dst.addClass(name, name);
+				tm = dst.addClass(translatedName, translatedName);
 			}
 
-			tm.set(ClassMapping.getSimplified(mapping));
+			tm.set(ClassMapping.getSimplified(translatedMapping));
 
 			break;
 		case FIELD:
