@@ -265,6 +265,10 @@ class Propagator {
 			}
 		}
 		if (mode == Mode.JAVADOCS) {
+			if (m == null) {
+				return null;
+			}
+
 			JavadocDiff jchange = change.getJavadoc();
 			String o = jchange.get(DiffSide.A);
 			String n = jchange.get(DiffSide.B);
