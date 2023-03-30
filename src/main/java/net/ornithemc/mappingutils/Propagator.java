@@ -358,7 +358,7 @@ class Propagator {
 			JavadocDiff jchange = change.getJavadoc();
 			JavadocDiff jd = (d == null) ? null : d.getJavadoc();
 
-			if (jd == null || (!jd.isDiff() && !insert)) {
+			if (jd == null || (!(d.isDiff() && d.get(side.opposite()).isEmpty()) && !jd.isDiff() && !insert)) {
 				return null;
 			}
 
