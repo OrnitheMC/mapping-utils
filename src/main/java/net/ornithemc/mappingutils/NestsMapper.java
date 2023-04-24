@@ -32,9 +32,9 @@ class NestsMapper {
 		NestType type = nest.type;
 		String className = mapClassName(nest.className);
 		String enclClassName = mapOuterName(nest.className, nest.enclClassName);
-		String enclMethodName = (nest.enclMethodName == null ? null : mapMethodName(nest.enclClassName, nest.enclMethodName, nest.enclMethodDesc));
-		String enclMethodDesc = (nest.enclMethodDesc == null ? null : mapMethodDesc(nest.enclClassName, nest.enclMethodName, nest.enclMethodDesc));
-		String innerName = mapInnerName(nest.className, nest.innerName);
+		String enclMethodName = (nest.enclMethodName == null) ? null : mapMethodName(nest.enclClassName, nest.enclMethodName, nest.enclMethodDesc);
+		String enclMethodDesc = (nest.enclMethodDesc == null) ? null : mapMethodDesc(nest.enclClassName, nest.enclMethodName, nest.enclMethodDesc);
+		String innerName = (nest.type == NestType.ANONYMOUS) ? nest.innerName : mapInnerName(nest.className, nest.innerName);
 		int access = nest.access;
 
 		return new Nest(type, className, enclClassName, enclMethodName, enclMethodDesc, innerName, access);
