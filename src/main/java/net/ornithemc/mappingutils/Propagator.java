@@ -6,9 +6,9 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.Set;
 
 import net.ornithemc.mappingutils.io.MappingTarget;
 import net.ornithemc.mappingutils.io.Mappings;
@@ -39,7 +39,7 @@ class Propagator {
 	private Map<Version, MappingsDiff> queuedChanges;
 	private Map<Version, MappingsDiff> workingChanges;
 
-	private final Map<PropagationDirection, Queue<Version>> propagation;
+	private final PropagationQueue propagation;
 
 	private Propagator(PropagationOptions options, VersionGraph graph, MappingsDiff changes, String version) {
 		changes.validate();
@@ -52,16 +52,7 @@ class Propagator {
 		this.queuedChanges = new HashMap<>();
 		this.workingChanges = new HashMap<>();
 
-		// order ensures each version is tested only once in each direction
-		// up = towards root/smaller depth
-		// down = away from root/larger depth
-		this.propagation = new EnumMap<>(PropagationDirection.class);
-		this.propagation.put(PropagationDirection.UP, new PriorityQueue<>((v1, v2) -> {
-			return v1.getDepth() - v2.getDepth();
-		}));
-		this.propagation.put(PropagationDirection.DOWN, new PriorityQueue<>((v1, v2) -> {
-			return v2.getDepth() - v1.getDepth();
-		}));
+		this.propagation = new PropagationQueue();
 
 		Version v = graph.getVersion(version);
 
@@ -83,7 +74,7 @@ class Propagator {
 		while (!queuedChanges.isEmpty()) {
 			prepareQueuedChanges();
 
-			for (Entry<Version, MappingsDiff> entry : workingChanges.entrySet()) {
+			for (Map.Entry<Version, MappingsDiff> entry : workingChanges.entrySet()) {
 				propagateChanges(entry.getKey(), entry.getValue());
 			}
 		}
@@ -120,25 +111,36 @@ class Propagator {
 	}
 
 	private void propagateChange(Version v, Diff change, Mode mode, Operation op) throws IOException {
-		propagation.get(PropagationDirection.UP).add(v);
+		propagation.offer(PropagationDirection.UP, v);
 
-		for (PropagationDirection dir : PROPAGATION_DIRECTION_ORDER) {
-			Queue<Version> queue = propagation.get(dir);
+		while (!propagation.isEmpty()) {
+			PropagationQueue.Entry e = propagation.poll();
 
-			while (!queue.isEmpty()) {
-				propagateChange(queue.poll(), change, dir, mode, op);
+			if (e != null) {
+				PropagationDirection dir = e.direction();
+				Version n = e.version();
+
+				if (dir == PropagationDirection.UP) {
+					propagateChange(null, n, change, dir, mode, op);
+				} else {
+					for (Version c : n.getChildren()) {
+						propagateChange(n, c, change, dir, mode, op);
+					}
+				}
 			}
 		}
+
+		propagation.reset();
 	}
 
-	private void propagateChange(Version v, Diff change, PropagationDirection dir, Mode mode, Operation op) throws IOException {
+	private void propagateChange(Version s, Version v, Diff change, PropagationDirection dir, Mode mode, Operation op) throws IOException {
 		if (v.isRoot()) {
 			Mapping m = applyChange(v, v.getMappings(), change, mode, op);
 
 			if (m != null) {
 				// success, now propagate in opposite direction
 				if (dir == PropagationDirection.UP) {
-					propagation.get(PropagationDirection.DOWN).addAll(v.getChildren());
+					propagation.offer(PropagationDirection.DOWN, v);
 				}
 
 				v.markDirty();
@@ -148,7 +150,7 @@ class Propagator {
 			boolean insert = barriers.contains(v);
 
 			for (Version p : v.getParents()) {
-				if (p.getDepth() >= v.getDepth()) {
+				if (dir == PropagationDirection.DOWN && p != s) {
 					continue;
 				}
 
@@ -157,14 +159,17 @@ class Propagator {
 				if (d == null) {
 					// change not applied to this version, propagate further
 					if (dir == PropagationDirection.UP) {
-						propagation.get(dir).add(p);
+						propagation.offer(dir, p);
 					} else {
-						propagation.get(dir).addAll(v.getChildren());
+						// change came down from some version, but
+						// could be propagated up to other parents
+						propagation.offer(PropagationDirection.UP, v);
+						propagation.offer(dir, v);
 					}
 				} else {
 					// change applied, now propagate in the opposite direction
 					if (dir == PropagationDirection.UP) {
-						propagation.get(PropagationDirection.DOWN).addAll(v.getChildren());
+						propagation.offer(PropagationDirection.DOWN, v);
 					}
 					if (mode == Mode.MAPPINGS && options.lenient && !insert) {
 						queueSiblingChange(v, d, change, side, dir, mode, op);
@@ -529,6 +534,80 @@ class Propagator {
 			}
 
 			return NONE;
+		}
+	}
+
+	private static class PropagationQueue {
+
+		private final Map<PropagationDirection, Queue<Version>> queues;
+		private final Map<PropagationDirection, Set<Version>> versions;
+
+		public PropagationQueue() {
+			this.queues = new EnumMap<>(PropagationDirection.class);
+			this.versions = new EnumMap<>(PropagationDirection.class);
+
+			for (PropagationDirection dir : PropagationDirection.values()) {
+				// order ensures each version is tested only once in each direction
+				// up = towards root/smaller depth
+				// down = away from root/larger depth
+				this.queues.put(dir, new PriorityQueue<>((v1, v2) -> {
+					return v1.getDepth() - v2.getDepth();
+				}));
+				this.versions.put(dir, new HashSet<>());
+			}
+		}
+
+		@Override
+		public String toString() {
+			return queues.toString();
+		}
+
+		public boolean offer(PropagationDirection dir, Version v) {
+			return versions.get(dir).add(v) && queues.get(dir).offer(v);
+		}
+
+		public Entry poll() {
+			for (PropagationDirection dir : PROPAGATION_DIRECTION_ORDER) {
+				Version v = queues.get(dir).poll();
+				if (v != null) {
+					return new Entry(dir, v);
+				}
+			}
+			return null;
+		}
+
+		public boolean isEmpty() {
+			for (PropagationDirection dir : PROPAGATION_DIRECTION_ORDER) {
+				if (!queues.get(dir).isEmpty()) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		public void reset() {
+			for (PropagationDirection dir : PROPAGATION_DIRECTION_ORDER) {
+				versions.get(dir).clear();
+			}
+		}
+
+		public static class Entry {
+
+			private final PropagationDirection dir;
+			private final Version version;
+
+			public Entry(PropagationDirection dir, Version version) {
+				this.dir = dir;
+				this.version = version;
+			}
+
+			public PropagationDirection direction() {
+				return dir;
+			}
+
+			public Version version() {
+				return version;
+			}
 		}
 	}
 }
