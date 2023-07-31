@@ -75,30 +75,31 @@ public class VersionGraph {
 		Deque<GraphWalker> walkers = new LinkedList<>();
 		Set<Version> visited = new HashSet<>();
 
-		GraphWalker walker = new GraphWalker();
-		walker.walk(start);
+		GraphWalker curr = new GraphWalker();
+		GraphWalker next = new GraphWalker();
+		curr.walk(start);
 
-		walkers.add(walker);
+		walkers.add(curr);
 
 		while (!walkers.isEmpty()) {
-			walker = walkers.poll();
+			curr = walkers.poll();
 
-			Version head = walker.head;
-			Collection<Version> path = walker.path;
-			Collection<Version> next = towardsRoot ? head.parents : head.children;
+			Version head = curr.head;
+			Collection<Version> path = curr.path;
+			Collection<Version> versions = towardsRoot ? head.parents : head.children;
 
 			if (visited.add(head)) {
 				versionVisitor.accept(head);
 			}
-			if (next.isEmpty()) {
+			if (versions.isEmpty()) {
 				pathVisitor.accept(path);
 			}
 
-			for (Version v : next) {
-				walker = new GraphWalker(walker);
-				walker.walk(v);
+			for (Version v : versions) {
+				next = new GraphWalker(curr);
+				next.walk(v);
 
-				walkers.add(walker);
+				walkers.add(next);
 			}
 		}
 	}
@@ -258,14 +259,14 @@ public class VersionGraph {
 
 		public void walk(Version v) {
 			if (!path.add(v)) {
-				throwLoopException(v);
+				throw foundLoopException(this, v);
 			}
 
 			head = v;
 		}
 
-		private void throwLoopException(Version v) {
-			List<Version> path = new LinkedList<>(this.path);
+		private static InvalidVersionGraphException foundLoopException(GraphWalker walker, Version v) {
+			List<Version> path = new LinkedList<>(walker.path);
 			int prevOccurance = path.indexOf(v);
 			List<Version> loop = path.subList(prevOccurance, path.size());
 
