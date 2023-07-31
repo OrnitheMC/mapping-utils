@@ -187,7 +187,7 @@ public class VersionGraph {
 			int depth = 0;
 
 			for (Version v : p) {
-				if (v.depth < 0 || depth < v.depth) {
+				if (v.depth < 0 || v.depth < depth) {
 					v.depth = depth;
 				}
 
