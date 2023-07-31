@@ -148,6 +148,10 @@ class Propagator {
 			boolean insert = barriers.contains(v);
 
 			for (Version p : v.getParents()) {
+				if (p.getDepth() >= v.getDepth()) {
+					continue;
+				}
+
 				Diff d = applyChange(v, v.getDiff(p), change, side, mode, op, insert);
 
 				if (d == null) {
