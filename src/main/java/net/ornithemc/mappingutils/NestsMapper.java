@@ -70,7 +70,7 @@ class NestsMapper {
 
 		if (idx > 0) {
 			// provided mappings already apply nesting
-			return mappedName.substring(idx + 1);
+			return mappedName.substring(idx + 2);
 		}
 
 		int i = 0;
