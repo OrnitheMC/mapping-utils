@@ -54,8 +54,7 @@ class NestsMapper {
 
 	private String mapOuterName(String name, String enclClassName) {
 		String mappedName = mapClassName(name);
-		mappedName = mappedName.replace("__", "$");
-		int idx = mappedName.lastIndexOf('$');
+		int idx = mappedName.lastIndexOf("__");
 
 		if (idx > 0) {
 			// provided mappings already apply nesting
@@ -67,8 +66,7 @@ class NestsMapper {
 
 	private String mapInnerName(String name, String innerName) {
 		String mappedName = mapClassName(name);
-		mappedName = mappedName.replace("__", "$");
-		int idx = mappedName.lastIndexOf('$');
+		int idx = mappedName.lastIndexOf("__");
 
 		if (idx > 0) {
 			// provided mappings already apply nesting
