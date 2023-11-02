@@ -428,6 +428,7 @@ class Propagator {
 
 		Iterator<Diff> it = siblings.iterator();
 
+		siblingLoop:
 		while (it.hasNext()) {
 			Diff sibling = it.next();
 
@@ -439,11 +440,11 @@ class Propagator {
 
 				if (dst.isEmpty() == siblingDst.isEmpty()) {
 					it.remove();
-					continue;
+					continue siblingLoop;
 				}
 				if (s != side && !change.get(DiffSide.A).equals(siblingDst)) {
 					it.remove();
-					continue;
+					continue siblingLoop;
 				}
 			}
 		}
