@@ -1,13 +1,17 @@
 package net.ornithemc.mappingutils;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.Scanner;
 import java.util.Set;
 
 import net.ornithemc.mappingutils.io.MappingTarget;
@@ -390,6 +394,8 @@ class Propagator {
 		return d;
 	}
 
+	private final Scanner scanner = new Scanner(System.in);
+
 	private void queueSiblingChange(Version v, Diff d, Diff change, DiffSide side, PropagationDirection dir, Mode mode, Operation op) {
 		if (change.get(DiffSide.A).isEmpty() == d.get(side.opposite()).isEmpty()) {
 			// mapping (does not) exists on both sides
@@ -405,46 +411,84 @@ class Propagator {
 		}
 
 		Diff parent = d.getParent();
-		Diff sibling = null;
+		List<Diff> siblings = new ArrayList<>();
 
 		for (Diff child : parent.getChildren()) {
 			if (child == d) {
 				continue;
 			}
 			if (child.target() == target && child.src().equals(name) && child.isDiff()) {
-				if (sibling == null) {
-					sibling = child;
-				} else {
-					throw new IllegalStateException("found multiple siblings (" + sibling + ", " + child + ") of target " + d + " with the same name!");
+				siblings.add(child);
+			}
+		}
+
+		if (siblings.isEmpty()) {
+			return;
+		}
+
+		Iterator<Diff> it = siblings.iterator();
+
+		while (it.hasNext()) {
+			Diff sibling = it.next();
+
+			for (DiffSide s : DiffSide.values()) {
+				// for the side that the change was applied to,
+				// we need to check against the value before the change
+				String dst = (s == side) ? change.get(DiffSide.A) : d.get(s);
+				String siblingDst = sibling.get(s);
+
+				if (dst.isEmpty() == siblingDst.isEmpty()) {
+					it.remove();
+					continue;
+				}
+				if (s != side && !change.get(DiffSide.A).equals(siblingDst)) {
+					it.remove();
+					continue;
 				}
 			}
 		}
 
-		if (sibling == null) {
+		if (siblings.isEmpty()) {
 			return;
 		}
 
-		for (DiffSide s : DiffSide.values()) {
-			// for the side that the change was applied to,
-			// we need to check against the value before the change
-			String dst = (s == side) ? change.get(DiffSide.A) : d.get(s);
-			String siblingDst = sibling.get(s);
+		Diff sibling = null;
 
-			if (dst.isEmpty() == siblingDst.isEmpty()) {
-				throw new IllegalStateException("two targets with the same name (" + d + ", " + sibling + ") exist in " + v + "!");
+		if (siblings.size() > 1) {
+			System.out.println("multiple propagation candidates for " + d);
+			for (int i = 0; i < siblings.size(); i++) {
+				System.out.println(i + ": " + siblings.get(i));
 			}
-			if (s != side && !change.get(DiffSide.A).equals(siblingDst)) {
-				// diff does not match, do not propagate to this sibling
-				return;
-			}
+			System.out.println(siblings.size() + ": none");
+			while (true) {
+				String cmd = scanner.nextLine();
+				int i;
+				try {
+					i = Integer.parseInt(cmd);
+				} catch (NumberFormatException e) {
+					e.printStackTrace();
+					continue;
+				}
+				if (i >= 0 && i < siblings.size()) {
+					sibling = siblings.get(i);
+					System.out.println("chose " + sibling);
+					break;
+				}
+				if (i == siblings.size()) {
+					System.out.println("chose none");
+					break;
+				}
+            }
 		}
 
-		if (dir == PropagationDirection.UP) {
-			for (Version p : v.getParents()) {
-				queueSiblingChange(p, sibling, change, mode, op);
+		if (sibling != null) {
+			if (dir == PropagationDirection.UP) {
+				for (Version p : v.getParents()) {
+					queueSiblingChange(p, sibling, change, mode, op);
+				}
+			} else {
+				queueSiblingChange(v, sibling, change, mode, op);
 			}
-		} else {
-			queueSiblingChange(v, sibling, change, mode, op);
 		}
 	}
 
