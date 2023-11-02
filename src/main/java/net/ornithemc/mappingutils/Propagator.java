@@ -453,7 +453,7 @@ class Propagator {
 			return;
 		}
 
-		Diff sibling = null;
+		Diff sibling = siblings.get(0);
 
 		if (siblings.size() > 1) {
 			System.out.println("multiple propagation candidates for " + d);
@@ -476,6 +476,7 @@ class Propagator {
 					break;
 				}
 				if (i == siblings.size()) {
+					sibling = null;
 					System.out.println("chose none");
 					break;
 				}
