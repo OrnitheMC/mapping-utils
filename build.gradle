@@ -33,7 +33,7 @@ dependencies {
     implementation 'org.ow2.asm:asm-tree:9.2'
     implementation 'org.ow2.asm:asm-util:9.2'
 
-	implementation 'net.ornithemc:nester:1.1.1'
+	implementation 'net.ornithemc:nester:1.2.0'
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")

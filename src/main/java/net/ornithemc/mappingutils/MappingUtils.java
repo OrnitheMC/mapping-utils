@@ -161,6 +161,20 @@ public class MappingUtils {
 		return NestsMapper.run(nests, mapper);
 	}
 
+	public static void mergeNests(Path clientPath, Path serverPath, Path mergedPath) throws IOException {
+		Nests client = Nests.empty();
+		NesterIo.read(client, clientPath);
+		Nests server = Nests.empty();
+		NesterIo.read(server, serverPath);
+
+		Nests merged = mergeNests(client, server);
+		NesterIo.write(merged, mergedPath);
+	}
+
+	public static Nests mergeNests(Nests client, Nests server) {
+		return NestsMerger.run(client, server);
+	}
+
 	public static Collection<MappingHistory> findMappings(Format format, Path dir, MappingTarget target, String key) throws IOException {
 		FileUtils.requireReadable(dir);
 
