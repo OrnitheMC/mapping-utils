@@ -19,6 +19,9 @@ import net.ornithemc.mappingutils.io.diff.graph.VersionGraph;
 import net.ornithemc.mappingutils.io.matcher.MatchSide;
 import net.ornithemc.mappingutils.io.matcher.MatchesReader;
 import net.ornithemc.mappingutils.io.matcher.MatchesWriter;
+import net.ornithemc.mappingutils.io.sigs.SignatureMappings;
+import net.ornithemc.mappingutils.io.sigs.SigsReader;
+import net.ornithemc.mappingutils.io.sigs.SigsWriter;
 
 import net.ornithemc.nester.nest.NesterIo;
 import net.ornithemc.nester.nest.Nests;
@@ -169,6 +172,30 @@ public class MappingUtils {
 
 		Nests merged = mergeNests(client, server);
 		NesterIo.write(merged, mergedPath);
+	}
+
+	public static void mapSignatures(Path sigsInPath, Path sigsOutPath, Format format, Path mappingsPath) throws IOException {
+		SignatureMappings sigsIn = SigsReader.read(sigsInPath);
+		Mappings mappings = format.readMappings(mappingsPath);
+
+		SignatureMappings sigsOut = mapSignatures(sigsIn, mappings);
+		SigsWriter.write(sigsOutPath, sigsOut);
+	}
+
+	public static SignatureMappings mapSignatures(SignatureMappings sigs, Mappings mappings) {
+		return SignatureMapper.run(sigs, mappings);
+	}
+
+	public static void mergeSignatures(Path clientPath, Path serverPath, Path mergedPath) throws IOException {
+		SignatureMappings client = SigsReader.read(clientPath);
+		SignatureMappings server = SigsReader.read(serverPath);
+
+		SignatureMappings merged = mergeSignatures(client, server);
+		SigsWriter.write(mergedPath, merged);
+	}
+
+	public static SignatureMappings mergeSignatures(SignatureMappings client, SignatureMappings server) {
+		return SignatureMerger.run(client, server);
 	}
 
 	public static Nests mergeNests(Nests client, Nests server) {

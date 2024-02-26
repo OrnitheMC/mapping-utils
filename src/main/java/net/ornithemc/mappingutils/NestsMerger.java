@@ -42,7 +42,7 @@ class NestsMerger {
 				// server only nest - we can add it to merged as is
 				merged.add(s);
 			} else {
-				// nest is present on both sides - alreay added to merged
+				// nest is present on both sides - already added to merged
 			}
 		}
 
