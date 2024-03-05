@@ -89,7 +89,17 @@ class NestsMapper {
 				innerName = prefix + mappedName.substring(mappedName.lastIndexOf('/') + 1);
 			}
 		} else {
-			// anonymous class, keep given inner name
+			// anonymous class
+			String simpleName = mappedName.substring(mappedName.lastIndexOf('/') + 1);
+
+			if (simpleName.startsWith("C_")) {
+				// mapped name is Calamus intermediary format C_<number>
+				// we strip the C_ prefix and keep the number as the inner name
+				return simpleName.substring(2);
+			} else {
+				// keep the inner name given by the nests file
+				return innerName;
+			}
 		}
 
 		return innerName;
