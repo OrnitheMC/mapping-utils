@@ -32,36 +32,67 @@ class SignatureMapper {
 			{
 				for (net.ornithemc.mappingutils.io.Mappings.ClassMapping c : mappings.getClasses()) {
 					put(c.src(), c.getComplete());
+					for (net.ornithemc.mappingutils.io.Mappings.FieldMapping f : c.getFields()) {
+						put(c.src() + "." + f.src(), f.get());
+					}
+					for (net.ornithemc.mappingutils.io.Mappings.MethodMapping m : c.getMethods()) {
+						put(c.src() + "." + m.src() + m.getDesc(), m.get());
+					}
 				}
+			}
+
+			@Override
+			public String get(Object key) {
+				String value = super.get(key);
+				return value == null ? (String)key : value;
 			}
 		});
 	}
 
 	private SignatureMappings run() {
-		for (ClassMapping c : sigsIn.getClasses()) {
-			String cname = remapper.map(c.getName());
-			SignatureMode cmode = c.getMode();
-			String csignature = remapSignature(c.getSignature());
+		int line = 0;
 
-			ClassMapping cout = sigsOut.addClass(cname, cmode, csignature);
+		try {
+			for (ClassMapping c : sigsIn.getClasses()) {
+				line++;
 
-			for (MemberMapping m : c.getMembers()) {
-				String mname = m.getName();
-				String mdesc = remapper.mapDesc(m.getDesc());
-				SignatureMode mmode = m.getMode();
-				String msignature = remapSignature(m.getSignature());
+				String cname = c.getName();
+				SignatureMode cmode = c.getMode();
+				String csignature = c.getSignature();
+				cname = remapper.map(cname);
+				csignature = remapSignature(csignature);
 
-				cout.addMember(mname, mdesc, mmode, msignature);
+				ClassMapping cout = sigsOut.addClass(cname, cmode, csignature);
+
+				for (MemberMapping m : c.getMembers()) {
+					line++;
+
+					String mname = m.getName();
+					String mdesc = m.getDesc();
+					SignatureMode mmode = m.getMode();
+					String msignature = m.getSignature();
+					mname = mdesc.charAt(0) == '(' ? remapper.mapMethodName(c.getName(), mname, mdesc) : remapper.mapFieldName(c.getName(), mname, mdesc);
+					mdesc = remapper.mapDesc(mdesc);
+					msignature = remapSignature(msignature);
+
+					cout.addMember(mname, mdesc, mmode, msignature);
+				}
 			}
+		} catch (Throwable t) {
+			throw new RuntimeException("exception on line " + line, t);
 		}
 
 		return this.sigsOut;
 	}
 
 	private String remapSignature(String signature) {
-		SignatureReader reader = new SignatureReader(signature);
-		SignatureWriter writer = new SignatureWriter();
-		reader.accept(new SignatureRemapper(writer, remapper));
-		return writer.toString();
+		if (signature.isBlank()) {
+			return null;
+		} else {
+			SignatureReader reader = new SignatureReader(signature);
+			SignatureWriter writer = new SignatureWriter();
+			reader.accept(new SignatureRemapper(writer, remapper));
+			return writer.toString();
+		}
 	}
 }
