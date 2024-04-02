@@ -86,7 +86,7 @@ class SignatureMapper {
 	}
 
 	private String remapSignature(String signature) {
-		if (signature.isBlank()) {
+		if (signature.isEmpty()) {
 			return null;
 		} else {
 			SignatureReader reader = new SignatureReader(signature);

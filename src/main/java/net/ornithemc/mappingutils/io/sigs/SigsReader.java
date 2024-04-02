@@ -55,11 +55,11 @@ public class SigsReader {
 					throw new IllegalArgumentException("Member info must have at least name and desc");
 				}
 				String name = unescape(parts[1]);
-				if (name.isBlank()) {
+				if (name.isEmpty()) {
 					throw new IllegalArgumentException("Member name \"" + name + "\" cannot be blank");
 				}
 				String desc = unescape(parts[2]);
-				if (desc.isBlank()) {
+				if (desc.isEmpty()) {
 					throw new IllegalArgumentException("Member descriptor \"" + desc + "\" cannot be blank");
 				}
 				SignatureMode signatureMode;
@@ -80,7 +80,7 @@ public class SigsReader {
 			}
 			String[] parts = line.split(TAB, -1);
 			String className = unescape(parts[0]);
-			if (className.isBlank()) {
+			if (className.isEmpty()) {
 				throw new IllegalArgumentException("Class name \"" + className + "\" cannot be blank");
 			}
 			SignatureMode signatureMode;
@@ -149,7 +149,7 @@ public class SigsReader {
 				if (i + 5 >= escaped.length()) {
 					throw new IllegalArgumentException("\\u escape overflows in string \"" + escaped + "\"");
 				}
-				result.append((char) Integer.parseInt(escaped, i + 2, i + 6, 16));
+				result.append((char) Integer.parseInt(escaped.substring(i + 2, i + 6), 16));
 				skip = 5;
 				break;
 			}
