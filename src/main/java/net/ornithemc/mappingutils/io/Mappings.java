@@ -665,17 +665,6 @@ public class Mappings {
 				throw new IllegalStateException("class mapping " + this + " is not consistent with parent class mapping " + parent);
 			}
 
-			try {
-				int srcIndex = Integer.parseInt(srcArgs[srcArgs.length - 1]);
-				int dstIndex = Integer.parseInt(dst);
-
-				if (srcIndex != dstIndex) {
-					throw new IllegalStateException("src and dst anonymous class indices do not match!");
-				}
-			} catch (NumberFormatException e) {
-
-			}
-
 			return super.validate();
 		}
 
