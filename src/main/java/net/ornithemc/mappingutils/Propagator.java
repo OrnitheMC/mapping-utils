@@ -3,7 +3,6 @@ package net.ornithemc.mappingutils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -150,9 +149,6 @@ class Propagator {
 				if (dir == PropagationDirection.UP) {
 					propagation.offer(PropagationDirection.DOWN, v);
 				}
-				if (options.lenient) {
-					queueInnerSiblingChange(v, mappings, change, dir, mode, op);
-				}
 
 				v.markDirty();
 			}
@@ -178,10 +174,6 @@ class Propagator {
 						propagation.offer(PropagationDirection.UP, v);
 						propagation.offer(dir, v);
 					}
-					if (options.lenient && !insert) {
-						queueInnerSiblingChange(v, diffs, change, side, dir, mode, op);
-						queueInnerSiblingChange(v, diffs, change, side.opposite(), dir, mode, op);
-					}
 				} else {
 					// change applied, now propagate in the opposite direction
 					if (dir == PropagationDirection.UP) {
@@ -189,7 +181,6 @@ class Propagator {
 					}
 					if (options.lenient && !insert) {
 						queueSiblingChange(v, diffs, d, change, side, dir, mode, op);
-						queueInnerSiblingChange(v, diffs, change, side, dir, mode, op);
 					}
 
 					v.markDirty();
@@ -409,44 +400,6 @@ class Propagator {
 
 	private final Scanner scanner = new Scanner(System.in);
 
-	private void queueInnerSiblingChange(Version v, Mappings mappings, Diff change, PropagationDirection dir, Mode mode, Operation op) {
-		if (change.target() != MappingTarget.CLASS) {
-			return;
-		}
-
-		Collection<Mapping> siblings = findInnerSiblings(v, mappings, change, dir, mode, op);
-
-		for (Mapping sibling : siblings) {
-			if (dir == PropagationDirection.UP) {
-				for (Version p : v.getParents()) {
-					queueSiblingChange(p, sibling, change, mode, op);
-				}
-			} else {
-				queueSiblingChange(v, sibling, change, mode, op);
-			}
-		}
-	}
-
-	private void queueInnerSiblingChange(Version v, MappingsDiff diffs, Diff change, DiffSide side, PropagationDirection dir, Mode mode, Operation op) {
-		if (change.target() != MappingTarget.CLASS) {
-			return;
-		}
-
-		Collection<Diff> siblings = findInnerSiblings(v, diffs, change, side, dir, mode, op);
-
-		for (Diff sibling : siblings) {
-			DiffSide s = side.opposite();
-
-			if (dir == PropagationDirection.UP) {
-				for (Version p : v.getParents()) {
-					queueSiblingChange(p, sibling, change, s, mode, op);
-				}
-			} else {
-				queueSiblingChange(v, sibling, change, s, mode, op);
-			}
-		}
-	}
-
 	private void queueSiblingChange(Version v, MappingsDiff diffs, Diff d, Diff change, DiffSide side, PropagationDirection dir, Mode mode, Operation op) {
 		if (change.get(DiffSide.A).isEmpty() == d.get(side.opposite()).isEmpty()) {
 			// mapping (does not) exists on both sides
@@ -473,72 +426,16 @@ class Propagator {
 		}
 	}
 
-	private static int innerSeparatorIndex(String s) {
-		int i = s.lastIndexOf("__");
-		return i < 0 ? 0 : i + 2;
-	}
-
-	private Collection<Mapping> findInnerSiblings(Version v, Mappings mappings, Diff change, PropagationDirection dir, Mode mode, Operation op) {
-		MappingTarget target = change.target();
-		String name = change.get(DiffSide.A);
-
-		if (target != MappingTarget.CLASS || name.isEmpty() || name.lastIndexOf('$') > 0 || name.lastIndexOf('/') < 0) {
-			return Collections.emptyList();
-		}
-
-		Collection<Mapping> siblings = new ArrayList<>();
-
-		for (Mapping c : mappings.getClasses()) {
-			if (c.get().startsWith(name) && !c.get().equals(name)) {
-				siblings.add(c);
-			}
-		}
-
-		return siblings;
-	}
-
-	private Collection<Diff> findInnerSiblings(Version v, MappingsDiff diffs, Diff change, DiffSide side, PropagationDirection dir, Mode mode, Operation op) {
-		MappingTarget target = change.target();
-		String name = change.get(DiffSide.A);
-
-		if (target != MappingTarget.CLASS || name.isEmpty() || name.lastIndexOf('$') > 0 || name.lastIndexOf('/') < 0) {
-			return Collections.emptyList();
-		}
-
-		Collection<Diff> siblings = new ArrayList<>();
-
-		for (Diff c : diffs.getClasses()) {
-			if (c.get(side).startsWith(name) && !c.get(side).equals(name) && c.isDiff()) {
-				siblings.add(c);
-			}
-		}
-
-		return siblings;
-	}
-
 	private Diff findSibling(Version v, MappingsDiff diffs, Diff d, Diff change, DiffSide side, PropagationDirection dir, Mode mode, Operation op) {
 		MappingTarget target = d.target();
-		String name = d.src();
+		String id = Mapping.getId(d.src());
 
 		List<Diff> siblings = new ArrayList<>();
 
 		if (target == MappingTarget.CLASS) {
-			int i = name.length();
-			while (i > 0 && Character.isDigit(name.charAt(i - 1))) {
-				i--;
-			}
-
-			if (i < name.length()) {
-				String number = name.substring(i);
-
-				for (Diff c : diffs.getClasses()) {
-					if (c == d) {
-						continue;
-					}
-
-					if (c.src().endsWith(number) && c.isDiff()) {
-						siblings.add(c);
-					}
+			for (Diff c : diffs.getClasses(id)) {
+				if (c != d && c.isDiff()) {
+					siblings.add(c);
 				}
 			}
 		} else if (target == MappingTarget.FIELD || target == MappingTarget.METHOD) {
@@ -553,12 +450,9 @@ class Propagator {
 			}
 
 			for (Diff parent : parents) {
-				for (Diff child : parent.getChildren()) {
-					if (child == d) {
-						continue;
-					}
-					if (child.target() == target && child.src().equals(name) && child.isDiff()) {
-						siblings.add(child);
+				for (Diff c : parent.getChildren(id)) {
+					if (c != d && c.target() == target && c.isDiff()) {
+						siblings.add(c);
 					}
 				}
 			}
@@ -589,21 +483,10 @@ class Propagator {
 					}
 					if (s != side) {
 						if (target == MappingTarget.CLASS) {
-							String simple = change.get(DiffSide.A);
-							String siblingSimple = siblingDst;
-							int i = Math.max(simple.lastIndexOf('/') + 1, innerSeparatorIndex(simple));
-							int si = Math.max(siblingSimple.lastIndexOf('/') + 1, innerSeparatorIndex(siblingSimple));
-							simple = simple.substring(i);
-							siblingSimple = siblingSimple.substring(si);
+							String simple = dst.substring(dst.lastIndexOf('/') + 1);
+							String siblingSimple = siblingDst.substring(siblingDst.lastIndexOf('/') + 1);
 
-							if (Character.isDigit(simple.charAt(0))) {
-								simple = "C_" + simple;
-							}
-							if (Character.isDigit(siblingSimple.charAt(0))) {
-								siblingSimple = "C_" + siblingSimple;
-							}
-
-							if (simple.equals(siblingSimple)) {
+							if (simple.length() > siblingSimple.length() ? simple.endsWith(siblingSimple) : siblingSimple.endsWith(simple)) {
 								continue;
 							}
 						} else {
@@ -679,63 +562,6 @@ class Propagator {
 		return sibling;
 	}
 
-	private Diff queueSiblingChange(Version v, Mapping sibling, Diff change, Mode mode, Operation op) {
-		MappingsDiff changes = queuedChanges.computeIfAbsent(v, key -> new MappingsDiff());
-		return queueSiblingChange(v, changes, sibling, change, mode, op);
-	}
-
-	private Diff queueSiblingChange(Version v, MappingsDiff changes, Mapping sibling, Diff change, Mode mode, Operation op) {
-		Diff siblingChange = null;
-
-		if (sibling.target() != MappingTarget.CLASS) {
-			throw new IllegalStateException("cannot get mapping of target " + sibling.toString() + " from the root mappings for " + v);
-		}
-
-		siblingChange = changes.getClass(sibling.src());
-
-		if (siblingChange == null) {
-			siblingChange = changes.addClass(sibling.src(), sibling.get(), sibling.get());
-		}
-
-		if (op != Operation.NONE) {
-			if (mode == Mode.MAPPINGS) {
-				String chngFrom = change.get(DiffSide.A);
-				int pchngFrom = chngFrom.lastIndexOf('/') + 1;
-				int ichngFrom = innerSeparatorIndex(chngFrom);
-				int ochngFrom = (ichngFrom == 0) ? chngFrom.length() : ichngFrom - 2;
-				String chngTo = change.get(DiffSide.B);
-				int pchngTo = chngTo.lastIndexOf('/') + 1;
-				int ichngTo = innerSeparatorIndex(chngTo);
-				int ochngTo = (ichngTo == 0) ? chngTo.length() : ichngTo - 2;
-				String from = siblingChange.get(DiffSide.A);
-				int pfrom = from.lastIndexOf('/') + 1;
-				int ifrom = innerSeparatorIndex(from);
-				int ofrom = (ifrom == 0) ? from.length() : ifrom - 2;
-				String to = siblingChange.get(DiffSide.B);
-				int pto = to.lastIndexOf('/') + 1;
-				int ito = innerSeparatorIndex(to);
-				int oto = (ito == 0) ? to.length() : ito - 2;
-
-				if (chngFrom.substring(0, ochngFrom).equals(from.substring(0, ofrom))) {
-					to = chngTo.substring(0, ochngTo) + to.substring(oto);
-				} else if (chngFrom.substring(0, pchngFrom).equals(from.substring(0, pfrom))) {
-					to = chngTo.substring(0, pchngTo) + to.substring(pto);
-				}
-
-				siblingChange.set(DiffSide.A, from);
-				siblingChange.set(DiffSide.B, to);
-			}
-			if (mode == Mode.JAVADOCS) {
-				JavadocDiff javadocChange = change.getJavadoc();
-				JavadocDiff siblingJavadocChange = siblingChange.getJavadoc();
-				siblingJavadocChange.set(DiffSide.A, sibling.getJavadoc());
-				siblingJavadocChange.set(DiffSide.B, javadocChange.get(DiffSide.B));
-			}
-		}
-
-		return siblingChange;
-	}
-
 	private Diff queueSiblingChange(Version v, Diff sibling, Diff change, DiffSide side, Mode mode, Operation op) {
 		MappingsDiff changes = queuedChanges.computeIfAbsent(v, key -> new MappingsDiff());
 		return queueSiblingChange(v, changes, sibling, change, side, mode, op);
@@ -771,29 +597,18 @@ class Propagator {
 
 			if (op != Operation.NONE) {
 				if (mode == Mode.MAPPINGS) {
-					String chngFrom = change.get(DiffSide.A);
-					int pchngFrom = chngFrom.lastIndexOf('/') + 1;
-					int ichngFrom = innerSeparatorIndex(chngFrom);
-					int ochngFrom = (ichngFrom == 0) ? chngFrom.length() : ichngFrom - 2;
-					String chngTo = change.get(DiffSide.B);
-					int pchngTo = chngTo.lastIndexOf('/') + 1;
-					int ichngTo = innerSeparatorIndex(chngTo);
-					int ochngTo = (ichngTo == 0) ? chngTo.length() : ichngTo - 2;
-					String from = siblingChange.get(DiffSide.A);
-					int pfrom = from.lastIndexOf('/') + 1;
-					int ifrom = innerSeparatorIndex(from);
-					int ofrom = (ifrom == 0) ? from.length() : ifrom - 2;
-					String to = siblingChange.get(DiffSide.B);
-					int pto = to.lastIndexOf('/') + 1;
-					int ito = innerSeparatorIndex(to);
-					int oto = (ito == 0) ? to.length() : ito - 2;
+					String from = sibling.get(side);
+					String to = change.get(DiffSide.B);
 
-					if (chngFrom.substring(Math.max(pchngFrom, ichngFrom)).equals(from.substring(Math.max(pfrom, ifrom)))) {
-						to = to.substring(0, Math.max(pto, ito)) + chngTo.substring(Math.max(pchngTo, ichngTo));
-					} else if (chngFrom.substring(0, ochngFrom).equals(from.substring(0, ofrom))) {
-						to = chngTo.substring(0, ochngTo) + to.substring(oto);
-					} else if (chngFrom.substring(0, pchngFrom).equals(from.substring(0, pfrom))) {
-						to = chngTo.substring(0, pchngTo) + to.substring(pto);
+					String fromSimple = from.substring(from.lastIndexOf('/') + 1);
+					String toSimple = to.substring(to.lastIndexOf('/') + 1);
+
+					int offset = fromSimple.length() - toSimple.length();
+
+					if (offset > 0) {
+						to = fromSimple.substring(0, offset) + toSimple.substring(offset);
+					} else {
+						to = toSimple.substring(-offset);
 					}
 
 					siblingChange.set(DiffSide.A, from);
@@ -829,17 +644,18 @@ class Propagator {
 
 			if (op != Operation.NONE) {
 				if (mode == Mode.MAPPINGS) {
-					String chngFrom = change.get(DiffSide.A);
-					int ichngFrom = Math.max(chngFrom.lastIndexOf('/') + 1, innerSeparatorIndex(chngFrom));
-					String chngTo = change.get(DiffSide.B);
-					int ichngTo = Math.max(chngTo.lastIndexOf('/') + 1, innerSeparatorIndex(chngTo));
-					String from = siblingChange.get(DiffSide.A);
-					int ifrom = Math.max(from.lastIndexOf('/') + 1, innerSeparatorIndex(from));
-					String to = siblingChange.get(DiffSide.B);
-					int ito = Math.max(to.lastIndexOf('/') + 1, innerSeparatorIndex(to));
+					String from = sibling.get(side);
+					String to = change.get(DiffSide.B);
 
-					if (chngFrom.substring(ichngFrom).equals(from.substring(ifrom))) {
-						to = to.substring(0, ito) + chngTo.substring(ichngTo);
+					String fromSimple = from.substring(from.lastIndexOf('/') + 1);
+					String toSimple = to.substring(to.lastIndexOf('/') + 1);
+
+					int offset = fromSimple.length() - toSimple.length();
+
+					if (offset > 0) {
+						to = fromSimple.substring(0, offset) + toSimple.substring(offset);
+					} else {
+						to = toSimple.substring(0, -offset);
 					}
 
 					siblingChange.set(DiffSide.A, from);

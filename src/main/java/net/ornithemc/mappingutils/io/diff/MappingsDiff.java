@@ -1,6 +1,7 @@
 package net.ornithemc.mappingutils.io.diff;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -13,15 +14,22 @@ import java.util.TreeMap;
 import org.objectweb.asm.Type;
 
 import net.ornithemc.mappingutils.io.MappingTarget;
+import net.ornithemc.mappingutils.io.Mappings.Mapping;
 
 public class MappingsDiff {
 
 	private final Map<String, ClassDiff> classDiffs;
+	private final Map<String, Collection<ClassDiff>> classDiffsById;
 
 	private MappingsDiffValidator validator;
 
 	public MappingsDiff() {
+		this(false);
+	}
+
+	public MappingsDiff(boolean cacheById) {
 		this.classDiffs = new LinkedHashMap<>();
+		this.classDiffsById = cacheById ? new LinkedHashMap<>() : null;
 
 		this.validator = MappingsDiffValidator.ALWAYS;
 	}
@@ -78,6 +86,14 @@ public class MappingsDiff {
 		return classDiffs.values();
 	}
 
+	public Collection<ClassDiff> getClasses(String id) {
+		if (classDiffsById == null) {
+			throw new UnsupportedOperationException("these diffs are not cached by id!");
+		}
+
+		return classDiffsById.getOrDefault(id, Collections.emptySet());
+	}
+
 	public ClassDiff addClass(String src, String dstA, String dstB) {
 		return addClass(new ClassDiff(src, dstA, dstB));
 	}
@@ -86,15 +102,22 @@ public class MappingsDiff {
 		ClassDiff parent = findParent(c.src(), true);
 
 		if (parent == null) {
-			c.root = this;
+			c.setRoot(this);
 			c.parent = null;
 
-			return classDiffs.compute(c.key(), (key, value) -> {
+			classDiffs.compute(c.key(), (key, value) -> {
 				return (ClassDiff)checkReplace(value, c);
 			});
+		} else {
+			parent.addClass(c);
 		}
 
-		return parent.addClass(c);
+		if (classDiffsById != null) {
+			String id = Mapping.getId(c.src());
+			classDiffsById.computeIfAbsent(id, key -> new LinkedHashSet<>()).add(c);
+		}
+
+		return c;
 	}
 
 	public ClassDiff removeClass(String name) {
@@ -105,10 +128,17 @@ public class MappingsDiff {
 	public ClassDiff removeClass(ClassDiff c) {
 		if (c.root == this) {
 			if (c.parent == null) {
-				return classDiffs.remove(c.key());
+				classDiffs.remove(c.key());
 			} else {
-				return c.parent.removeClass(c);
+				c.parent.removeClass(c);
 			}
+
+			if (classDiffsById != null) {
+				String id = Mapping.getId(c.src());
+				getClasses(id).remove(c);
+			}
+
+			return c;
 		}
 
 		return null;
@@ -131,7 +161,7 @@ public class MappingsDiff {
 	}
 
 	public MappingsDiff copy() {
-		MappingsDiff copy = new MappingsDiff();
+		MappingsDiff copy = new MappingsDiff(classDiffsById != null);
 
 		for (ClassDiff c : classDiffs.values()) {
 			c.copy(copy.addClass(c.src(), c.dstA, c.dstB));
@@ -151,6 +181,7 @@ public class MappingsDiff {
 	public static abstract class Diff {
 
 		protected final Map<String, Diff> children;
+		protected Map<String, Collection<Diff>> childrenById;
 		protected final JavadocDiff jav;
 
 		protected MappingsDiff root;
@@ -210,6 +241,18 @@ public class MappingsDiff {
 
 		public final boolean isDiff() {
 			return MappingsDiff.isDiff(dstA, dstB);
+		}
+
+		protected final void setRoot(MappingsDiff diff) {
+			this.root = diff;
+
+			for (Diff d : children.values()) {
+				d.setRoot(diff);
+			}
+
+			if (root.classDiffsById != null) {
+				childrenById = new LinkedHashMap<>();
+			}
 		}
 
 		public Diff getParent() {
@@ -301,6 +344,14 @@ public class MappingsDiff {
 			return castChildren(MappingTarget.PARAMETER);
 		}
 
+		public final Collection<Diff> getChildren(String id) {
+			if (childrenById == null) {
+				throw new UnsupportedOperationException("these diffs are not cached by id!");
+			}
+
+			return childrenById.getOrDefault(id, Collections.emptySet());
+		}
+
 		public final Diff addChild(MappingTarget target, String key, String dstA, String dstB) {
 			switch (target) {
 			case CLASS:
@@ -320,12 +371,19 @@ public class MappingsDiff {
 			if (!isValidChild(d.target()))
 				throw new IllegalStateException("invalid child target " + d.target());
 
-			d.root = root;
+			d.setRoot(root);
 			d.parent = this;
 
-			return children.compute(d.key(), (key, value) -> {
+			children.compute(d.key(), (key, value) -> {
 				return checkReplace(value, d);
 			});
+
+			if (childrenById != null) {
+				String id = Mapping.getId(d.src());
+				childrenById.computeIfAbsent(id, key -> new LinkedHashSet<>()).add(d);
+			}
+
+			return d;
 		}
 
 		public final ClassDiff addClass(String src, String dstA, String dstB) {
@@ -382,7 +440,18 @@ public class MappingsDiff {
 		}
 
 		public final Diff removeChild(Diff d) {
-			return (d.parent == this) ? children.remove(d.key()) : null;
+			if (d.parent == this) {
+				children.remove(d.key());
+
+				if (childrenById != null) {
+					String id = Mapping.getId(d.src());
+					getChildren(id).remove(d);
+				}
+
+				return d;
+			}
+
+			return null;
 		}
 
 		public final ClassDiff removeClass(String name) {

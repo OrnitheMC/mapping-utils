@@ -11,8 +11,8 @@ import net.ornithemc.mappingutils.io.enigma.file.EnigmaFileReader;
 
 public class EnigmaDirReader {
 
-	public static Mappings read(Path dir) throws IOException {
-		return new EnigmaDirReader(dir, new Mappings()).read();
+	public static Mappings read(Path dir, boolean cacheById) throws IOException {
+		return new EnigmaDirReader(dir, new Mappings(cacheById)).read();
 	}
 
 	private final Path dir;

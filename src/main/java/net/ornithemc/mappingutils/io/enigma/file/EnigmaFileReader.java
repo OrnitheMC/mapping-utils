@@ -15,16 +15,16 @@ import net.ornithemc.mappingutils.io.Mappings.MethodMapping;
 
 public class EnigmaFileReader {
 
-	public static Mappings read(Path path) throws IOException {
+	public static Mappings read(Path path, boolean cacheById) throws IOException {
 		try (BufferedReader reader = new BufferedReader(new FileReader(path.toFile()))) {
-			return read(reader);
+			return read(reader, cacheById);
 		} catch (Exception e) {
 			throw new IOException("error reading " + path.toString(), e);
 		}
 	}
 
-	public static Mappings read(BufferedReader reader) throws IOException {
-		return read(reader, new Mappings());
+	public static Mappings read(BufferedReader reader, boolean cacheById) throws IOException {
+		return read(reader, new Mappings(cacheById));
 	}
 
 	public static Mappings read(Path path, Mappings mappings) throws IOException {

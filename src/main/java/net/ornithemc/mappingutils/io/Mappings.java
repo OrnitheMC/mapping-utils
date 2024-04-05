@@ -1,6 +1,7 @@
 package net.ornithemc.mappingutils.io;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -19,6 +20,7 @@ import net.ornithemc.mappingutils.MappingUtils;
 public class Mappings {
 
 	private final Map<String, ClassMapping> classMappings;
+	private final Map<String, Collection<ClassMapping>> classMappingsById;
 
 	private MappingNamespace srcNamespace;
 	private MappingNamespace dstNamespace;
@@ -27,11 +29,16 @@ public class Mappings {
 	private Mappings inverted;
 
 	public Mappings() {
-		this(MappingNamespace.NONE, MappingNamespace.NONE);
+		this(false);
 	}
 
-	public Mappings(MappingNamespace srcNamespace, MappingNamespace dstNamespace) {
+	public Mappings(boolean cacheByIds) {
+		this(cacheByIds, MappingNamespace.NONE, MappingNamespace.NONE);
+	}
+
+	public Mappings(boolean cacheByIds, MappingNamespace srcNamespace, MappingNamespace dstNamespace) {
 		this.classMappings = new LinkedHashMap<>();
+		this.classMappingsById = cacheByIds ? new LinkedHashMap<>() : null;
 
 		this.srcNamespace = srcNamespace;
 		this.dstNamespace = dstNamespace;
@@ -115,6 +122,14 @@ public class Mappings {
 		return classMappings.values();
 	}
 
+	public Collection<ClassMapping> getClasses(String id) {
+		if (classMappingsById == null) {
+			throw new UnsupportedOperationException("these mappings are not cached by id!");
+		}
+
+		return classMappingsById.getOrDefault(id, Collections.emptySet());
+	}
+
 	public ClassMapping addClass(String src, String dst) {
 		return addClass(new ClassMapping(src, dst));
 	}
@@ -125,12 +140,19 @@ public class Mappings {
 		if (parent == null) {
 			c.setRoot(this);
 
-			return classMappings.compute(c.key(), (key, value) -> {
+			classMappings.compute(c.key(), (key, value) -> {
 				return (ClassMapping)checkReplace(value, c);
 			});
+		} else {
+			parent.addClass(c);
 		}
 
-		return parent.addClass(c);
+		if (classMappingsById != null) {
+			String id = Mapping.getId(c);
+			classMappingsById.computeIfAbsent(id, key -> new LinkedHashSet<>()).add(c);
+		}
+
+		return c;
 	}
 
 	public ClassMapping removeClass(String name) {
@@ -141,10 +163,17 @@ public class Mappings {
 	public ClassMapping removeClass(ClassMapping c) {
 		if (c.root == this) {
 			if (c.parent == null) {
-				return classMappings.remove(c.key());
+				classMappings.remove(c.key());
 			} else {
-				return c.parent.removeClass(c);
+				c.parent.removeClass(c);
 			}
+
+			if (classMappingsById != null) {
+				String id = Mapping.getId(c);
+				getClasses(id).remove(c);
+			}
+
+			return c;
 		}
 
 		return null;
@@ -168,7 +197,7 @@ public class Mappings {
 
 	public Mappings invert() {
 		if (inverted == null) {
-			inverted = new Mappings();
+			inverted = new Mappings(classMappingsById != null);
 			inverted.inverted = this;
 
 			for (ClassMapping c : classMappings.values()) {
@@ -180,7 +209,7 @@ public class Mappings {
 	}
 
 	public Mappings copy() {
-		Mappings copy = new Mappings(srcNamespace, dstNamespace);
+		Mappings copy = new Mappings(classMappingsById != null, srcNamespace, dstNamespace);
 
 		for (ClassMapping c : classMappings.values()) {
 			c.copy(copy.addClass(c.src(), c.dst));
@@ -192,6 +221,7 @@ public class Mappings {
 	public static abstract class Mapping {
 
 		protected final Map<String, Mapping> children;
+		protected Map<String, Collection<Mapping>> childrenById;
 
 		protected Mappings root;
 		protected Mapping parent;
@@ -247,6 +277,10 @@ public class Mappings {
 
 			for (Mapping m : children.values()) {
 				m.setRoot(mappings);
+			}
+
+			if (root.classMappingsById != null) {
+				childrenById = new LinkedHashMap<>();
 			}
 		}
 
@@ -339,6 +373,14 @@ public class Mappings {
 			return castChildren(MappingTarget.PARAMETER);
 		}
 
+		public final Collection<Mapping> getChildren(String id) {
+			if (childrenById == null) {
+				throw new UnsupportedOperationException("these mappings are not cached by id!");
+			}
+
+			return childrenById.getOrDefault(id, Collections.emptySet());
+		}
+
 		public final Mapping addChild(MappingTarget target, String key, String dst) {
 			switch (target) {
 			case CLASS:
@@ -361,9 +403,16 @@ public class Mappings {
 			m.setRoot(root);
 			m.parent = this;
 
-			return children.compute(m.key(), (key, value) -> {
+			children.compute(m.key(), (key, value) -> {
 				return checkReplace(value, m);
 			});
+
+			if (childrenById != null) {
+				String id = getId(m);
+				childrenById.computeIfAbsent(id, key -> new LinkedHashSet<>()).add(m);
+			}
+
+			return m;
 		}
 
 		public final ClassMapping addClass(String src, String dst) {
@@ -420,7 +469,18 @@ public class Mappings {
 		}
 
 		public final Mapping removeChild(Mapping m) {
-			return (m.parent == this) ? children.remove(m.key()) : null;
+			if (m.parent == this) {
+				children.remove(m.key());
+
+				if (childrenById != null) {
+					String id = getId(m);
+					getChildren(id).remove(m);
+				}
+
+				return m;
+			}
+
+			return null;
 		}
 
 		public final ClassMapping removeClass(String name) {
@@ -515,6 +575,31 @@ public class Mappings {
 			}
 
 			return copy;
+		}
+
+		public static String getId(Mapping m) {
+			return getId(m.src());
+		}
+
+		public static String getId(String name) {
+			int i;
+
+			for (i = name.length(); i > 0; i--) {
+				char chr = name.charAt(i - 1);
+
+				if (chr == '$' || chr == '/') {
+					break;
+				}
+				if (chr == '_' && i > 1) {
+					char prevChr = name.charAt(i - 2);
+
+					if (prevChr == 'C' || prevChr == 'f' || prevChr == 'm' || prevChr == 'p') {
+						break;
+					}
+				}
+			}
+
+			return name.substring(i);
 		}
 	}
 

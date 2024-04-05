@@ -25,12 +25,22 @@ public enum Format {
 
 		@Override
 		public Mappings readMappings(Path path) throws IOException {
-			return TinyV1Reader.read(path);
+			return TinyV1Reader.read(path, false);
+		}
+
+		@Override
+		public Mappings readMappings(Path path, boolean cacheById) throws IOException {
+			return TinyV1Reader.read(path, cacheById);
 		}
 
 		@Override
 		public Mappings readMappings(BufferedReader br) throws IOException {
-			return TinyV1Reader.read(br);
+			return TinyV1Reader.read(br, false);
+		}
+
+		@Override
+		public Mappings readMappings(BufferedReader br, boolean cacheById) throws IOException {
+			return TinyV1Reader.read(br, cacheById);
 		}
 
 		@Override
@@ -45,12 +55,22 @@ public enum Format {
 
 		@Override
 		public MappingsDiff readDiff(Path path) throws IOException {
-			return TinyV1DiffReader.read(path);
+			return TinyV1DiffReader.read(path, false);
+		}
+
+		@Override
+		public MappingsDiff readDiff(Path path, boolean cacheById) throws IOException {
+			return TinyV1DiffReader.read(path, cacheById);
 		}
 
 		@Override
 		public MappingsDiff readDiff(BufferedReader br) throws IOException {
-			return TinyV1DiffReader.read(br);
+			return TinyV1DiffReader.read(br, false);
+		}
+
+		@Override
+		public MappingsDiff readDiff(BufferedReader br, boolean cacheById) throws IOException {
+			return TinyV1DiffReader.read(br, cacheById);
 		}
 
 		@Override
@@ -67,12 +87,22 @@ public enum Format {
 
 		@Override
 		public Mappings readMappings(Path path) throws IOException {
-			return TinyV2Reader.read(path);
+			return TinyV2Reader.read(path, false);
+		}
+
+		@Override
+		public Mappings readMappings(Path path, boolean cacheById) throws IOException {
+			return TinyV2Reader.read(path, cacheById);
 		}
 
 		@Override
 		public Mappings readMappings(BufferedReader br) throws IOException {
-			return TinyV2Reader.read(br);
+			return TinyV2Reader.read(br, false);
+		}
+
+		@Override
+		public Mappings readMappings(BufferedReader br, boolean cacheById) throws IOException {
+			return TinyV2Reader.read(br, cacheById);
 		}
 
 		@Override
@@ -87,12 +117,22 @@ public enum Format {
 
 		@Override
 		public MappingsDiff readDiff(Path path) throws IOException {
-			return TinyV2DiffReader.read(path);
+			return TinyV2DiffReader.read(path, false);
+		}
+
+		@Override
+		public MappingsDiff readDiff(Path path, boolean cacheById) throws IOException {
+			return TinyV2DiffReader.read(path, cacheById);
 		}
 
 		@Override
 		public MappingsDiff readDiff(BufferedReader br) throws IOException {
-			return TinyV2DiffReader.read(br);
+			return TinyV2DiffReader.read(br, false);
+		}
+
+		@Override
+		public MappingsDiff readDiff(BufferedReader br, boolean cacheById) throws IOException {
+			return TinyV2DiffReader.read(br, cacheById);
 		}
 
 		@Override
@@ -109,12 +149,22 @@ public enum Format {
 
 		@Override
 		public Mappings readMappings(Path path) throws IOException {
-			return EnigmaFileReader.read(path);
+			return EnigmaFileReader.read(path, false);
+		}
+
+		@Override
+		public Mappings readMappings(Path path, boolean cacheById) throws IOException {
+			return EnigmaFileReader.read(path, cacheById);
 		}
 
 		@Override
 		public Mappings readMappings(BufferedReader br) throws IOException {
-			return EnigmaFileReader.read(br);
+			return EnigmaFileReader.read(br, false);
+		}
+
+		@Override
+		public Mappings readMappings(BufferedReader br, boolean cacheById) throws IOException {
+			return EnigmaFileReader.read(br, cacheById);
 		}
 
 		@Override
@@ -131,7 +181,12 @@ public enum Format {
 
 		@Override
 		public Mappings readMappings(Path path) throws IOException {
-			return EnigmaDirReader.read(path);
+			return EnigmaDirReader.read(path, false);
+		}
+
+		@Override
+		public Mappings readMappings(Path path, boolean cacheById) throws IOException {
+			return EnigmaDirReader.read(path, cacheById);
 		}
 
 		@Override
@@ -160,7 +215,15 @@ public enum Format {
 		throw new UnsupportedOperationException();
 	}
 
+	public Mappings readMappings(Path path, boolean cacheById) throws IOException {
+		throw new UnsupportedOperationException();
+	}
+
 	public Mappings readMappings(BufferedReader br) throws IOException {
+		throw new UnsupportedOperationException();
+	}
+
+	public Mappings readMappings(BufferedReader br, boolean cacheById) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -176,7 +239,15 @@ public enum Format {
 		throw new UnsupportedOperationException();
 	}
 
+	public MappingsDiff readDiff(Path path, boolean cacheById) throws IOException {
+		throw new UnsupportedOperationException();
+	}
+
 	public MappingsDiff readDiff(BufferedReader br) throws IOException {
+		throw new UnsupportedOperationException();
+	}
+
+	public MappingsDiff readDiff(BufferedReader br, boolean cacheById) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 

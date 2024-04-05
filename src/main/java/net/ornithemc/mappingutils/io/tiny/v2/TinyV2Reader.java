@@ -14,16 +14,16 @@ import net.ornithemc.mappingutils.io.tiny.TinyMappingsReader;
 
 public class TinyV2Reader extends TinyMappingsReader {
 
-	public static Mappings read(Path path) throws IOException {
+	public static Mappings read(Path path, boolean cacheById) throws IOException {
 		try (BufferedReader reader = new BufferedReader(new FileReader(path.toFile()))) {
-			return read(reader);
+			return read(reader, cacheById);
 		} catch (Exception e) {
 			throw new IOException("error reading " + path.toString(), e);
 		}
 	}
 
-	public static Mappings read(BufferedReader reader) throws IOException {
-		return new TinyV2Reader(reader).read();
+	public static Mappings read(BufferedReader reader, boolean cacheById) throws IOException {
+		return new TinyV2Reader(reader, cacheById).read();
 	}
 
 	private int indents;
@@ -33,8 +33,8 @@ public class TinyV2Reader extends TinyMappingsReader {
 	private MethodMapping m;
 	private ParameterMapping p;
 
-	private TinyV2Reader(BufferedReader reader) {
-		super(reader, new Mappings());
+	private TinyV2Reader(BufferedReader reader, boolean cacheById) {
+		super(reader, new Mappings(cacheById));
 	}
 
 	@Override

@@ -17,16 +17,16 @@ import net.ornithemc.mappingutils.io.diff.tiny.TinyDiffReader;
 
 public class TinyV2DiffReader extends TinyDiffReader {
 
-	public static MappingsDiff read(Path path) throws IOException {
+	public static MappingsDiff read(Path path, boolean cacheById) throws IOException {
 		try (BufferedReader reader = new BufferedReader(new FileReader(path.toFile()))) {
-			return read(reader);
+			return read(reader, cacheById);
 		} catch (Exception e) {
 			throw new IOException("error reading " + path.toString(), e);
 		}
 	}
 
-	public static MappingsDiff read(BufferedReader reader) throws IOException {
-		return new TinyV2DiffReader(reader).read();
+	public static MappingsDiff read(BufferedReader reader, boolean cacheById) throws IOException {
+		return new TinyV2DiffReader(reader, cacheById).read();
 	}
 
 	private int indents;
@@ -37,8 +37,8 @@ public class TinyV2DiffReader extends TinyDiffReader {
 	private ParameterDiff p;
 	private JavadocDiff j;
 
-	private TinyV2DiffReader(BufferedReader reader) {
-		super(reader, new MappingsDiff());
+	private TinyV2DiffReader(BufferedReader reader, boolean cacheById) {
+		super(reader, new MappingsDiff(cacheById));
 	}
 
 	@Override

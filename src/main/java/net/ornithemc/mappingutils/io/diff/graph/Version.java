@@ -87,7 +87,7 @@ public class Version {
 			throw new UnsupportedOperationException("only a root has mappings!");
 		}
 		if (mappings == null) {
-			mappings = format.readMappings(paths.get(this));
+			mappings = format.readMappings(paths.get(this), true);
 		}
 
 		return mappings;
@@ -101,7 +101,7 @@ public class Version {
 		MappingsDiff diff = diffs.get(parent);
 
 		if (diff == null) {
-			diffs.put(parent, diff = format.readDiff(paths.get(parent)));
+			diffs.put(parent, diff = format.readDiff(paths.get(parent), true));
 		}
 
 		return diff;
