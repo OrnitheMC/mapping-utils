@@ -2,6 +2,7 @@ package net.ornithemc.mappingutils;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -277,7 +278,6 @@ public class MappingUtils {
 		return type;
 	}
 
-	public static void main(String[] args) {
-
+	public static void main(String[] args) throws Throwable {
 	}
 }

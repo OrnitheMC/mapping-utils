@@ -672,7 +672,7 @@ public class Mappings {
 			// empty dst == map to src
 			String name = dst.isEmpty() ? getSimplified(src) : dst;
 
-			if (parent != null) {
+			if (parent != null && name.lastIndexOf('/') < 0) {
 				name = getParent().getComplete() + "$" + name;
 			}
 
