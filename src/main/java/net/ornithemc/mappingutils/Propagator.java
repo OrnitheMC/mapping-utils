@@ -483,7 +483,7 @@ class Propagator {
 					}
 					if (s != side) {
 						if (target == MappingTarget.CLASS) {
-							String simple = change.get(DiffSide.A).substring(dst.lastIndexOf('/') + 1);
+							String simple = change.get(DiffSide.A).substring(change.get(DiffSide.A).lastIndexOf('/') + 1);
 							String siblingSimple = siblingDst.substring(siblingDst.lastIndexOf('/') + 1);
 
 							if (simple.length() > siblingSimple.length() ? simple.endsWith(siblingSimple) : siblingSimple.endsWith(simple)) {
