@@ -483,7 +483,7 @@ class Propagator {
 					}
 					if (s != side) {
 						if (target == MappingTarget.CLASS) {
-							String simple = dst.substring(dst.lastIndexOf('/') + 1);
+							String simple = change.get(DiffSide.A).substring(dst.lastIndexOf('/') + 1);
 							String siblingSimple = siblingDst.substring(siblingDst.lastIndexOf('/') + 1);
 
 							if (simple.length() > siblingSimple.length() ? simple.endsWith(siblingSimple) : siblingSimple.endsWith(simple)) {
@@ -597,18 +597,20 @@ class Propagator {
 
 			if (op != Operation.NONE) {
 				if (mode == Mode.MAPPINGS) {
+					String ofrom = change.get(DiffSide.A);
 					String from = sibling.get(side);
 					String to = change.get(DiffSide.B);
 
+					String ofromSimple = ofrom.substring(ofrom.lastIndexOf('/') + 1);
 					String fromSimple = from.substring(from.lastIndexOf('/') + 1);
 					String toSimple = to.substring(to.lastIndexOf('/') + 1);
 
-					int offset = fromSimple.length() - toSimple.length();
+					int offset = ofromSimple.length() - fromSimple.length();
 
 					if (offset > 0) {
-						to = fromSimple.substring(0, offset) + toSimple.substring(offset);
+						to = from.substring(0, from.length() - fromSimple.length()) + toSimple.substring(offset);
 					} else {
-						to = toSimple.substring(-offset);
+						to = from.substring(0, from.length() - fromSimple.length() - offset) + toSimple;
 					}
 
 					siblingChange.set(DiffSide.A, from);
@@ -626,7 +628,7 @@ class Propagator {
 			Diff siblingParent = sibling.getParent();
 
 			if (siblingParent == null) {
-				queueSiblingChange(v, changes, sibling, parentChange, side, mode, mode == Mode.MAPPINGS ? op : Operation.NONE);
+				queueSiblingChange(v, changes, sibling, parentChange, side, mode, Operation.NONE);
 
 				siblingChange = changes.getClass(sibling.src());
 
@@ -644,18 +646,22 @@ class Propagator {
 
 			if (op != Operation.NONE) {
 				if (mode == Mode.MAPPINGS) {
+					String ofrom = change.get(DiffSide.A);
 					String from = sibling.get(side);
 					String to = change.get(DiffSide.B);
 
-					String fromSimple = from.substring(from.lastIndexOf('/') + 1);
-					String toSimple = to.substring(to.lastIndexOf('/') + 1);
+					if (sibling.target() == MappingTarget.CLASS) {
+						String ofromSimple = ofrom.substring(ofrom.lastIndexOf('/') + 1);
+						String fromSimple = from.substring(from.lastIndexOf('/') + 1);
+						String toSimple = to.substring(to.lastIndexOf('/') + 1);
 
-					int offset = fromSimple.length() - toSimple.length();
+						int offset = ofromSimple.length() - fromSimple.length();
 
-					if (offset > 0) {
-						to = fromSimple.substring(0, offset) + toSimple.substring(offset);
-					} else {
-						to = toSimple.substring(0, -offset);
+						if (offset > 0) {
+							to = from.substring(0, from.length() - fromSimple.length()) + toSimple.substring(offset);
+						} else {
+							to = from.substring(0, from.length() - fromSimple.length() - offset) + toSimple;
+						}
 					}
 
 					siblingChange.set(DiffSide.A, from);
