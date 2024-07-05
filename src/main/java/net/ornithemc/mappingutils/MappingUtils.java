@@ -2,13 +2,14 @@ package net.ornithemc.mappingutils;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 import org.objectweb.asm.Type;
 
+import net.ornithemc.exceptor.io.ExceptionsFile;
+import net.ornithemc.exceptor.io.ExceptorIo;
 import net.ornithemc.mappingutils.io.Format;
 import net.ornithemc.mappingutils.io.MappingNamespace;
 import net.ornithemc.mappingutils.io.MappingTarget;
@@ -175,6 +176,10 @@ public class MappingUtils {
 		NesterIo.write(merged, mergedPath);
 	}
 
+	public static Nests mergeNests(Nests client, Nests server) {
+		return NestsMerger.run(client, server);
+	}
+
 	public static void mapSignatures(Path sigsInPath, Path sigsOutPath, Format format, Path mappingsPath) throws IOException {
 		SignatureMappings sigsIn = SigsReader.read(sigsInPath);
 		Mappings mappings = format.readMappings(mappingsPath);
@@ -199,8 +204,28 @@ public class MappingUtils {
 		return SignatureMerger.run(client, server);
 	}
 
-	public static Nests mergeNests(Nests client, Nests server) {
-		return NestsMerger.run(client, server);
+	public static void mapExceptions(Path exceptionsInPath, Path exceptionsOutPath, Format format, Path mappingsPath) throws IOException {
+		ExceptionsFile exceptionsIn = ExceptorIo.read(exceptionsInPath);
+		Mappings mappings = format.readMappings(mappingsPath);
+
+		ExceptionsFile exceptionsOut = mapExceptions(exceptionsIn, mappings);
+		ExceptorIo.write(exceptionsOutPath, exceptionsOut);
+	}
+
+	public static ExceptionsFile mapExceptions(ExceptionsFile exceptions, Mappings mappings) {
+		return ExceptionsMapper.run(exceptions, mappings);
+	}
+
+	public static void mergeExceptions(Path clientPath, Path serverPath, Path mergedPath) throws IOException {
+		ExceptionsFile client = ExceptorIo.read(clientPath);
+		ExceptionsFile server = ExceptorIo.read(serverPath);
+
+		ExceptionsFile merged = mergeExceptions(client, server);
+		ExceptorIo.write(mergedPath, merged);
+	}
+
+	public static ExceptionsFile mergeExceptions(ExceptionsFile client, ExceptionsFile server) {
+		return ExceptionsMerger.run(client, server);
 	}
 
 	public static Collection<MappingHistory> findMappings(Format format, Path dir, MappingTarget target, String key) throws IOException {
