@@ -487,7 +487,9 @@ class Propagator {
 							String siblingSimple = siblingDst.substring(siblingDst.lastIndexOf('/') + 1);
 
 							if (simple.length() > siblingSimple.length() ? simple.endsWith(siblingSimple) : siblingSimple.endsWith(simple)) {
-								continue;
+								if (!change.get(DiffSide.B).equals(siblingSimple)) {
+									continue;
+								}
 							}
 						} else {
 							if (change.get(DiffSide.A).equals(siblingDst)) {
