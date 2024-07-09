@@ -2,6 +2,7 @@ package net.ornithemc.mappingutils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeMap;
 
 import net.ornithemc.exceptor.io.ClassEntry;
 import net.ornithemc.exceptor.io.ExceptionsFile;
@@ -20,7 +21,7 @@ class ExceptionsMapper {
 
 	private ExceptionsMapper(ExceptionsFile sigs, Mappings mappings) {
 		this.exceptionsIn = sigs;
-		this.exceptionsOut = new ExceptionsFile();
+		this.exceptionsOut = new ExceptionsFile(new TreeMap<>());
 		this.mapper = Mapper.of(mappings);
 	}
 
@@ -29,7 +30,7 @@ class ExceptionsMapper {
 			String clsNameIn = ci.name();
 			String clsNameOut = mapper.mapClass(clsNameIn);
 
-			ClassEntry co = new ClassEntry(clsNameOut);
+			ClassEntry co = new ClassEntry(clsNameOut, new TreeMap<>());
 			exceptionsOut.classes().put(co.name(), co);
 
 			for (MethodEntry mi : ci.methods().values()) {

@@ -3,6 +3,7 @@ package net.ornithemc.mappingutils;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.TreeMap;
 
 import net.ornithemc.exceptor.io.ClassEntry;
 import net.ornithemc.exceptor.io.ExceptionsFile;
@@ -21,7 +22,7 @@ class ExceptionsMerger {
 	private ExceptionsMerger(ExceptionsFile client, ExceptionsFile server) {
 		this.client = client;
 		this.server = server;
-		this.merged = new ExceptionsFile();
+		this.merged = new ExceptionsFile(new TreeMap<>());
 	}
 
 	private ExceptionsFile run() {
@@ -51,7 +52,7 @@ class ExceptionsMerger {
 	}
 
 	private ClassEntry mergeClasses(ClassEntry c, ClassEntry s) {
-		ClassEntry m = new ClassEntry(c.name());
+		ClassEntry m = new ClassEntry(c.name(), new TreeMap<>());
 
 		for (MethodEntry cm : c.methods().values()) {
 			MethodEntry sm = s.methods().get(cm.name() + cm.descriptor());

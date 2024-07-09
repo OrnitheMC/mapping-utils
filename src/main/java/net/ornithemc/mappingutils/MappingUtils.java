@@ -149,6 +149,30 @@ public class MappingUtils {
 		return Nester.run(mappings, nests, apply);
 	}
 
+	public static void mapExceptions(Path exceptionsInPath, Path exceptionsOutPath, Format format, Path mappingsPath) throws IOException {
+		ExceptionsFile exceptionsIn = ExceptorIo.read(exceptionsInPath);
+		Mappings mappings = format.readMappings(mappingsPath);
+
+		ExceptionsFile exceptionsOut = mapExceptions(exceptionsIn, mappings);
+		ExceptorIo.write(exceptionsOutPath, exceptionsOut);
+	}
+
+	public static ExceptionsFile mapExceptions(ExceptionsFile exceptions, Mappings mappings) {
+		return ExceptionsMapper.run(exceptions, mappings);
+	}
+
+	public static void mergeExceptions(Path clientPath, Path serverPath, Path mergedPath) throws IOException {
+		ExceptionsFile client = ExceptorIo.read(clientPath);
+		ExceptionsFile server = ExceptorIo.read(serverPath);
+
+		ExceptionsFile merged = mergeExceptions(client, server);
+		ExceptorIo.write(mergedPath, merged);
+	}
+
+	public static ExceptionsFile mergeExceptions(ExceptionsFile client, ExceptionsFile server) {
+		return ExceptionsMerger.run(client, server);
+	}
+
 	public static void mapNests(Path srcPath, Path dstPath, Format format, Path mappingsPath) throws IOException {
 		Nests src = Nests.empty();
 		NesterIo.read(src, srcPath);
@@ -202,30 +226,6 @@ public class MappingUtils {
 
 	public static SignatureMappings mergeSignatures(SignatureMappings client, SignatureMappings server) {
 		return SignatureMerger.run(client, server);
-	}
-
-	public static void mapExceptions(Path exceptionsInPath, Path exceptionsOutPath, Format format, Path mappingsPath) throws IOException {
-		ExceptionsFile exceptionsIn = ExceptorIo.read(exceptionsInPath);
-		Mappings mappings = format.readMappings(mappingsPath);
-
-		ExceptionsFile exceptionsOut = mapExceptions(exceptionsIn, mappings);
-		ExceptorIo.write(exceptionsOutPath, exceptionsOut);
-	}
-
-	public static ExceptionsFile mapExceptions(ExceptionsFile exceptions, Mappings mappings) {
-		return ExceptionsMapper.run(exceptions, mappings);
-	}
-
-	public static void mergeExceptions(Path clientPath, Path serverPath, Path mergedPath) throws IOException {
-		ExceptionsFile client = ExceptorIo.read(clientPath);
-		ExceptionsFile server = ExceptorIo.read(serverPath);
-
-		ExceptionsFile merged = mergeExceptions(client, server);
-		ExceptorIo.write(mergedPath, merged);
-	}
-
-	public static ExceptionsFile mergeExceptions(ExceptionsFile client, ExceptionsFile server) {
-		return ExceptionsMerger.run(client, server);
 	}
 
 	public static Collection<MappingHistory> findMappings(Format format, Path dir, MappingTarget target, String key) throws IOException {
