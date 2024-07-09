@@ -149,6 +149,34 @@ public class MappingUtils {
 		return Nester.run(mappings, nests, apply);
 	}
 
+	public static void applyNestsToExceptions(Format format, Path srcPath, Path dstPath, Path nestsPath) throws IOException {
+		runExceptionsNester(format, srcPath, dstPath, nestsPath, true);
+	}
+
+	public static void undoNestsToExceptions(Format format, Path srcPath, Path dstPath, Path nestsPath) throws IOException {
+		runExceptionsNester(format, srcPath, dstPath, nestsPath, false);
+	}
+
+	private static void runExceptionsNester(Format format, Path srcPath, Path dstPath, Path nestsPath, boolean apply) throws IOException {
+		ExceptionsFile exceptions = ExceptorIo.read(srcPath);
+		Nests nests = Nests.of(nestsPath);
+
+		ExceptionsFile nestedExceptions = runExceptionsNester(exceptions, nests, apply);
+		ExceptorIo.write(dstPath, nestedExceptions);
+	}
+
+	public static ExceptionsFile applyNestsToExceptions(ExceptionsFile exceptions, Nests nests) {
+		return runExceptionsNester(exceptions, nests, true);
+	}
+
+	public static ExceptionsFile undoNestsToExceptions(ExceptionsFile exceptions, Nests nests)  {
+		return runExceptionsNester(exceptions, nests, false);
+	}
+
+	private static ExceptionsFile runExceptionsNester(ExceptionsFile exceptions, Nests nests, boolean apply) {
+		return ExceptionsNester.run(exceptions, nests, apply);
+	}
+
 	public static void mapExceptions(Path exceptionsInPath, Path exceptionsOutPath, Format format, Path mappingsPath) throws IOException {
 		ExceptionsFile exceptionsIn = ExceptorIo.read(exceptionsInPath);
 		Mappings mappings = format.readMappings(mappingsPath);

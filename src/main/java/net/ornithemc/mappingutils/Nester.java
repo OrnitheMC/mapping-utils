@@ -40,7 +40,7 @@ class Nester {
 		this.mappedTranslator = buildTranslator(this.mappedNests, this.apply);
 	}
 
-	private static Mapper buildTranslator(Nests nests, boolean apply) {
+	public static Mapper buildTranslator(Nests nests, boolean apply) {
 		return new Mapper() {
 
 			private final Map<String, String> translations;
