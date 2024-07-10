@@ -149,15 +149,15 @@ public class MappingUtils {
 		return Nester.run(mappings, nests, apply);
 	}
 
-	public static void applyNestsToExceptions(Format format, Path srcPath, Path dstPath, Path nestsPath) throws IOException {
-		runExceptionsNester(format, srcPath, dstPath, nestsPath, true);
+	public static void applyNestsToExceptions(Path srcPath, Path dstPath, Path nestsPath) throws IOException {
+		runExceptionsNester(srcPath, dstPath, nestsPath, true);
 	}
 
-	public static void undoNestsToExceptions(Format format, Path srcPath, Path dstPath, Path nestsPath) throws IOException {
-		runExceptionsNester(format, srcPath, dstPath, nestsPath, false);
+	public static void undoNestsToExceptions(Path srcPath, Path dstPath, Path nestsPath) throws IOException {
+		runExceptionsNester(srcPath, dstPath, nestsPath, false);
 	}
 
-	private static void runExceptionsNester(Format format, Path srcPath, Path dstPath, Path nestsPath, boolean apply) throws IOException {
+	private static void runExceptionsNester(Path srcPath, Path dstPath, Path nestsPath, boolean apply) throws IOException {
 		ExceptionsFile exceptions = ExceptorIo.read(srcPath);
 		Nests nests = Nests.of(nestsPath);
 
