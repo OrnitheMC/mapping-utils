@@ -1,6 +1,8 @@
 package net.ornithemc.mappingutils;
 
 import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.commons.SignatureRemapper;
@@ -8,29 +10,32 @@ import org.objectweb.asm.commons.SimpleRemapper;
 import org.objectweb.asm.signature.SignatureReader;
 import org.objectweb.asm.signature.SignatureWriter;
 
+import io.github.gaming32.signaturechanger.SignatureMode;
+import io.github.gaming32.signaturechanger.tree.MemberReference;
+import io.github.gaming32.signaturechanger.tree.SignatureInfo;
+import io.github.gaming32.signaturechanger.tree.SigsClass;
+import io.github.gaming32.signaturechanger.tree.SigsFile;
+
 import net.ornithemc.mappingutils.io.Mappings;
-import net.ornithemc.mappingutils.io.sigs.SignatureMappings;
-import net.ornithemc.mappingutils.io.sigs.SignatureMappings.ClassMapping;
-import net.ornithemc.mappingutils.io.sigs.SignatureMappings.MemberMapping;
-import net.ornithemc.mappingutils.io.sigs.SignatureMode;
+import net.ornithemc.mappingutils.io.Mappings.ClassMapping;
 
 class SignatureMapper {
 
-	static SignatureMappings run(SignatureMappings sigs, Mappings mappings) {
+	static SigsFile run(SigsFile sigs, Mappings mappings) {
 		return new SignatureMapper(sigs, mappings).run();
 	}
 
-	private final SignatureMappings sigsIn;
-	private final SignatureMappings sigsOut;
+	private final SigsFile sigsIn;
+	private final SigsFile sigsOut;
 	private final Remapper remapper;
 
-	private SignatureMapper(SignatureMappings sigs, Mappings mappings) {
+	private SignatureMapper(SigsFile sigs, Mappings mappings) {
 		this.sigsIn = sigs;
-		this.sigsOut = new SignatureMappings();
+		this.sigsOut = new SigsFile();
 		this.remapper = new SimpleRemapper(new HashMap<String, String>() {
 
 			{
-				for (net.ornithemc.mappingutils.io.Mappings.ClassMapping c : mappings.getClasses()) {
+				for (ClassMapping c : mappings.getClasses()) {
 					put(c.src(), c.getComplete());
 					for (net.ornithemc.mappingutils.io.Mappings.FieldMapping f : c.getFields()) {
 						put(c.src() + "." + f.src(), f.get());
@@ -49,35 +54,43 @@ class SignatureMapper {
 		});
 	}
 
-	private SignatureMappings run() {
+	private SigsFile run() {
 		int line = 0;
 
 		try {
-			for (ClassMapping c : sigsIn.getClasses()) {
+			Map<String, SigsClass> sigsOutSorted = new TreeMap<>();
+
+			for (Map.Entry<String, SigsClass> ce : sigsIn.classes.entrySet()) {
 				line++;
 
-				String cname = c.getName();
-				SignatureMode cmode = c.getMode();
-				String csignature = c.getSignature();
+				String cname = ce.getKey();
+				SigsClass c = ce.getValue();
+				SignatureMode cmode = c.signatureInfo.mode();
+				String csignature = c.signatureInfo.signature();
 				cname = remapper.map(cname);
 				csignature = remapSignature(csignature);
+				
+				SigsClass cout = new SigsClass();
+				cout.signatureInfo.mergeWith(new SignatureInfo(cmode, csignature));
+				sigsOutSorted.put(cname, cout);
 
-				ClassMapping cout = sigsOut.addClass(cname, cmode, csignature);
-
-				for (MemberMapping m : c.getMembers()) {
+				for (Map.Entry<MemberReference, SignatureInfo> me : c.members.entrySet()) {
 					line++;
 
-					String mname = m.getName();
-					String mdesc = m.getDesc();
-					SignatureMode mmode = m.getMode();
-					String msignature = m.getSignature();
-					mname = mdesc.charAt(0) == '(' ? remapper.mapMethodName(c.getName(), mname, mdesc) : remapper.mapFieldName(c.getName(), mname, mdesc);
+					MemberReference m = me.getKey();
+					String mname = m.name();
+					String mdesc = m.desc().getDescriptor();
+					SignatureMode mmode = me.getValue().mode();
+					String msignature = me.getValue().signature();
+					mname = mdesc.charAt(0) == '(' ? remapper.mapMethodName(ce.getKey(), mname, mdesc) : remapper.mapFieldName(ce.getKey(), mname, mdesc);
 					mdesc = remapper.mapDesc(mdesc);
 					msignature = remapSignature(msignature);
 
-					cout.addMember(mname, mdesc, mmode, msignature);
+					cout.visitMember(mname, mdesc, mmode, msignature);
 				}
 			}
+
+			sigsOut.classes.putAll(sigsOutSorted);
 		} catch (Throwable t) {
 			throw new RuntimeException("exception on line " + line, t);
 		}

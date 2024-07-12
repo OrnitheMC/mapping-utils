@@ -1,48 +1,53 @@
 package net.ornithemc.mappingutils;
 
+import java.util.Map;
 import java.util.Objects;
 
-import net.ornithemc.mappingutils.io.sigs.SignatureMappings;
-import net.ornithemc.mappingutils.io.sigs.SignatureMappings.ClassMapping;
-import net.ornithemc.mappingutils.io.sigs.SignatureMappings.Mapping;
-import net.ornithemc.mappingutils.io.sigs.SignatureMappings.MemberMapping;
+import io.github.gaming32.signaturechanger.tree.MemberReference;
+import io.github.gaming32.signaturechanger.tree.SignatureInfo;
+import io.github.gaming32.signaturechanger.tree.SigsClass;
+import io.github.gaming32.signaturechanger.tree.SigsFile;
 
 class SignatureMerger {
 
-	static SignatureMappings run(SignatureMappings client, SignatureMappings server) {
+	static SigsFile run(SigsFile client, SigsFile server) {
 		return new SignatureMerger(client, server).run();
 	}
 
-	private final SignatureMappings client;
-	private final SignatureMappings server;
-	private final SignatureMappings merged;
+	private final SigsFile client;
+	private final SigsFile server;
+	private final SigsFile merged;
 
-	private SignatureMerger(SignatureMappings client, SignatureMappings server) {
+	private SignatureMerger(SigsFile client, SigsFile server) {
 		this.client = client;
 		this.server = server;
-		this.merged = new SignatureMappings();
+		this.merged = new SigsFile();
 	}
 
-	private SignatureMappings run() {
-		for (ClassMapping c : client.getClasses()) {
-			ClassMapping s = server.getClass(c.getName());
+	private SigsFile run() {
+		for (Map.Entry<String, SigsClass> e : client.classes.entrySet()) {
+			String name = e.getKey();
+			SigsClass c = e.getValue();
+			SigsClass s = server.classes.get(name);
 
 			if (s == null) {
 				// client only mapping - we can add it to merged as is
-				addClass(c);
+				addClass(name, c);
 			} else {
 				// mapping is present on both sides - check that they match
-				if (mappingsMatch(c, s)) {
-					mergeClasses(c, s);
+				if (signaturesMatch(name, c.signatureInfo, s.signatureInfo)) {
+					mergeClasses(name, c, s);
 				}
 			}
 		}
-		for (ClassMapping s : server.getClasses()) {
-			ClassMapping c = client.getClass(s.getName());
+		for (Map.Entry<String, SigsClass> e : server.classes.entrySet()) {
+			String name = e.getKey();
+			SigsClass s = e.getValue();
+			SigsClass c = client.classes.get(name);
 
 			if (c == null) {
 				// server only mapping - we can add it to merged as is
-				addClass(s);
+				addClass(name, s);
 			} else {
 				// mapping is present on both sides - already added to merged
 			}
@@ -51,54 +56,58 @@ class SignatureMerger {
 		return merged;
 	}
 
-	private void addClass(ClassMapping c) {
-		ClassMapping mc = merged.addClass(c.getName(), c.getMode(), c.getSignature());
+	private void addClass(String name, SigsClass c) {
+		SigsClass mc = merged.visitClass(name, c.signatureInfo.mode(), c.signatureInfo.signature());
 
-		for (MemberMapping m : c.getMembers()) {
-			mc.addMember(m.getName(), m.getDesc(), m.getMode(), m.getSignature());
+		for (Map.Entry<MemberReference, SignatureInfo> m : c.members.entrySet()) {
+			mc.visitMember(m.getKey().name(), m.getKey().desc().getDescriptor(), m.getValue().mode(), m.getValue().signature());
 		}
 	}
 
-	private void mergeClasses(ClassMapping c, ClassMapping s) {
-		ClassMapping mc = merged.addClass(c.getName(), c.getMode(), c.getSignature());
+	private void mergeClasses(String name, SigsClass c, SigsClass s) {
+		SigsClass mc = merged.visitClass(name, c.signatureInfo.mode(), c.signatureInfo.signature());
 
-		for (MemberMapping cm : c.getMembers()) {
-			MemberMapping sm = s.getMember(cm.getName(), cm.getDesc());
+		for (Map.Entry<MemberReference, SignatureInfo> e : c.members.entrySet()) {
+			MemberReference mr = e.getKey();
+			SignatureInfo cm = e.getValue();
+			SignatureInfo sm = s.members.get(mr);
 
 			if (sm == null) {
 				// client only mapping - we can add it to merged as is
-				mc.addMember(cm.getName(), cm.getDesc(), cm.getMode(), cm.getSignature());
+				mc.visitMember(mr.name(), mr.desc().getDescriptor(), cm.mode(), cm.signature());
 			} else {
 				// mapping is present on both sides - check that they match
-				if (mappingsMatch(cm, sm)) {
-					mc.addMember(cm.getName(), cm.getDesc(), cm.getMode(), cm.getSignature());
+				if (signaturesMatch(name + "." + mr.name() + mr.desc().getDescriptor(), cm, sm)) {
+					mc.visitMember(mr.name(), mr.desc().getDescriptor(), cm.mode(), cm.signature());
 				}
 			}
 		}
-		for (MemberMapping sm : s.getMembers()) {
-			MemberMapping cm = c.getMember(sm.getName(), sm.getDesc());
+		for (Map.Entry<MemberReference, SignatureInfo> e : s.members.entrySet()) {
+			MemberReference mr = e.getKey();
+			SignatureInfo sm = e.getValue();
+			SignatureInfo cm = c.members.get(mr);
 
 			if (cm == null) {
 				// server only mapping - we can add it to merged as is
-				mc.addMember(sm.getName(), sm.getDesc(), sm.getMode(), sm.getSignature());
+				mc.visitMember(mr.name(), mr.desc().getDescriptor(), sm.mode(), sm.signature());
 			} else {
 				// nest is present on both sides - already added to merged
 			}
 		}
 	}
 
-	private boolean mappingsMatch(Mapping c, Mapping s) {
-		if (c.getMode() != s.getMode()) {
-			throw cannotMerge(c, s, "mode does not match");
+	private boolean signaturesMatch(String ref, SignatureInfo c, SignatureInfo s) {
+		if (c.mode() != s.mode()) {
+			throw cannotMerge(ref, "mode does not match");
 		}
-		if (!Objects.equals(c.getSignature(), s.getSignature())) {
-			throw cannotMerge(c, s, "enclosing class name does not match");
+		if (!Objects.equals(c.signature(), s.signature())) {
+			throw cannotMerge(ref, "enclosing class name does not match");
 		}
 
 		return true;
 	}
 
-	private RuntimeException cannotMerge(Mapping  c, Mapping s, String reason) {
-		return new IllegalStateException("cannot merge client signature mapping for " + c.toString() + " with server signature mapping for " + s.toString() + ": " + reason);
+	private RuntimeException cannotMerge(String ref, String reason) {
+		return new IllegalStateException("cannot merge client and server signatures for " + ref + ": " + reason);
 	}
 }

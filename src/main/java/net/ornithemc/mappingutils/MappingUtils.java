@@ -1,12 +1,18 @@
 package net.ornithemc.mappingutils;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 import org.objectweb.asm.Type;
+
+import io.github.gaming32.signaturechanger.tree.SigsFile;
+import io.github.gaming32.signaturechanger.visitor.SigsFileWriter;
+import io.github.gaming32.signaturechanger.visitor.SigsReader;
 
 import net.ornithemc.exceptor.io.ExceptionsFile;
 import net.ornithemc.exceptor.io.ExceptorIo;
@@ -21,9 +27,6 @@ import net.ornithemc.mappingutils.io.diff.graph.VersionGraph;
 import net.ornithemc.mappingutils.io.matcher.MatchSide;
 import net.ornithemc.mappingutils.io.matcher.MatchesReader;
 import net.ornithemc.mappingutils.io.matcher.MatchesWriter;
-import net.ornithemc.mappingutils.io.sigs.SignatureMappings;
-import net.ornithemc.mappingutils.io.sigs.SigsReader;
-import net.ornithemc.mappingutils.io.sigs.SigsWriter;
 
 import net.ornithemc.nester.nest.NesterIo;
 import net.ornithemc.nester.nest.Nests;
@@ -233,26 +236,39 @@ public class MappingUtils {
 	}
 
 	public static void mapSignatures(Path sigsInPath, Path sigsOutPath, Format format, Path mappingsPath) throws IOException {
-		SignatureMappings sigsIn = SigsReader.read(sigsInPath);
+		SigsFile sigsIn = new SigsFile();
+		try (SigsReader sr = new SigsReader(Files.newBufferedReader(sigsInPath))) {
+			sr.accept(sigsIn);
+		}
 		Mappings mappings = format.readMappings(mappingsPath);
 
-		SignatureMappings sigsOut = mapSignatures(sigsIn, mappings);
-		SigsWriter.write(sigsOutPath, sigsOut);
+		SigsFile sigsOut = mapSignatures(sigsIn, mappings);
+		try (BufferedWriter bw = Files.newBufferedWriter(sigsOutPath)) {
+			sigsOut.accept(new SigsFileWriter(bw));
+		}
 	}
 
-	public static SignatureMappings mapSignatures(SignatureMappings sigs, Mappings mappings) {
+	public static SigsFile mapSignatures(SigsFile sigs, Mappings mappings) {
 		return SignatureMapper.run(sigs, mappings);
 	}
 
 	public static void mergeSignatures(Path clientPath, Path serverPath, Path mergedPath) throws IOException {
-		SignatureMappings client = SigsReader.read(clientPath);
-		SignatureMappings server = SigsReader.read(serverPath);
+		SigsFile client = new SigsFile();
+		SigsFile server = new SigsFile();
+		try (SigsReader sr = new SigsReader(Files.newBufferedReader(clientPath))) {
+			sr.accept(client);
+		}
+		try (SigsReader sr = new SigsReader(Files.newBufferedReader(serverPath))) {
+			sr.accept(server);
+		}
 
-		SignatureMappings merged = mergeSignatures(client, server);
-		SigsWriter.write(mergedPath, merged);
+		SigsFile merged = mergeSignatures(client, server);
+		try (BufferedWriter bw = Files.newBufferedWriter(mergedPath)) {
+			merged.accept(new SigsFileWriter(bw));
+		}
 	}
 
-	public static SignatureMappings mergeSignatures(SignatureMappings client, SignatureMappings server) {
+	public static SigsFile mergeSignatures(SigsFile client, SigsFile server) {
 		return SignatureMerger.run(client, server);
 	}
 
