@@ -1,6 +1,5 @@
 package net.ornithemc.mappingutils;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -180,6 +179,39 @@ public class MappingUtils {
 		return ExceptionsNester.run(exceptions, nests, apply);
 	}
 
+	public static void applyNestsToSignatures(Path srcPath, Path dstPath, Path nestsPath) throws IOException {
+		runSignaturesNester(srcPath, dstPath, nestsPath, true);
+	}
+
+	public static void undoNestsToSignatures(Path srcPath, Path dstPath, Path nestsPath) throws IOException {
+		runSignaturesNester(srcPath, dstPath, nestsPath, false);
+	}
+
+	private static void runSignaturesNester(Path srcPath, Path dstPath, Path nestsPath, boolean apply) throws IOException {
+		SigsFile sigs = new SigsFile();
+		try (SigsReader sr = new SigsReader(Files.newBufferedReader(srcPath))) {
+			sr.accept(sigs);
+		}
+		Nests nests = Nests.of(nestsPath);
+
+		SigsFile nestedSigs = runSignaturesNester(sigs, nests, apply);
+		try (SigsFileWriter sw = new SigsFileWriter(Files.newBufferedWriter(dstPath))) {
+			nestedSigs.accept(sw);
+		}
+	}
+
+	public static SigsFile applyNestsToSignatures(SigsFile sigs, Nests nests) {
+		return runSignaturesNester(sigs, nests, true);
+	}
+
+	public static SigsFile undoNestsToSignatures(SigsFile sigs, Nests nests)  {
+		return runSignaturesNester(sigs, nests, false);
+	}
+
+	private static SigsFile runSignaturesNester(SigsFile sigs, Nests nests, boolean apply) {
+		return SignatureNester.run(sigs, nests, apply);
+	}
+
 	public static void mapExceptions(Path exceptionsInPath, Path exceptionsOutPath, Format format, Path mappingsPath) throws IOException {
 		ExceptionsFile exceptionsIn = ExceptorIo.read(exceptionsInPath);
 		Mappings mappings = format.readMappings(mappingsPath);
@@ -243,8 +275,8 @@ public class MappingUtils {
 		Mappings mappings = format.readMappings(mappingsPath);
 
 		SigsFile sigsOut = mapSignatures(sigsIn, mappings);
-		try (BufferedWriter bw = Files.newBufferedWriter(sigsOutPath)) {
-			sigsOut.accept(new SigsFileWriter(bw));
+		try (SigsFileWriter sw = new SigsFileWriter(Files.newBufferedWriter(sigsOutPath))) {
+			sigsOut.accept(sw);
 		}
 	}
 
@@ -263,8 +295,8 @@ public class MappingUtils {
 		}
 
 		SigsFile merged = mergeSignatures(client, server);
-		try (BufferedWriter bw = Files.newBufferedWriter(mergedPath)) {
-			merged.accept(new SigsFileWriter(bw));
+		try (SigsFileWriter sw = new SigsFileWriter(Files.newBufferedWriter(mergedPath))) {
+			merged.accept(sw);
 		}
 	}
 

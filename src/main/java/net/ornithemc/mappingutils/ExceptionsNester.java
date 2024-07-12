@@ -22,7 +22,7 @@ class ExceptionsNester {
 	private ExceptionsNester(ExceptionsFile exceptions, Nests nests, boolean apply) {
 		this.src = exceptions;
 		this.dst = new ExceptionsFile(new TreeMap<>());
-		this.translator = Nester.buildTranslator(nests, apply);
+		this.translator = Nester.buildMapper(nests, apply);
 	}
 
 	public ExceptionsFile run() {

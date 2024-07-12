@@ -25,14 +25,16 @@ class SignatureMapper {
 		return new SignatureMapper(sigs, mappings).run();
 	}
 
+	static SigsFile run(SigsFile sigs, Remapper remapper) {
+		return new SignatureMapper(sigs, remapper).run();
+	}
+
 	private final SigsFile sigsIn;
 	private final SigsFile sigsOut;
 	private final Remapper remapper;
 
 	private SignatureMapper(SigsFile sigs, Mappings mappings) {
-		this.sigsIn = sigs;
-		this.sigsOut = new SigsFile();
-		this.remapper = new SimpleRemapper(new HashMap<String, String>() {
+		this(sigs, new SimpleRemapper(new HashMap<String, String>() {
 
 			{
 				for (ClassMapping c : mappings.getClasses()) {
@@ -51,7 +53,13 @@ class SignatureMapper {
 				String value = super.get(key);
 				return value == null ? (String)key : value;
 			}
-		});
+		}));
+	}
+
+	private SignatureMapper(SigsFile sigs, Remapper remapper) {
+		this.sigsIn = sigs;
+		this.sigsOut = new SigsFile();
+		this.remapper = remapper;
 	}
 
 	private SigsFile run() {
@@ -71,7 +79,7 @@ class SignatureMapper {
 				csignature = remapSignature(csignature);
 				
 				SigsClass cout = new SigsClass();
-				cout.signatureInfo.mergeWith(new SignatureInfo(cmode, csignature));
+				cout.signatureInfo = new SignatureInfo(cmode, csignature);
 				sigsOutSorted.put(cname, cout);
 
 				for (Map.Entry<MemberReference, SignatureInfo> me : c.members.entrySet()) {
@@ -99,7 +107,7 @@ class SignatureMapper {
 	}
 
 	private String remapSignature(String signature) {
-		if (signature.isEmpty()) {
+		if (signature == null || signature.isEmpty()) {
 			return null;
 		} else {
 			SignatureReader reader = new SignatureReader(signature);

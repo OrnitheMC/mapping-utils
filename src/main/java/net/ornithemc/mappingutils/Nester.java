@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.objectweb.asm.commons.Remapper;
+
 import net.ornithemc.mappingutils.io.Mappings;
 import net.ornithemc.mappingutils.io.Mappings.ClassMapping;
 import net.ornithemc.mappingutils.io.Mappings.FieldMapping;
@@ -36,47 +38,49 @@ class Nester {
 		this.mappedNests = apply ? MappingUtils.mapNests(this.nests, this.src) : Nests.empty();
 		this.apply = apply;
 
-		this.translator = buildTranslator(this.nests, this.apply);
-		this.mappedTranslator = buildTranslator(this.mappedNests, this.apply);
+		this.translator = buildMapper(this.nests, this.apply);
+		this.mappedTranslator = buildMapper(this.mappedNests, this.apply);
 	}
 
-	public static Mapper buildTranslator(Nests nests, boolean apply) {
+	private static Map<String, String> buildTranslations(Nests nests, boolean apply) {
+		Map<String, String> translations = new HashMap<>();
+
+		for (Nest nest : nests) {
+			translations.put(nest.className, buildTranslation(nests, nest.className, translations));
+		}
+
+		if (!apply) {
+			Map<String, String> inverted = new HashMap<>(translations);
+			translations.clear();
+
+			for (Entry<String, String> entry : inverted.entrySet()) {
+				translations.put(entry.getValue(), entry.getKey());
+			}
+		}
+
+		return translations;
+	}
+
+	private static String buildTranslation(Nests nests, String className, Map<String, String> translations) {
+		String translation = translations.get(className);
+
+		if (translation != null) {
+			return translation;
+		}
+
+		Nest nest = nests.get(className);
+
+		if (nest == null) {
+			return className;
+		}
+
+		return buildTranslation(nests, nest.enclClassName, translations) + "$" + nest.innerName;
+	}
+
+	public static Mapper buildMapper(Nests nests, boolean apply) {
+		Map<String, String> translations = buildTranslations(nests, apply);
+
 		return new Mapper() {
-
-			private final Map<String, String> translations;
-
-			{
-				this.translations = new HashMap<>();
-
-				for (Nest nest : nests) {
-					this.translations.put(nest.className, translate(nest.className));
-				}
-
-				if (!apply) {
-					Map<String, String> inverted = new HashMap<>(this.translations);
-					this.translations.clear();
-
-					for (Entry<String, String> entry : inverted.entrySet()) {
-						this.translations.put(entry.getValue(), entry.getKey());
-					}
-				}
-			}
-
-			private String translate(String className) {
-				String translation = translations.get(className);
-
-				if (translation != null) {
-					return translation;
-				}
-
-				Nest nest = nests.get(className);
-
-				if (nest == null) {
-					return className;
-				}
-
-				return translate(nest.enclClassName) + "$" + nest.innerName;
-			}
 
 			@Override
 			public String mapClass(String className) {
@@ -96,6 +100,18 @@ class Nester {
 			@Override
 			public String mapParameter(String className, String methodName, String methodDesc, String parameterName, int index) {
 				return parameterName;
+			}
+		};
+	}
+
+	public static Remapper buildRemapper(Nests nests, boolean apply) {
+		Map<String, String> translations = buildTranslations(nests, apply);
+
+		return new Remapper() {
+
+			@Override
+			public String map(String key) {
+				return translations.getOrDefault(key, key);
 			}
 		};
 	}
