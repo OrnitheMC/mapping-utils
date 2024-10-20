@@ -75,6 +75,10 @@ public class Mappings {
 	}
 
 	private ClassMapping findParent(String name, boolean orThrowException) {
+		if (!MappingUtils.parseInnerClasses) {
+			return null;
+		}
+
 		int i = name.lastIndexOf('$');
 
 		if (i < 0) {
@@ -648,21 +652,24 @@ public class Mappings {
 			if (dst.isEmpty()) {
 				return super.validate();
 			}
-			if (dst.contains("$")) {
-				throw new IllegalStateException("simple name of " + this + " cannot be nested!");
-			}
 
-			String[] srcArgs = src.split("[$]");
+			if (MappingUtils.parseInnerClasses) {
+				if (dst.contains("$")) {
+					throw new IllegalStateException("simple name of " + this + " cannot be nested!");
+				}
 
-			if (srcArgs.length == 1) {
-				return super.validate();
-			}
+				String[] srcArgs = src.split("[$]");
 
-			int i = src.lastIndexOf('$');
-			String srcParentName = src.substring(0, i);
+				if (srcArgs.length == 1) {
+					return super.validate();
+				}
 
-			if (!parent.src.equals(srcParentName)) {
-				throw new IllegalStateException("class mapping " + this + " is not consistent with parent class mapping " + parent);
+				int i = src.lastIndexOf('$');
+				String srcParentName = src.substring(0, i);
+
+				if (!parent.src.equals(srcParentName)) {
+					throw new IllegalStateException("class mapping " + this + " is not consistent with parent class mapping " + parent);
+				}
 			}
 
 			return super.validate();

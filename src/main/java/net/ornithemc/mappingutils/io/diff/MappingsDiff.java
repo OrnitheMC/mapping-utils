@@ -13,6 +13,7 @@ import java.util.TreeMap;
 
 import org.objectweb.asm.Type;
 
+import net.ornithemc.mappingutils.MappingUtils;
 import net.ornithemc.mappingutils.io.MappingTarget;
 import net.ornithemc.mappingutils.io.Mappings.Mapping;
 
@@ -39,6 +40,10 @@ public class MappingsDiff {
 	}
 
 	private ClassDiff findParent(String name, boolean orThrowException) {
+		if (!MappingUtils.parseInnerClasses) {
+			return null;
+		}
+
 		int i = name.lastIndexOf('$');
 
 		if (i < 0) {

@@ -32,6 +32,8 @@ import net.ornithemc.nester.nest.Nests;
 
 public class MappingUtils {
 
+	public static boolean parseInnerClasses = true;
+
 	public static void invertMatches(Path src, Path dst) throws IOException {
 		FileUtils.requireReadable(src);
 		FileUtils.requireWritable(dst);
