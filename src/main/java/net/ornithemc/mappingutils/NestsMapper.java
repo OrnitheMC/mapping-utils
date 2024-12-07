@@ -66,6 +66,12 @@ class NestsMapper {
 
 	private String mapInnerName(String name, String innerName) {
 		String mappedName = mapClassName(name);
+
+		if (mappedName.equals(name)) {
+			// class name maps to itself, keep given inner name
+			return innerName;
+		}
+
 		int idx = mappedName.lastIndexOf("__");
 
 		if (idx > 0) {
