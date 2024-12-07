@@ -687,6 +687,10 @@ public class Mappings {
 		}
 
 		public static String getSimplified(String name) {
+			if (!MappingUtils.parseInnerClasses) {
+				return name;
+			}
+
 			int i = name.lastIndexOf('$');
 			return name.substring(i + 1);
 		}
