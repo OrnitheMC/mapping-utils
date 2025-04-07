@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.objectweb.asm.Type;
 
@@ -335,6 +336,26 @@ public class MappingUtils {
 		type = translateType(type, mapper);
 
 		return type.getDescriptor();
+	}
+
+	public static Map<String, String> buildNestingTranslations(Path nestsPath) {
+		return buildNestsTranslations(nestsPath, true);
+	}
+
+	public static Map<String, String> buildUnnestingTranslations(Path nestsPath) {
+		return buildNestsTranslations(nestsPath, false);
+	}
+
+	private static Map<String, String> buildNestsTranslations(Path nestsPath, boolean apply) {
+		return Nester.buildTranslations(Nests.of(nestsPath), apply);
+	}
+
+	public static Map<String, String> buildNestingTranslations(Nests nests) {
+		return Nester.buildTranslations(nests, true);
+	}
+
+	public static Map<String, String> buildUnnestingTranslations(Nests nests) {
+		return Nester.buildTranslations(nests, false);
 	}
 
 	public static String translateMethodDescriptor(String desc, Mapper mapper) {

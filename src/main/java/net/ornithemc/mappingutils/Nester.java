@@ -42,7 +42,7 @@ class Nester {
 		this.mappedTranslator = buildMapper(this.mappedNests, this.apply);
 	}
 
-	private static Map<String, String> buildTranslations(Nests nests, boolean apply) {
+	public static Map<String, String> buildTranslations(Nests nests, boolean apply) {
 		Map<String, String> translations = new HashMap<>();
 
 		for (Nest nest : nests) {
