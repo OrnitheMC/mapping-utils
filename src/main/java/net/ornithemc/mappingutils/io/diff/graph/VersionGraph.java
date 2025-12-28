@@ -8,9 +8,9 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Queue;
@@ -72,35 +72,48 @@ public class VersionGraph {
 	}
 
 	private void walk(Version start, boolean towardsRoot, Consumer<Version> versionVisitor, Consumer<Collection<Version>> pathVisitor) {
-		Deque<GraphWalker> walkers = new LinkedList<>();
 		Set<Version> visited = new HashSet<>();
+		Map<Version, Set<Version>> curr = new LinkedHashMap<>();
+		Map<Version, Set<Version>> next = new LinkedHashMap<>();
 
-		GraphWalker curr = new GraphWalker();
-		GraphWalker next = new GraphWalker();
-		curr.walk(start);
+		curr.put(start, new LinkedHashSet<>());
 
-		walkers.add(curr);
+		while (!curr.isEmpty()) {
+			for (Map.Entry<Version, Set<Version>> e : curr.entrySet()) {
+				Version v = e.getKey();
+				Set<Version> p = e.getValue();
+				Set<Version> n = towardsRoot ? v.parents : v.children;
 
-		while (!walkers.isEmpty()) {
-			curr = walkers.poll();
+				p.add(v);
 
-			Version head = curr.head;
-			Collection<Version> path = curr.path;
-			Collection<Version> versions = towardsRoot ? head.parents : head.children;
+				if (visited.add(v)) {
+					versionVisitor.accept(v);
+				}
+				if (n.isEmpty()) {
+					pathVisitor.accept(p);
+				}
 
-			if (visited.add(head)) {
-				versionVisitor.accept(head);
+				for (Version nv : n) {
+					next.compute(nv, (key, path) -> {
+						if (path == null || path.size() > p.size()) {
+							if (n.size() > 1) {
+								// path used in multiple branches, copy it
+								return new LinkedHashSet<>(p);
+							} else {
+								return p;
+							}
+						} else {
+							return path;
+						}
+					});
+				}
 			}
-			if (versions.isEmpty()) {
-				pathVisitor.accept(path);
-			}
 
-			for (Version v : versions) {
-				next = new GraphWalker(curr);
-				next.walk(v);
+			Map<Version, Set<Version>> tmp = curr;
+			curr = next;
+			next = tmp;
 
-				walkers.add(next);
-			}
+			next.clear();
 		}
 	}
 
@@ -241,36 +254,5 @@ public class VersionGraph {
 
 		void accept(String parent, String version, Path path);
 
-	}
-
-	private static class GraphWalker {
-
-		private final Collection<Version> path;
-		private Version head;
-
-		public GraphWalker() {
-			this.path = new LinkedHashSet<>();
-		}
-
-		public GraphWalker(GraphWalker walker) {
-			this.path = new LinkedHashSet<>(walker.path);
-			this.head = walker.head;
-		}
-
-		public void walk(Version v) {
-			if (!path.add(v)) {
-				throw foundLoopException(this, v);
-			}
-
-			head = v;
-		}
-
-		private static InvalidVersionGraphException foundLoopException(GraphWalker walker, Version v) {
-			List<Version> path = new LinkedList<>(walker.path);
-			int prevOccurance = path.indexOf(v);
-			List<Version> loop = path.subList(prevOccurance, path.size());
-
-			throw new InvalidVersionGraphException("found a loop in the version graph: (" + prevOccurance + ") " + loop + " + " + v);
-		}
 	}
 }
