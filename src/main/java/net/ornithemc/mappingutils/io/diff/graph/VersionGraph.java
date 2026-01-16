@@ -94,6 +94,11 @@ public class VersionGraph {
 				}
 
 				for (Version nv : n) {
+					// this ensures visiting order maintains order between versions
+					if (!visited.containsAll(towardsRoot ? nv.children : nv.parents)) {
+						continue;
+					}
+
 					next.compute(nv, (key, path) -> {
 						if (path == null || path.size() > p.size()) {
 							if (n.size() > 1) {
