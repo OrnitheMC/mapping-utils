@@ -75,6 +75,7 @@ public class VersionGraph {
 		Set<Version> visited = new HashSet<>();
 		Map<Version, Set<Version>> curr = new LinkedHashMap<>();
 		Map<Version, Set<Version>> next = new LinkedHashMap<>();
+		Map<Version, Set<Version>> wait = new LinkedHashMap<>();
 
 		curr.put(start, new LinkedHashSet<>());
 
@@ -95,11 +96,11 @@ public class VersionGraph {
 
 				for (Version nv : n) {
 					// this ensures visiting order maintains order between versions
-					if (!visited.containsAll(towardsRoot ? nv.children : nv.parents)) {
-						continue;
-					}
+					Map<Version, Set<Version>> queue =
+						visited.containsAll(towardsRoot ? nv.children : nv.parents) ? next : wait;
+						
 
-					next.compute(nv, (key, path) -> {
+					queue.compute(nv, (key, path) -> {
 						if (path == null || path.size() > p.size()) {
 							if (n.size() > 1) {
 								// path used in multiple branches, copy it
@@ -114,11 +115,21 @@ public class VersionGraph {
 				}
 			}
 
-			Map<Version, Set<Version>> tmp = curr;
+			Map<Version, Set<Version>> tmp;
+
+			tmp = curr;
 			curr = next;
 			next = tmp;
 
 			next.clear();
+
+			if (curr.isEmpty()) {
+				tmp = curr;
+				curr = wait;
+				wait = tmp;
+
+				wait.clear();
+			}
 		}
 	}
 
