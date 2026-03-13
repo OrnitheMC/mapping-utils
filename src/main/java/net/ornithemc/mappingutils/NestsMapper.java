@@ -34,7 +34,7 @@ class NestsMapper {
 		String enclClassName = mapOuterName(nest.className, nest.enclClassName);
 		String enclMethodName = (nest.enclMethodName == null) ? null : mapMethodName(nest.enclClassName, nest.enclMethodName, nest.enclMethodDesc);
 		String enclMethodDesc = (nest.enclMethodDesc == null) ? null : mapMethodDesc(nest.enclClassName, nest.enclMethodName, nest.enclMethodDesc);
-		String innerName = mapInnerName(nest.className, nest.innerName);
+		String innerName = mapInnerName(nest.className, nest.enclClassName, nest.innerName);
 		int access = nest.access;
 
 		return new Nest(type, className, enclClassName, enclMethodName, enclMethodDesc, innerName, access);
@@ -57,14 +57,14 @@ class NestsMapper {
 		int idx = mappedName.lastIndexOf("__");
 
 		if (idx > 0) {
-			// provided mappings already apply nesting
+			// provided mappings already apply pseudo-nesting
 			return mappedName.substring(0, idx);
 		}
 
 		return mapClassName(enclClassName);
 	}
 
-	private String mapInnerName(String name, String innerName) {
+	private String mapInnerName(String name, String enclClassName, String innerName) {
 		String mappedName = mapClassName(name);
 
 		if (mappedName.equals(name)) {
@@ -75,8 +75,19 @@ class NestsMapper {
 		int idx = mappedName.lastIndexOf("__");
 
 		if (idx > 0) {
-			// provided mappings already apply nesting
+			// provided mappings already apply pseudo-nesting
 			return mappedName.substring(idx + 2);
+		}
+
+		idx = mappedName.lastIndexOf('$');
+
+		if (idx > 0) {
+			String mappedEnclClassName = mapClassName(enclClassName);
+
+			if (idx == mappedEnclClassName.length() && mappedName.startsWith(mappedEnclClassName)) {
+				// provided mappings already apply nesting
+				return mappedName.substring(idx + 1);
+			}
 		}
 
 		int i = 0;
